@@ -1,0 +1,46 @@
+<body>
+  <mat-card class="mat-elevation-z4 card">
+    <mat-card-title class="title"
+      >Controle de estoque - Mr. Mordis</mat-card-title
+    >
+    <form (ngSubmit)="login()" #loginForm="ngForm">
+      <!-- Campo para o Usuário -->
+      <mat-form-field appearance="fill">
+        <mat-label>Usuário</mat-label>
+        <input
+          matInput
+          type="text"
+          [(ngModel)]="usuario_login"
+          placeholder="Digite o seu nome de usuário ou email"
+          name="usuario_login"
+          #usuarioLogin="ngModel"
+          required
+        />
+        <mat-error *ngIf="usuarioLogin.invalid && usuarioLogin.touched">
+          Usuário é obrigatório.
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Campo para Senha -->
+      <mat-form-field appearance="fill">
+        <mat-label>Senha</mat-label>
+        <input
+          matInput
+          type="password"
+          [(ngModel)]="usuario_password"
+          placeholder="Digite sua senha"
+          name="usuario_password"
+          #usuarioPassword="ngModel"
+          required
+        />
+        <mat-error *ngIf="usuarioPassword.invalid && usuarioPassword.touched">
+          Senha é obrigatória.
+        </mat-error>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" [disabled]="loginForm.invalid">
+        Entrar
+      </button>
+    </form>
+  </mat-card>
+</body>

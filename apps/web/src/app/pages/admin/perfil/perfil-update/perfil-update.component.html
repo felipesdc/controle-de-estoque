@@ -1,0 +1,44 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Alterar um perfil </mat-card-title>
+  <form [formGroup]="perfilForm">
+    <mat-form-field>
+      <input
+        placeholder="ID do Perfil"
+        matInput
+        formControlName="perfil_id"
+        name="perfil_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Nome do Perfil"
+        matInput
+        formControlName="perfil_nome"
+        name="perfil_nome"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          perfilFormControl.perfil_nome.touched &&
+          perfilFormControl.perfil_nome.errors?.required
+        "
+        class="text-danger"
+      >
+        Nome do perfil obrigatório
+      </span>
+    </p>
+  </form>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="updatePerfil()"
+    [disabled]="perfilForm.invalid"
+  >
+    Alterar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

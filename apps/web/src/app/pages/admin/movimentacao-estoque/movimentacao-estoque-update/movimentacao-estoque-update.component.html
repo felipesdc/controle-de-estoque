@@ -1,0 +1,144 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Alterar uma Movimentação de Estoque </mat-card-title>
+  <form [formGroup]="movimentacaoEstoqueForm">
+    <mat-form-field>
+      <input
+        placeholder="ID da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_id"
+        name="movimento_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="ID do Produto da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_produto_id"
+        name="movimento_produto_id"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          movimentacaoEstoqueFormControl.movimento_produto_id.touched &&
+          movimentacaoEstoqueFormControl.movimento_produto_id.errors?.required
+        "
+        class="text-danger"
+      >
+        ID do Produto da Movimentação de Estoque obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Produto da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_produto"
+        name="movimento_produto"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          movimentacaoEstoqueFormControl.movimento_produto.touched &&
+          movimentacaoEstoqueFormControl.movimento_produto.errors?.required
+        "
+        class="text-danger"
+      >
+        Produto da Movimentação de Estoque obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Quantidade da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_quantidade"
+        name="movimento_quantidade"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          movimentacaoEstoqueFormControl.movimento_quantidade.touched &&
+          movimentacaoEstoqueFormControl.movimento_quantidade.errors?.required
+        "
+        class="text-danger"
+      >
+        Quantidade da Movimentação de Estoque obrigatória
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Tipo da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_tipo"
+        name="movimento_tipo"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          movimentacaoEstoqueFormControl.movimento_tipo.touched &&
+          movimentacaoEstoqueFormControl.movimento_tipo.errors?.required
+        "
+        class="text-danger"
+      >
+        Tipo da Movimentação de Estoque obrigatória
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Data da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_data"
+        name="movimento_data"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          movimentacaoEstoqueFormControl.movimento_data.touched &&
+          movimentacaoEstoqueFormControl.movimento_data.errors?.required
+        "
+        class="text-danger"
+      >
+        Data da Movimentação de Estoque obrigatória
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Observação da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_observacao"
+        name="movimento_observacao"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          movimentacaoEstoqueFormControl.movimento_observacao.touched &&
+          movimentacaoEstoqueFormControl.movimento_observacao.errors?.required
+        "
+        class="text-danger"
+      >
+        Observação da Movimentação de Estoque obrigatória
+      </span>
+    </p>
+  </form>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="updateMovimentacaoEstoque()"
+    [disabled]="movimentacaoEstoqueForm.invalid"
+  >
+    Alterar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

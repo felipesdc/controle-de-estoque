@@ -1,0 +1,29 @@
+name: controle-de-estoque
+services:
+  api:
+    build: ./apps/api
+    environment:
+      PORT: 3000
+      SQLITE_PATH: /data/estoque.sqlite
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no arquivo .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD no arquivo .env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@localhost}
+    volumes:
+      - estoque-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+  web:
+    build: ./apps/web
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  estoque-data:

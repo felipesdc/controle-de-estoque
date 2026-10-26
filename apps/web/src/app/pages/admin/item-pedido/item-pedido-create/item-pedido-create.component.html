@@ -1,0 +1,162 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Cadastrar um novo Item de Pedido </mat-card-title>
+  <form [formGroup]="itemPedidoForm">
+    <mat-form-field>
+      <mat-label>ID do Pedido</mat-label>
+      <mat-select
+        formControlName="item_pedido_pedido_id"
+        name="item_pedido_pedido_id"
+        (selectionChange)="alteraDescricaoDoPedido($event.value)"
+      >
+        @for (pedido of pedidos; track pedido) {
+        <mat-option [value]="pedido.pedido_id"
+          >{{ pedido.pedido_id }} - {{ pedido.pedido_data | date }} -
+          {{ pedido.pedido_observacao }}</mat-option
+        >
+        }
+      </mat-select>
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          itemPedidoFormControl.item_pedido_pedido_id.touched &&
+          itemPedidoFormControl.item_pedido_pedido_id.errors?.required
+        "
+        class="text-danger"
+      >
+        ID do Pedido obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <mat-label>ID do Produto do Item de Pedido</mat-label>
+      <mat-select
+        formControlName="item_pedido_produto_id"
+        name="item_pedido_produto_id"
+        (selectionChange)="alteraDescricaoDoProduto($event.value)"
+      >
+        @for (produto of produtos; track produto) {
+        <mat-option [value]="produto.produto_id"
+          >{{ produto.produto_id }} -
+          {{ produto.produto_descricao }}</mat-option
+        >
+        }
+      </mat-select>
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          itemPedidoFormControl.item_pedido_produto_id.touched &&
+          itemPedidoFormControl.item_pedido_produto_id.errors?.required
+        "
+        class="text-danger"
+      >
+        ID do Produto do Item do Pedido obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <mat-label>ID da Unidade do Item de Pedido</mat-label>
+      <mat-select
+        formControlName="item_pedido_unidade_id"
+        name="item_pedido_unidade_id"
+        (selectionChange)="alteraDescricaoDaUnidade($event.value)"
+      >
+        @for (unidade of unidades; track unidade) {
+        <mat-option [value]="unidade.unidade_id"
+          >{{ unidade.unidade_id }} -
+          {{ unidade.unidade_descricao }}</mat-option
+        >
+        }
+      </mat-select>
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          itemPedidoFormControl.item_pedido_unidade_id.touched &&
+          itemPedidoFormControl.item_pedido_unidade_id.errors?.required
+        "
+        class="text-danger"
+      >
+        ID da Unidade do Item do Pedido obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <mat-label>ID do Preço do Item de Pedido</mat-label>
+      <mat-select
+        formControlName="item_pedido_preco_id"
+        name="item_pedido_preco_id"
+        (selectionChange)="alteraValorDoPreco($event.value)"
+      >
+        @for (preco of precos; track preco) {
+        <mat-option [value]="preco.preco_id"
+          >{{ preco.preco_id }} -
+          {{ preco.preco_compra | currency : ".1-2" : "R$" }}</mat-option
+        >
+        }
+      </mat-select>
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          itemPedidoFormControl.item_pedido_preco_id.touched &&
+          itemPedidoFormControl.item_pedido_preco_id.errors?.required
+        "
+        class="text-danger"
+      >
+        ID do Preço do Item do Pedido obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Quantidade do Item do Pedido"
+        matInput
+        formControlName="item_pedido_quantidade"
+        name="item_pedido_quantidade"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          itemPedidoFormControl.item_pedido_quantidade.touched &&
+          itemPedidoFormControl.item_pedido_quantidade.errors?.required
+        "
+        class="text-danger"
+      >
+        Quantidade do Item do Pedido obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Total do Item do Pedido"
+        matInput
+        formControlName="item_pedido_total"
+        name="item_pedido_total"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          itemPedidoFormControl.item_pedido_total.touched &&
+          itemPedidoFormControl.item_pedido_total.errors?.required
+        "
+        class="text-danger"
+      >
+        Total do Item do Pedido obrigatório
+      </span>
+    </p>
+  </form>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="createItemPedido()"
+    [disabled]="itemPedidoForm.invalid"
+  >
+    Cadastrar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

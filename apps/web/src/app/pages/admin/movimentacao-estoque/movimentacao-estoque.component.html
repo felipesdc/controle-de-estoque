@@ -1,0 +1,86 @@
+<div>
+  <div class="header">
+    <h1>Movimentações de Estoque cadastradas</h1>
+    <button
+      mat-raised-button
+      color="primary"
+      routerLink="create"
+      style="margin-left: auto"
+    >
+      <mat-icon>add</mat-icon>
+      Nova Movimentação de Estoque
+    </button>
+  </div>
+  <table mat-table [dataSource]="movimentacoesEstoque" class="mat-elevation-z4">
+    <ng-container matColumnDef="movimento_id">
+      <th mat-header-cell *matHeaderCellDef>ID da Movimentação de Estoque</th>
+      <td mat-cell *matCellDef="let movimentacaoEstoque">
+        {{ movimentacaoEstoque.movimento_id }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="movimento_produto">
+      <th mat-header-cell *matHeaderCellDef>
+        Produto da Movimentação de Estoque
+      </th>
+      <td mat-cell *matCellDef="let movimentacaoEstoque">
+        {{ movimentacaoEstoque.movimento_produto }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="movimento_quantidade">
+      <th mat-header-cell *matHeaderCellDef>
+        Quantidade da Movimentação de Estoque
+      </th>
+      <td mat-cell *matCellDef="let movimentacaoEstoque">
+        {{ movimentacaoEstoque.movimento_quantidade }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="movimento_tipo">
+      <th mat-header-cell *matHeaderCellDef>Tipo da Movimentação de Estoque</th>
+      <td mat-cell *matCellDef="let movimentacaoEstoque">
+        {{ movimentacaoEstoque.movimento_tipo }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="movimento_data">
+      <th mat-header-cell *matHeaderCellDef>Data da Movimentação de Estoque</th>
+      <td mat-cell *matCellDef="let movimentacaoEstoque">
+        {{ movimentacaoEstoque.movimento_data }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="movimento_observacao">
+      <th mat-header-cell *matHeaderCellDef>
+        Observação da Movimentação de Estoque
+      </th>
+      <td mat-cell *matCellDef="let movimentacaoEstoque">
+        {{ movimentacaoEstoque.movimento_observacao }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="movimento_action">
+      <th mat-header-cell *matHeaderCellDef>Ações</th>
+      <td mat-cell *matCellDef="let movimentacaoEstoque">
+        <a
+          mat-icon-button
+          class="edit"
+          routerLink="update/{{ movimentacaoEstoque.movimento_id }}"
+        >
+          <mat-icon> edit </mat-icon>
+        </a>
+        <a
+          mat-icon-button
+          class="delete"
+          routerLink="delete/{{ movimentacaoEstoque.movimento_id }}"
+        >
+          <mat-icon> delete </mat-icon>
+        </a>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</div>

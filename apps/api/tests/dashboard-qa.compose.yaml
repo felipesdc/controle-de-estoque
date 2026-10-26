@@ -1,0 +1,24 @@
+# Disposable visual QA environment. Uses memory-backed storage, never the user's volume.
+name: estoque-dashboard-qa
+services:
+  api:
+    image: controle-de-estoque-api:latest
+    environment:
+      SQLITE_PATH: /data/dashboard-qa.sqlite
+      JWT_SECRET: dashboard-qa-jwt-key-only-2026-local
+      ADMIN_PASSWORD: dashboard-qa-only-2026
+      ADMIN_EMAIL: qa@dashboard.local
+    tmpfs:
+      - /data:uid=1000,gid=1000,mode=0700
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+  web:
+    image: controle-de-estoque-web:latest
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on:
+      api:
+        condition: service_healthy

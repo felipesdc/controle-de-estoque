@@ -1,0 +1,5 @@
+<header class="app-header">
+  <button mat-icon-button (click)="nav.toggle()" class="menu-button" aria-label="Abrir ou fechar menu de navegação"><mat-icon>menu</mat-icon></button>
+  <span class="section-title">{{ titulo }}</span>
+  <div class="session"><span class="profile"><span class="avatar"><mat-icon>person_outline</mat-icon></span>{{ perfil }}</span><button mat-icon-button (click)="auth.logout()" aria-label="Sair da sessão" title="Sair da sessão"><mat-icon>logout</mat-icon></button></div>
+</header>

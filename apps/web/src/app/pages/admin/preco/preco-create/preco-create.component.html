@@ -1,0 +1,115 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Cadastrar um novo Preço </mat-card-title>
+  <form [formGroup]="precoForm">
+    <mat-form-field>
+      <mat-label>Preço de Compra</mat-label>
+      <input
+        currencyMask
+        placeholder="Preço de Compra"
+        matInput
+        formControlName="preco_compra"
+        name="preco_compra"
+        [options]="{
+          prefix: 'R$ ',
+          thousands: '.',
+          decimal: ',',
+          align: 'left'
+        }"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          precoFormControl.preco_compra.touched &&
+          precoFormControl.preco_compra.errors?.required
+        "
+        class="text-danger"
+      >
+        Preço de Compra Obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <mat-label>Preço de Venda</mat-label>
+      <input
+        currencyMask
+        placeholder="Preço de Venda"
+        matInput
+        formControlName="preco_venda"
+        name="preco_venda"
+        [options]="{
+          prefix: 'R$ ',
+          thousands: '.',
+          decimal: ',',
+          align: 'left'
+        }"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          precoFormControl.preco_venda.touched &&
+          precoFormControl.preco_venda.errors?.required
+        "
+        class="text-danger"
+      >
+        Preço de Venda Obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <mat-label>Data Inicial</mat-label>
+      <input
+        placeholder="Data Inicial do Preço"
+        matInput
+        formControlName="preco_data_inicial"
+        name="preco_data_inicial"
+        [matDatepicker]="pickerInicial"
+      />
+      <mat-hint>DD/MM/AAAA</mat-hint>
+      <mat-datepicker-toggle
+        matIconSuffix
+        [for]="pickerInicial"
+      ></mat-datepicker-toggle>
+      <mat-datepicker #pickerInicial></mat-datepicker>
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          precoFormControl.preco_data_inicial.touched &&
+          precoFormControl.preco_data_inicial.errors?.required
+        "
+        class="text-danger"
+      >
+        Data Inicial do Preço Obrigatória
+      </span>
+    </p>
+
+    <mat-form-field>
+      <mat-label>Data Final</mat-label>
+      <input
+        placeholder="Data Final do Preço"
+        matInput
+        formControlName="preco_data_final"
+        name="preco_data_final"
+        [matDatepicker]="pickerFinal"
+      />
+      <mat-hint>DD/MM/AAAA</mat-hint>
+      <mat-datepicker-toggle
+        matIconSuffix
+        [for]="pickerFinal"
+      ></mat-datepicker-toggle>
+      <mat-datepicker #pickerFinal></mat-datepicker>
+    </mat-form-field>
+  </form>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="createPreco()"
+    [disabled]="precoForm.invalid"
+  >
+    Cadastrar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

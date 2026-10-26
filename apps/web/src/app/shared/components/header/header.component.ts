@@ -1,0 +1,16 @@
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
+import { SidenavService } from '../../services/sidenav.service';
+import { AuthService } from '../../services/auth.service';
+@Component({ selector: 'app-header', templateUrl: './header.component.html', styleUrls: ['./header.component.scss'] })
+export class HeaderComponent {
+  constructor(public nav: SidenavService, public auth: AuthService, private router: Router) {}
+  get titulo(): string {
+    const url = this.router.url;
+    if (url.startsWith('/admin')) return 'Administração';
+    if (url.includes('/produtos')) return 'Produtos';
+    if (url.includes('/movimentacoes')) return 'Movimentações';
+    return 'Visão geral';
+  }
+  get perfil(): string { return this.auth.isAdmin() ? 'Administrador' : this.auth.isGerente() ? 'Gerente' : 'Consulta'; }
+}

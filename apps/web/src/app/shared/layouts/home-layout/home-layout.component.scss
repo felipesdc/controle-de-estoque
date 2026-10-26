@@ -1,0 +1,9 @@
+.app-container { height: 100dvh; background: #f5f7fa; }
+.app-sidenav { width: 240px; background: #fff; border-right: 1px solid #e0e7ed; }
+mat-sidenav-content { display: flex; flex-direction: column; }
+app-header { position: sticky; top: 0; z-index: 10; }
+.app-main-content { flex: 1; min-width: 0; padding: 32px; outline: none; }
+app-footer { margin-top: auto; }
+.skip-link { position: fixed; top: -100px; z-index: 100; background: white; color: #17644e; padding: 12px; }
+.skip-link:focus { top: 8px; }
+@media(max-width: 760px) { .app-main-content { padding: 20px 16px; } }

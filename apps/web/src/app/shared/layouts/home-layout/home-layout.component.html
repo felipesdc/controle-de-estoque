@@ -1,0 +1,4 @@
+<mat-sidenav-container class="app-container">
+  <mat-sidenav class="app-sidenav" [mode]="nav.isMobile ? 'over' : 'side'" [opened]="!nav.isMobile" aria-label="Menu principal"><app-sidenav></app-sidenav></mat-sidenav>
+  <mat-sidenav-content><a class="skip-link" href="#conteudo-principal" (click)="$event.preventDefault(); conteudo.focus(); conteudo.scrollIntoView()">Pular para o conteúdo</a><app-header></app-header><div id="conteudo-principal" #conteudo class="app-main-content" tabindex="-1"><router-outlet></router-outlet></div><app-footer></app-footer></mat-sidenav-content>
+</mat-sidenav-container>

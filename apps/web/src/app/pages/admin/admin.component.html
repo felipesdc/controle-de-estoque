@@ -1,0 +1,43 @@
+<mat-card class="mat-elevation-z2">
+  <mat-card-title>Área Administrativa</mat-card-title>
+  <mat-card-content>
+    <div class="cabecalho-painel">
+      <h2>Painel de Administração</h2>
+      <p>Escolha uma seção para gerenciar:</p>
+
+      <button mat-raised-button color="primary" routerLink="/home">
+        Voltar para Home
+      </button>
+    </div>
+    <mat-button-toggle-group appearance="standard">
+      <mat-button-toggle [routerLink]="'produto'">Produtos</mat-button-toggle>
+      <mat-button-toggle [routerLink]="'pedido'">Pedidos</mat-button-toggle>
+      <mat-button-toggle [routerLink]="'categoria'"
+        >Categorias</mat-button-toggle
+      >
+      <mat-button-toggle [routerLink]="'estado-pedido'"
+        >Estados de Pedido</mat-button-toggle
+      >
+      <mat-button-toggle [routerLink]="'fornecedor'"
+        >Fornecedores</mat-button-toggle
+      >
+      <mat-button-toggle [routerLink]="'usuario'">Usuários</mat-button-toggle>
+      <mat-button-toggle [routerLink]="'unidade'">Unidades</mat-button-toggle>
+      <mat-button-toggle [routerLink]="'perfil'">Perfis</mat-button-toggle>
+      <mat-button-toggle [routerLink]="'preco'">Preços</mat-button-toggle>
+      <mat-button-toggle [routerLink]="'movimentacao-estoque'"
+        >Movimentações</mat-button-toggle
+      >
+      <mat-button-toggle [routerLink]="'item-pedido'"
+        >Itens de Pedido</mat-button-toggle
+      >
+      <mat-button-toggle [routerLink]="'historico-estado-pedido'"
+        >Histórico</mat-button-toggle
+      >
+    </mat-button-toggle-group>
+
+    <div class="admin-crud-container">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-card-content>
+</mat-card>

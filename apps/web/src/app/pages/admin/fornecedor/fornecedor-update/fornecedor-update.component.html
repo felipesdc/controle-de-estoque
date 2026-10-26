@@ -1,0 +1,84 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Alterar um fornecedor </mat-card-title>
+  <form [formGroup]="fornecedorForm">
+    <mat-form-field>
+      <input
+        placeholder="ID do Fornecedor"
+        matInput
+        formControlName="fornecedor_id"
+        name="fornecedor_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Nome do Fornecedor"
+        matInput
+        formControlName="fornecedor_nome"
+        name="fornecedor_nome"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          fornecedorFormControl.fornecedor_nome.touched &&
+          fornecedorFormControl.fornecedor_nome.errors?.required
+        "
+        class="text-danger"
+      >
+        Nome do fornecedor obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Contato do Fornecedor"
+        matInput
+        formControlName="fornecedor_contato"
+        name="fornecedor_contato"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          fornecedorFormControl.fornecedor_contato.touched &&
+          fornecedorFormControl.fornecedor_contato.errors?.required
+        "
+        class="text-danger"
+      >
+        Contato do fornecedor obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Endereço do Fornecedor"
+        matInput
+        formControlName="fornecedor_endereco"
+        name="fornecedor_endereco"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          fornecedorFormControl.fornecedor_endereco.touched &&
+          fornecedorFormControl.fornecedor_endereco.errors?.required
+        "
+        class="text-danger"
+      >
+        Endereço do fornecedor obrigatório
+      </span>
+    </p>
+  </form>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="updateFornecedor()"
+    [disabled]="fornecedorForm.invalid"
+  >
+    Alterar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

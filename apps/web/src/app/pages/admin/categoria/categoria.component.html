@@ -1,0 +1,51 @@
+<div>
+  <div class="header">
+    <h1>Categorias cadastradas</h1>
+    <button
+      mat-raised-button
+      color="primary"
+      routerLink="create"
+      style="margin-left: auto"
+    >
+      <mat-icon>add</mat-icon>
+      Nova Categoria
+    </button>
+  </div>
+
+  <table mat-table [dataSource]="categorias" class="mat-elevation-z4">
+    <ng-container matColumnDef="categoria_id">
+      <th mat-header-cell *matHeaderCellDef>ID da Categoria</th>
+      <td mat-cell *matCellDef="let categoria">{{ categoria.categoria_id }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="categoria_descricao">
+      <th mat-header-cell *matHeaderCellDef>Descrição da Categoria</th>
+      <td mat-cell *matCellDef="let categoria">
+        {{ categoria.categoria_descricao }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="categoria_action">
+      <th mat-header-cell *matHeaderCellDef>Ações</th>
+      <td mat-cell *matCellDef="let categoria">
+        <a
+          mat-icon-button
+          class="edit"
+          routerLink="update/{{ categoria.categoria_id }}"
+        >
+          <mat-icon> edit </mat-icon>
+        </a>
+        <a
+          mat-icon-button
+          class="delete"
+          routerLink="delete/{{ categoria.categoria_id }}"
+        >
+          <mat-icon> delete </mat-icon>
+        </a>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</div>

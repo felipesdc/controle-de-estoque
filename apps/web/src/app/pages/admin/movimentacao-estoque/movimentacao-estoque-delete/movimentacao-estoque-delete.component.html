@@ -1,0 +1,84 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Excluir uma Movimentação de Estoque </mat-card-title>
+  <form [formGroup]="movimentacaoEstoqueForm">
+    <mat-form-field>
+      <input
+        placeholder="ID da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_id"
+        name="movimento_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="ID do Produto da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_produto_id"
+        name="movimento_produto_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Produto da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_produto"
+        name="movimento_produto"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Quantidade da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_quantidade"
+        name="movimento_quantidade"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Tipo da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_tipo"
+        name="movimento_tipo"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Data da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_data"
+        name="movimento_data"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Observação da Movimentação de Estoque"
+        matInput
+        formControlName="movimento_observacao"
+        name="movimento_observacao"
+        readonly=""
+      />
+    </mat-form-field>
+  </form>
+
+  <button
+    mat-raised-button
+    color="warn"
+    (click)="deleteMovimentacaoEstoque()"
+    [disabled]="movimentacaoEstoqueForm.invalid"
+  >
+    Excluir
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

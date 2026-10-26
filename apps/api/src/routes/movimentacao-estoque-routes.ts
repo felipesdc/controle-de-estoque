@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { createNewMovimentacaoEstoque, getMovimentacaoEstoque, getMovimentacoesEstoque, estornarMovimentacao, immutableMovimentacao } from "../controllers/movimentacao-estoque-controller";
+import { authenticateToken, requireManager } from "../middlewares/auth";
+const router = Router();
+router.use("/movimentacao-estoque", authenticateToken);
+router.get("/movimentacao-estoque", getMovimentacoesEstoque);
+router.get("/movimentacao-estoque/:movimento_id", getMovimentacaoEstoque);
+router.post("/movimentacao-estoque", requireManager, createNewMovimentacaoEstoque);
+router.post("/movimentacao-estoque/:movimento_id/estorno", requireManager, estornarMovimentacao);
+router.put("/movimentacao-estoque/:movimento_id", immutableMovimentacao);
+router.delete("/movimentacao-estoque/:movimento_id", immutableMovimentacao);
+export default router;

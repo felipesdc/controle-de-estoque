@@ -1,0 +1,71 @@
+<div>
+  <div class="header">
+    <h1>Preços cadastrados</h1>
+    <button
+      mat-raised-button
+      color="primary"
+      routerLink="create"
+      style="margin-left: auto"
+    >
+      <mat-icon>add</mat-icon>
+      Novo Preço
+    </button>
+  </div>
+  <table mat-table [dataSource]="precos" class="mat-elevation-z4">
+    <ng-container matColumnDef="preco_id">
+      <th mat-header-cell *matHeaderCellDef>ID do Preço</th>
+      <td mat-cell *matCellDef="let preco">{{ preco.preco_id }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="preco_compra">
+      <th mat-header-cell *matHeaderCellDef>Preço de Compra</th>
+      <td mat-cell *matCellDef="let preco">
+        {{ preco.preco_compra | currency : ".1-2" : "R$" }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="preco_venda">
+      <th mat-header-cell *matHeaderCellDef>Preço de Venda</th>
+      <td mat-cell *matCellDef="let preco">
+        {{ preco.preco_venda | currency : ".1-2" : "R$" }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="preco_data_inicial">
+      <th mat-header-cell *matHeaderCellDef>Data Inicial do Preço</th>
+      <td mat-cell *matCellDef="let preco">
+        {{ preco.preco_data_inicial }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="preco_data_final">
+      <th mat-header-cell *matHeaderCellDef>Data Final do Preço</th>
+      <td mat-cell *matCellDef="let preco">
+        {{ preco.preco_data_final }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="preco_action">
+      <th mat-header-cell *matHeaderCellDef>Ações</th>
+      <td mat-cell *matCellDef="let preco">
+        <a
+          mat-icon-button
+          class="edit"
+          routerLink="update/{{ preco.preco_id }}"
+        >
+          <mat-icon> edit </mat-icon>
+        </a>
+        <a
+          mat-icon-button
+          class="delete"
+          routerLink="delete/{{ preco.preco_id }}"
+        >
+          <mat-icon> delete </mat-icon>
+        </a>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</div>

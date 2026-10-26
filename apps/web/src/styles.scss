@@ -1,0 +1,5 @@
+html, body { height: 100%; margin: 0; }
+body { font-family: Roboto, "Helvetica Neue", sans-serif; color: #233447; background: #f5f7fa; }
+* { box-sizing: border-box; }
+a:focus-visible, button:focus-visible { outline: 3px solid #469e8a; outline-offset: 3px; }
+.mat-mdc-unelevated-button.mat-primary, .mat-mdc-raised-button.mat-primary { --mdc-filled-button-container-color: #247c67; --mdc-protected-button-container-color: #247c67; }

@@ -1,0 +1,54 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Excluir um fornecedor </mat-card-title>
+  <form [formGroup]="fornecedorForm">
+    <mat-form-field>
+      <input
+        placeholder="ID do Fornecedor"
+        matInput
+        formControlName="fornecedor_id"
+        name="fornecedor_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Nome do fornecedor"
+        matInput
+        formControlName="fornecedor_nome"
+        name="fornecedor_nome"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Contato do fornecedor"
+        matInput
+        formControlName="fornecedor_contato"
+        name="fornecedor_contato"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Endereço do fornecedor"
+        matInput
+        formControlName="fornecedor_endereco"
+        name="fornecedor_endereco"
+        readonly=""
+      />
+    </mat-form-field>
+  </form>
+
+  <button
+    mat-raised-button
+    color="warn"
+    (click)="deleteFornecedor()"
+    [disabled]="fornecedorForm.invalid"
+  >
+    Excluir
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

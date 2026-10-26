@@ -1,0 +1,11 @@
+<div class="sidebar">
+  <a class="brand" routerLink="/home/dashboard" (click)="nav.closeMobile()"><span class="brand-mark"><mat-icon>inventory_2</mat-icon></span><span>Mr. Mordis<small>CONTROLE DE ESTOQUE</small></span></a>
+  <span class="nav-label">PRINCIPAL</span>
+  <nav aria-label="Navegação principal"><mat-nav-list>
+    <a mat-list-item routerLink="/home/dashboard" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }" ariaCurrentWhenActive="page" (click)="nav.closeMobile()"><mat-icon matListItemIcon>space_dashboard</mat-icon><span matListItemTitle>Visão geral</span></a>
+    <a mat-list-item routerLink="/home/produtos" routerLinkActive="active-link" ariaCurrentWhenActive="page" (click)="nav.closeMobile()"><mat-icon matListItemIcon>inventory_2</mat-icon><span matListItemTitle>Produtos</span></a>
+    <a mat-list-item routerLink="/home/movimentacoes" routerLinkActive="active-link" ariaCurrentWhenActive="page" (click)="nav.closeMobile()"><mat-icon matListItemIcon>swap_horiz</mat-icon><span matListItemTitle>Movimentações</span></a>
+  </mat-nav-list></nav>
+  <ng-container *ngIf="auth.isAdmin()"><span class="nav-label management">GERENCIAR</span><mat-nav-list aria-label="Administração"><a mat-list-item routerLink="/admin" routerLinkActive="active-link" ariaCurrentWhenActive="page" (click)="nav.closeMobile()"><mat-icon matListItemIcon>tune</mat-icon><span matListItemTitle>Administração</span></a></mat-nav-list></ng-container>
+  <div class="sidebar-note"><mat-icon>layers</mat-icon><p>Seu estoque, em dia.<small>Organize. Acompanhe. Reponha.</small></p></div>
+</div>

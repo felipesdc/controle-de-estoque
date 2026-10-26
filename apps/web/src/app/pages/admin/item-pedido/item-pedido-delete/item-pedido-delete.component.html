@@ -1,0 +1,84 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Excluir um Item de Pedido </mat-card-title>
+  <form [formGroup]="itemPedidoForm">
+    <mat-form-field>
+      <input
+        placeholder="ID da Item do Pedido"
+        matInput
+        formControlName="item_pedido_id"
+        name="item_pedido_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="ID do Pedido"
+        matInput
+        formControlName="item_pedido_id"
+        name="item_pedido_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="ID do Produto do Item do Pedido"
+        matInput
+        formControlName="item_pedido_produto_id"
+        name="item_pedido_produto_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="ID da Unidade do Item Pedido"
+        matInput
+        formControlName="item_pedido_unidade_id"
+        name="item_pedido_unidade_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="ID do Preço do Item do Pedido"
+        matInput
+        formControlName="item_pedido_preco_id"
+        name="item_pedido_preco_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Quantidade do Item do Pedido"
+        matInput
+        formControlName="item_pedido_quantidade"
+        name="item_pedido_quantidade"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Total do Item do Pedido"
+        matInput
+        formControlName="item_pedido_total"
+        name="item_pedido_total"
+        readonly=""
+      />
+    </mat-form-field>
+  </form>
+
+  <button
+    mat-raised-button
+    color="warn"
+    (click)="deleteItemPedido()"
+    [disabled]="itemPedidoForm.invalid"
+  >
+    Excluir
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

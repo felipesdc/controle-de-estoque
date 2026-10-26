@@ -1,0 +1,16 @@
+:host { display: block; height: 100%; }
+.sidebar { min-height: 100%; box-sizing: border-box; padding: 0 16px 22px; display: flex; flex-direction: column; }
+.brand { display: flex; align-items: center; gap: 12px; color: #244337; text-decoration: none; padding: 25px 8px 36px; font-size: 21px; font-weight: 600; letter-spacing: -.5px; }
+.brand-mark { display: flex; padding: 9px; border-radius: 11px; background: #247c67; color: white; }
+.brand small { display: block; font-size: 8px; letter-spacing: 1.5px; color: #788c83; margin-top: 4px; font-weight: 500; }
+.nav-label { font-size: 9px; font-weight: 600; letter-spacing: 1.5px; color: #93a099; padding: 0 12px; }
+.management { margin-top: 32px; }
+mat-nav-list { padding: 12px 0 0; }
+a[mat-list-item] { border-radius: 8px; margin: 3px 0; }
+a[mat-list-item] mat-icon { color: #73867d; font-size: 21px; height: 21px; width: 21px; margin-left: 12px; margin-right: 12px; }
+a[mat-list-item] [matListItemTitle] { color: #60756b; font-size: 13px; }
+a.active-link { background: #eaf3ee; }
+a.active-link mat-icon, a.active-link [matListItemTitle] { color: #237b63; font-weight: 600; }
+.sidebar-note { margin: auto 8px 0; padding-top: 40px; color: #668374; }
+.sidebar-note p { font-size: 12px; margin-bottom: 0; line-height: 1.7; }
+.sidebar-note small { display: block; color: #96a39c; font-size: 10px; }

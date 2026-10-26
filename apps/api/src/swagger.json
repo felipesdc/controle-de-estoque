@@ -1,0 +1,2403 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API do Sistema de Gestão de Estoques",
+    "version": "1.0.0",
+    "description": "Documentação da API de Gestão de Estoques"
+  },
+  "servers": [
+    {
+      "url": "https://controle-de-estoque-pi-2-api.vercel.app/v1"
+    }
+  ],
+  "paths": {
+    "/pedido": {
+      "get": {
+        "summary": "Consultar todos os pedidos",
+        "tags": ["Pedido"],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos retornada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Pedido"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar pedidos"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo pedido",
+        "tags": ["Pedido"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pedido"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar pedido"
+          }
+        }
+      }
+    },
+    "/pedido/{pedido_id}": {
+      "get": {
+        "summary": "Consultar um pedido específico",
+        "tags": ["Pedido"],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do pedido a ser consultado"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido retornado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pedido"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pedido não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar pedido"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um pedido específico",
+        "tags": ["Pedido"],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do pedido a ser atualizado"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PedidoInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pedido"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pedido não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar pedido"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um pedido específico",
+        "tags": ["Pedido"],
+        "parameters": [
+          {
+            "name": "pedido_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID do pedido a ser deletado"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Pedido deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar pedido"
+          }
+        }
+      }
+    },
+    "/item-pedido": {
+      "get": {
+        "summary": "Consultar todos os itens de pedido",
+        "tags": ["ItemPedido"],
+        "responses": {
+          "200": {
+            "description": "Lista de todos os itens de pedido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ItemPedido" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar itens de pedido"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo item de pedido",
+        "tags": ["ItemPedido"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ItemPedidoInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item de pedido criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ItemPedido" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar item de pedido"
+          }
+        }
+      }
+    },
+    "/item-pedido/{item_pedido_id}": {
+      "get": {
+        "summary": "Consultar um item de pedido específico",
+        "tags": ["ItemPedido"],
+        "parameters": [
+          {
+            "name": "item_pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do item de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item de pedido encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ItemPedido" }
+              }
+            }
+          },
+          "404": {
+            "description": "Item de pedido não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar item de pedido"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um item de pedido específico",
+        "tags": ["ItemPedido"],
+        "parameters": [
+          {
+            "name": "item_pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do item de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ItemPedidoInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item de pedido atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ItemPedido" }
+              }
+            }
+          },
+          "404": {
+            "description": "Item de pedido não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar item de pedido"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um item de pedido específico",
+        "tags": ["ItemPedido"],
+        "parameters": [
+          {
+            "name": "item_pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do item de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Item de pedido deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar item de pedido"
+          }
+        }
+      }
+    },
+    "/estado-pedido": {
+      "get": {
+        "summary": "Consultar todos os estados de pedido",
+        "tags": ["EstadoPedido"],
+        "responses": {
+          "200": {
+            "description": "Lista de todos os estados de pedido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EstadoPedido" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar estados de pedido"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo estado de pedido",
+        "tags": ["EstadoPedido"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EstadoPedidoInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Estado de pedido criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EstadoPedido" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar estado de pedido"
+          }
+        }
+      }
+    },
+    "/estado-pedido/{estado_pedido_id}": {
+      "get": {
+        "summary": "Consultar um estado de pedido específico",
+        "tags": ["EstadoPedido"],
+        "parameters": [
+          {
+            "name": "estado_pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do estado de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do estado de pedido encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EstadoPedido" }
+              }
+            }
+          },
+          "404": {
+            "description": "Estado de pedido não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar estado de pedido"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um estado de pedido específico",
+        "tags": ["EstadoPedido"],
+        "parameters": [
+          {
+            "name": "estado_pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do estado de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EstadoPedidoInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado de pedido atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EstadoPedido" }
+              }
+            }
+          },
+          "404": {
+            "description": "Estado de pedido não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar estado de pedido"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um estado de pedido específico",
+        "tags": ["EstadoPedido"],
+        "parameters": [
+          {
+            "name": "estado_pedido_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do estado de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Estado de pedido deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar estado de pedido"
+          }
+        }
+      }
+    },
+    "/historico-estado-pedido": {
+      "get": {
+        "summary": "Consultar todos os históricos de estados de pedido",
+        "tags": ["HistoricoEstadoPedido"],
+        "responses": {
+          "200": {
+            "description": "Lista de todos os históricos de estados de pedido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HistoricoEstadoPedido"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar históricos de estados de pedido"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo histórico de estado de pedido",
+        "tags": ["HistoricoEstadoPedido"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoricoEstadoPedidoInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Histórico de estado de pedido criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricoEstadoPedido"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar histórico de estado de pedido"
+          }
+        }
+      }
+    },
+    "/historico-estado-pedido/{historico_id}": {
+      "get": {
+        "summary": "Consultar um histórico de estado de pedido específico",
+        "tags": ["HistoricoEstadoPedido"],
+        "parameters": [
+          {
+            "name": "historico_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do histórico de estado de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do histórico de estado de pedido encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricoEstadoPedido"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Histórico de estado de pedido não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar histórico de estado de pedido"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um histórico de estado de pedido específico",
+        "tags": ["HistoricoEstadoPedido"],
+        "parameters": [
+          {
+            "name": "historico_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do histórico de estado de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoricoEstadoPedidoInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Histórico de estado de pedido atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricoEstadoPedido"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Histórico de estado de pedido não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar histórico de estado de pedido"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um histórico de estado de pedido específico",
+        "tags": ["HistoricoEstadoPedido"],
+        "parameters": [
+          {
+            "name": "historico_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do histórico de estado de pedido",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Histórico de estado de pedido deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar histórico de estado de pedido"
+          }
+        }
+      }
+    },
+    "/fornecedor": {
+      "get": {
+        "summary": "Consultar todos os fornecedores",
+        "tags": ["Fornecedor"],
+        "responses": {
+          "200": {
+            "description": "Lista de todos os fornecedores",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Fornecedor" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar fornecedores"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo fornecedor",
+        "tags": ["Fornecedor"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FornecedorInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fornecedor criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Fornecedor" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar fornecedor"
+          }
+        }
+      }
+    },
+    "/fornecedor/{fornecedor_id}": {
+      "get": {
+        "summary": "Consultar um fornecedor específico",
+        "tags": ["Fornecedor"],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do fornecedor",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados do fornecedor encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Fornecedor" }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar fornecedor"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um fornecedor específico",
+        "tags": ["Fornecedor"],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do fornecedor",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/FornecedorInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fornecedor atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Fornecedor" }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar fornecedor"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um fornecedor específico",
+        "tags": ["Fornecedor"],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do fornecedor",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Fornecedor deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar fornecedor"
+          }
+        }
+      }
+    },
+    "/produto": {
+      "get": {
+        "summary": "Consultar todos os produtos",
+        "tags": ["Produto"],
+        "responses": {
+          "200": {
+            "description": "Lista de todos os produtos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Produto" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar produtos"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo produto",
+        "tags": ["Produto"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProdutoInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Produto criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Produto" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar produto"
+          }
+        }
+      }
+    },
+    "/produto/{produto_id}": {
+      "get": {
+        "summary": "Consultar um produto específico",
+        "tags": ["Produto"],
+        "parameters": [
+          {
+            "name": "produto_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do produto",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Produto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar produto"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um produto específico",
+        "tags": ["Produto"],
+        "parameters": [
+          {
+            "name": "produto_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do produto",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProdutoInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Produto atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Produto" }
+              }
+            }
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar produto"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um produto específico",
+        "tags": ["Produto"],
+        "parameters": [
+          {
+            "name": "produto_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do produto",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Produto deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar produto"
+          }
+        }
+      }
+    },
+    "/categoria": {
+      "get": {
+        "summary": "Consultar todas as categorias",
+        "tags": ["Categoria"],
+        "responses": {
+          "200": {
+            "description": "Lista de todas as categorias",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Categoria" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar categorias"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar uma nova categoria",
+        "tags": ["Categoria"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CategoriaInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Categoria criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Categoria" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar categoria"
+          }
+        }
+      }
+    },
+    "/categoria/{categoria_id}": {
+      "get": {
+        "summary": "Consultar uma categoria específica",
+        "tags": ["Categoria"],
+        "parameters": [
+          {
+            "name": "categoria_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da categoria",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dados da categoria encontrada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Categoria" }
+              }
+            }
+          },
+          "404": {
+            "description": "Categoria não encontrada"
+          },
+          "500": {
+            "description": "Erro ao buscar categoria"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar uma categoria específica",
+        "tags": ["Categoria"],
+        "parameters": [
+          {
+            "name": "categoria_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da categoria",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CategoriaInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Categoria atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Categoria" }
+              }
+            }
+          },
+          "404": {
+            "description": "Categoria não encontrada"
+          },
+          "500": {
+            "description": "Erro ao atualizar categoria"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar uma categoria específica",
+        "tags": ["Categoria"],
+        "parameters": [
+          {
+            "name": "categoria_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da categoria",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Categoria deletada com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar categoria"
+          }
+        }
+      }
+    },
+    "/preco": {
+      "get": {
+        "summary": "Consultar todos os preços",
+        "tags": ["Preço"],
+        "responses": {
+          "200": {
+            "description": "Lista de todos os preços",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Preco" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar preços"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar um novo preço",
+        "tags": ["Preço"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PrecoInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Preço criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Preco" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar preço"
+          }
+        }
+      }
+    },
+    "/preco/{preco_id}": {
+      "get": {
+        "summary": "Consultar um preço específico",
+        "tags": ["Preço"],
+        "parameters": [
+          {
+            "name": "preco_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do preço",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preço encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Preco" }
+              }
+            }
+          },
+          "404": {
+            "description": "Preço não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar preço"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um preço específico",
+        "tags": ["Preço"],
+        "parameters": [
+          {
+            "name": "preco_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do preço",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PrecoInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Preço atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Preco" }
+              }
+            }
+          },
+          "404": {
+            "description": "Preço não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar preço"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um preço específico",
+        "tags": ["Preço"],
+        "parameters": [
+          {
+            "name": "preco_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do preço",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Preço deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar preço"
+          }
+        }
+      }
+    },
+    "/unidade": {
+      "get": {
+        "summary": "Consultar todas as unidades",
+        "tags": ["Unidade"],
+        "responses": {
+          "200": {
+            "description": "Lista de todas as unidades",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Unidade" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar unidades"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar uma nova unidade",
+        "tags": ["Unidade"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UnidadeInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Unidade criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Unidade" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar unidade"
+          }
+        }
+      }
+    },
+    "/unidade/{unidade_id}": {
+      "get": {
+        "summary": "Consultar uma unidade específica",
+        "tags": ["Unidade"],
+        "parameters": [
+          {
+            "name": "unidade_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da unidade",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unidade encontrada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Unidade" }
+              }
+            }
+          },
+          "404": {
+            "description": "Unidade não encontrada"
+          },
+          "500": {
+            "description": "Erro ao buscar unidade"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar uma unidade específica",
+        "tags": ["Unidade"],
+        "parameters": [
+          {
+            "name": "unidade_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da unidade",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UnidadeInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unidade atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Unidade" }
+              }
+            }
+          },
+          "404": {
+            "description": "Unidade não encontrada"
+          },
+          "500": {
+            "description": "Erro ao atualizar unidade"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar uma unidade específica",
+        "tags": ["Unidade"],
+        "parameters": [
+          {
+            "name": "unidade_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da unidade",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Unidade deletada com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar unidade"
+          }
+        }
+      }
+    },
+    "/movimentacao-estoque": {
+      "get": {
+        "summary": "Consultar todas as movimentações de estoque",
+        "tags": ["Movimentação de Estoque"],
+        "responses": {
+          "200": {
+            "description": "Lista de todas as movimentações de estoque",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MovimentacaoEstoque"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar movimentações"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar nova movimentação de estoque",
+        "tags": ["Movimentação de Estoque"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovimentacaoEstoqueInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Movimentação de estoque criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MovimentacaoEstoque" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar movimentação"
+          }
+        }
+      }
+    },
+    "/movimentacao-estoque/{movimento_id}": {
+      "get": {
+        "summary": "Consultar uma movimentação de estoque específica",
+        "tags": ["Movimentação de Estoque"],
+        "parameters": [
+          {
+            "name": "movimento_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da movimentação",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Movimentação encontrada",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MovimentacaoEstoque" }
+              }
+            }
+          },
+          "404": {
+            "description": "Movimentação não encontrada"
+          },
+          "500": {
+            "description": "Erro ao buscar movimentação"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar uma movimentação de estoque específica",
+        "tags": ["Movimentação de Estoque"],
+        "parameters": [
+          {
+            "name": "movimento_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da movimentação",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovimentacaoEstoqueInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Movimentação atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MovimentacaoEstoque" }
+              }
+            }
+          },
+          "404": {
+            "description": "Movimentação não encontrada"
+          },
+          "500": {
+            "description": "Erro ao atualizar movimentação"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar uma movimentação de estoque específica",
+        "tags": ["Movimentação de Estoque"],
+        "parameters": [
+          {
+            "name": "movimento_id",
+            "in": "path",
+            "required": true,
+            "description": "ID da movimentação",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Movimentação deletada com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar movimentação"
+          }
+        }
+      }
+    },
+    "/usuario": {
+      "get": {
+        "summary": "Consultar todos os usuários",
+        "tags": ["Usuários"],
+        "responses": {
+          "200": {
+            "description": "Lista de todos os usuários",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Usuario" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar usuários"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar novo usuário",
+        "tags": ["Usuários"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UsuarioInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Usuario" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar usuário"
+          }
+        }
+      }
+    },
+    "/usuario/{usuario_id}": {
+      "get": {
+        "summary": "Consultar um usuário específico",
+        "tags": ["Usuários"],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do usuário",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuário encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Usuario" }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar usuário"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um usuário específico",
+        "tags": ["Usuários"],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do usuário",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UsuarioInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Usuário atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Usuario" }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuário não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar usuário"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um usuário específico",
+        "tags": ["Usuários"],
+        "parameters": [
+          {
+            "name": "usuario_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do usuário",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Usuário deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar usuário"
+          }
+        }
+      }
+    },
+    "/perfil": {
+      "get": {
+        "summary": "Consultar todos os perfis",
+        "tags": ["Perfis"],
+        "responses": {
+          "200": {
+            "description": "Lista de todos os perfis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Perfil" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao buscar perfis"
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar novo perfil",
+        "tags": ["Perfis"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PerfilInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Perfil criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Perfil" }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro ao criar perfil"
+          }
+        }
+      }
+    },
+    "/perfil/{perfil_id}": {
+      "get": {
+        "summary": "Consultar um perfil específico",
+        "tags": ["Perfis"],
+        "parameters": [
+          {
+            "name": "perfil_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do perfil",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Perfil encontrado",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Perfil" }
+              }
+            }
+          },
+          "404": {
+            "description": "Perfil não encontrado"
+          },
+          "500": {
+            "description": "Erro ao buscar perfil"
+          }
+        }
+      },
+      "put": {
+        "summary": "Atualizar um perfil específico",
+        "tags": ["Perfis"],
+        "parameters": [
+          {
+            "name": "perfil_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do perfil",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PerfilInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Perfil atualizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Perfil" }
+              }
+            }
+          },
+          "404": {
+            "description": "Perfil não encontrado"
+          },
+          "500": {
+            "description": "Erro ao atualizar perfil"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar um perfil específico",
+        "tags": ["Perfis"],
+        "parameters": [
+          {
+            "name": "perfil_id",
+            "in": "path",
+            "required": true,
+            "description": "ID do perfil",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Perfil deletado com sucesso"
+          },
+          "500": {
+            "description": "Erro ao deletar perfil"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Pedido": {
+        "type": "object",
+        "properties": {
+          "pedido_id": {
+            "type": "integer",
+            "example": 1
+          },
+          "pedido_fornecedor_id": {
+            "type": "integer",
+            "example": 2
+          },
+          "pedido_data": {
+            "type": "string",
+            "format": "date",
+            "example": "2023-10-01"
+          },
+          "pedido_usuario_id": {
+            "type": "integer",
+            "example": 3
+          },
+          "pedido_estado_id": {
+            "type": "integer",
+            "example": 1
+          },
+          "pedido_observacao": {
+            "type": "string",
+            "example": "Urgente"
+          },
+          "pedido_total": {
+            "type": "number",
+            "example": 150.75
+          }
+        }
+      },
+      "PedidoInput": {
+        "type": "object",
+        "properties": {
+          "pedido_fornecedor_id": {
+            "type": "integer",
+            "example": 2
+          },
+          "pedido_data": {
+            "type": "string",
+            "format": "date",
+            "example": "2023-10-01"
+          },
+          "pedido_usuario_id": {
+            "type": "integer",
+            "example": 3
+          },
+          "pedido_estado_id": {
+            "type": "integer",
+            "example": 1
+          },
+          "pedido_observacao": {
+            "type": "string",
+            "example": "Urgente"
+          },
+          "pedido_total": {
+            "type": "number",
+            "example": 150.75
+          }
+        },
+        "required": [
+          "pedido_fornecedor_id",
+          "pedido_data",
+          "pedido_usuario_id",
+          "pedido_estado_id",
+          "pedido_total"
+        ]
+      },
+      "ItemPedido": {
+        "type": "object",
+        "properties": {
+          "item_pedido_id": {
+            "type": "integer",
+            "description": "ID único do item de pedido"
+          },
+          "item_pedido_pedido_id": {
+            "type": "integer",
+            "description": "ID do pedido relacionado"
+          },
+          "item_pedido_produto_id": {
+            "type": "integer",
+            "description": "ID do produto relacionado ao item"
+          },
+          "item_pedido_unidade_id": {
+            "type": "integer",
+            "description": "ID da unidade do item"
+          },
+          "item_pedido_preco_id": {
+            "type": "integer",
+            "description": "ID do preço do item"
+          },
+          "item_pedido_quantidade": {
+            "type": "integer",
+            "description": "Quantidade do item no pedido"
+          },
+          "item_pedido_total": {
+            "type": "number",
+            "description": "Total calculado para o item"
+          }
+        },
+        "example": {
+          "item_pedido_id": 1,
+          "item_pedido_pedido_id": 100,
+          "item_pedido_produto_id": 20,
+          "item_pedido_unidade_id": 2,
+          "item_pedido_preco_id": 15,
+          "item_pedido_quantidade": 10,
+          "item_pedido_total": 150
+        }
+      },
+      "ItemPedidoInput": {
+        "type": "object",
+        "properties": {
+          "item_pedido_pedido_id": {
+            "type": "integer",
+            "description": "ID do pedido relacionado"
+          },
+          "item_pedido_produto_id": {
+            "type": "integer",
+            "description": "ID do produto"
+          },
+          "item_pedido_unidade_id": {
+            "type": "integer",
+            "description": "ID da unidade do item"
+          },
+          "item_pedido_preco_id": {
+            "type": "integer",
+            "description": "ID do preço do item"
+          },
+          "item_pedido_quantidade": {
+            "type": "integer",
+            "description": "Quantidade do item no pedido"
+          },
+          "item_pedido_total": {
+            "type": "number",
+            "description": "Total calculado para o item"
+          }
+        },
+        "example": {
+          "item_pedido_pedido_id": 100,
+          "item_pedido_produto_id": 20,
+          "item_pedido_unidade_id": 2,
+          "item_pedido_preco_id": 15,
+          "item_pedido_quantidade": 5,
+          "item_pedido_total": 75
+        }
+      },
+      "EstadoPedido": {
+        "type": "object",
+        "properties": {
+          "estado_pedido_id": {
+            "type": "integer",
+            "description": "ID único do estado de pedido"
+          },
+          "estado_pedido_descricao": {
+            "type": "string",
+            "description": "Descrição do estado de pedido"
+          }
+        },
+        "example": {
+          "estado_pedido_id": 1,
+          "estado_pedido_descricao": "Pedido em processamento"
+        }
+      },
+      "EstadoPedidoInput": {
+        "type": "object",
+        "properties": {
+          "estado_pedido_descricao": {
+            "type": "string",
+            "description": "Descrição do estado de pedido"
+          }
+        },
+        "example": {
+          "estado_pedido_descricao": "Pedido entregue"
+        }
+      },
+      "HistoricoEstadoPedido": {
+        "type": "object",
+        "properties": {
+          "historico_id": {
+            "type": "integer",
+            "description": "ID único do histórico de estado de pedido"
+          },
+          "historico_pedido_id": {
+            "type": "integer",
+            "description": "ID do pedido relacionado ao histórico"
+          },
+          "historico_estado_id": {
+            "type": "integer",
+            "description": "ID do estado do pedido"
+          },
+          "historico_data": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data do histórico de estado do pedido"
+          },
+          "historico_usuario_id": {
+            "type": "integer",
+            "description": "ID do usuário responsável pela alteração"
+          },
+          "historico_observacao": {
+            "type": "string",
+            "description": "Observação sobre a alteração"
+          }
+        },
+        "example": {
+          "historico_id": 1,
+          "historico_pedido_id": 101,
+          "historico_estado_id": 3,
+          "historico_data": "2024-10-12T14:30:00Z",
+          "historico_usuario_id": 5,
+          "historico_observacao": "Pedido em transporte"
+        }
+      },
+      "HistoricoEstadoPedidoInput": {
+        "type": "object",
+        "properties": {
+          "historico_pedido_id": {
+            "type": "integer",
+            "description": "ID do pedido relacionado"
+          },
+          "historico_estado_id": {
+            "type": "integer",
+            "description": "ID do estado do pedido"
+          },
+          "historico_data": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data do histórico"
+          },
+          "historico_usuario_id": {
+            "type": "integer",
+            "description": "ID do usuário responsável pela alteração"
+          },
+          "historico_observacao": {
+            "type": "string",
+            "description": "Observações sobre a mudança de estado"
+          }
+        },
+        "example": {
+          "historico_pedido_id": 101,
+          "historico_estado_id": 2,
+          "historico_data": "2024-10-11T10:00:00Z",
+          "historico_usuario_id": 3,
+          "historico_observacao": "Pedido confirmado"
+        }
+      },
+      "Fornecedor": {
+        "type": "object",
+        "properties": {
+          "fornecedor_id": {
+            "type": "integer",
+            "description": "ID único do fornecedor"
+          },
+          "fornecedor_nome": {
+            "type": "string",
+            "description": "Nome do fornecedor"
+          },
+          "fornecedor_contato": {
+            "type": "string",
+            "description": "Informações de contato do fornecedor"
+          },
+          "fornecedor_endereco": {
+            "type": "string",
+            "description": "Endereço do fornecedor"
+          }
+        },
+        "example": {
+          "fornecedor_id": 1,
+          "fornecedor_nome": "Fornecedor XYZ",
+          "fornecedor_contato": "(11) 98765-4321",
+          "fornecedor_endereco": "Rua ABC, 123, São Paulo, SP"
+        }
+      },
+      "FornecedorInput": {
+        "type": "object",
+        "properties": {
+          "fornecedor_nome": {
+            "type": "string",
+            "description": "Nome do fornecedor"
+          },
+          "fornecedor_contato": {
+            "type": "string",
+            "description": "Informações de contato do fornecedor"
+          },
+          "fornecedor_endereco": {
+            "type": "string",
+            "description": "Endereço do fornecedor"
+          }
+        },
+        "example": {
+          "fornecedor_nome": "Fornecedor ABC",
+          "fornecedor_contato": "(11) 99999-8888",
+          "fornecedor_endereco": "Rua DEF, 456, Rio de Janeiro, RJ"
+        }
+      },
+      "Produto": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "integer",
+            "description": "ID único do produto"
+          },
+          "produto_descricao": {
+            "type": "string",
+            "description": "Descrição do produto"
+          },
+          "produto_fornecedor_id": {
+            "type": "integer",
+            "description": "ID do fornecedor do produto"
+          },
+          "produto_preco_id": {
+            "type": "integer",
+            "description": "ID do preço do produto"
+          },
+          "produto_unidade_id": {
+            "type": "integer",
+            "description": "ID da unidade de medida do produto"
+          },
+          "produto_categoria_id": {
+            "type": "integer",
+            "description": "ID da categoria do produto"
+          },
+          "produto_quantidade_estoque": {
+            "type": "integer",
+            "description": "Quantidade do produto em estoque"
+          },
+          "produto_data_validade": {
+            "type": "string",
+            "format": "date",
+            "description": "Data de validade do produto"
+          },
+          "produto_codigo_barras": {
+            "type": "string",
+            "description": "Código de barras do produto"
+          },
+          "produto_estado": {
+            "type": "boolean",
+            "description": "Estado ativo ou inativo do produto"
+          }
+        },
+        "example": {
+          "produto_id": 1,
+          "produto_descricao": "Hambúrguer de Carne",
+          "produto_fornecedor_id": 10,
+          "produto_preco_id": 100,
+          "produto_unidade_id": 1,
+          "produto_categoria_id": 5,
+          "produto_quantidade_estoque": 50,
+          "produto_data_validade": "2024-12-01",
+          "produto_codigo_barras": "1234567890123",
+          "produto_estado": true
+        }
+      },
+      "ProdutoInput": {
+        "type": "object",
+        "properties": {
+          "produto_descricao": {
+            "type": "string",
+            "description": "Descrição do produto"
+          },
+          "produto_fornecedor_id": {
+            "type": "integer",
+            "description": "ID do fornecedor do produto"
+          },
+          "produto_preco_id": {
+            "type": "integer",
+            "description": "ID do preço do produto"
+          },
+          "produto_unidade_id": {
+            "type": "integer",
+            "description": "ID da unidade de medida do produto"
+          },
+          "produto_categoria_id": {
+            "type": "integer",
+            "description": "ID da categoria do produto"
+          },
+          "produto_quantidade_estoque": {
+            "type": "integer",
+            "description": "Quantidade do produto em estoque"
+          },
+          "produto_data_validade": {
+            "type": "string",
+            "format": "date",
+            "description": "Data de validade do produto"
+          },
+          "produto_codigo_barras": {
+            "type": "string",
+            "description": "Código de barras do produto"
+          },
+          "produto_estado": {
+            "type": "boolean",
+            "description": "Estado ativo ou inativo do produto"
+          }
+        },
+        "example": {
+          "produto_descricao": "Hambúrguer de Carne",
+          "produto_fornecedor_id": 10,
+          "produto_preco_id": 100,
+          "produto_unidade_id": 1,
+          "produto_categoria_id": 5,
+          "produto_quantidade_estoque": 50,
+          "produto_data_validade": "2024-12-01",
+          "produto_codigo_barras": "1234567890123",
+          "produto_estado": true
+        }
+      },
+      "Categoria": {
+        "type": "object",
+        "properties": {
+          "categoria_id": {
+            "type": "integer",
+            "description": "ID único da categoria"
+          },
+          "categoria_descricao": {
+            "type": "string",
+            "description": "Descrição da categoria"
+          }
+        },
+        "example": {
+          "categoria_id": 1,
+          "categoria_descricao": "Lanches"
+        }
+      },
+      "CategoriaInput": {
+        "type": "object",
+        "properties": {
+          "categoria_descricao": {
+            "type": "string",
+            "description": "Descrição da categoria"
+          }
+        },
+        "example": {
+          "categoria_descricao": "Bebidas"
+        }
+      },
+      "Preco": {
+        "type": "object",
+        "properties": {
+          "preco_id": {
+            "type": "integer",
+            "description": "ID único do preço"
+          },
+          "preco_compra": {
+            "type": "string",
+            "description": "Valor de compra do produto"
+          },
+          "preco_venda": {
+            "type": "string",
+            "description": "Valor de venda do produto"
+          },
+          "preco_data_inicial": {
+            "type": "string",
+            "format": "date",
+            "description": "Data de início da validade do preço"
+          },
+          "preco_data_final": {
+            "type": "string",
+            "format": "date",
+            "description": "Data final da validade do preço"
+          }
+        },
+        "example": {
+          "preco_id": 1,
+          "preco_compra": "10.50",
+          "preco_venda": "15.00",
+          "preco_data_inicial": "2024-01-01",
+          "preco_data_final": "2024-12-31"
+        }
+      },
+      "PrecoInput": {
+        "type": "object",
+        "properties": {
+          "preco_compra": {
+            "type": "string",
+            "description": "Valor de compra do produto"
+          },
+          "preco_venda": {
+            "type": "string",
+            "description": "Valor de venda do produto"
+          },
+          "preco_data_inicial": {
+            "type": "string",
+            "format": "date",
+            "description": "Data de início da validade do preço"
+          },
+          "preco_data_final": {
+            "type": "string",
+            "format": "date",
+            "description": "Data final da validade do preço"
+          }
+        },
+        "example": {
+          "preco_compra": "10.50",
+          "preco_venda": "15.00",
+          "preco_data_inicial": "2024-01-01",
+          "preco_data_final": "2024-12-31"
+        }
+      },
+      "Unidade": {
+        "type": "object",
+        "properties": {
+          "unidade_id": {
+            "type": "integer",
+            "description": "ID único da unidade"
+          },
+          "unidade_descricao": {
+            "type": "string",
+            "description": "Descrição da unidade"
+          }
+        },
+        "example": {
+          "unidade_id": 1,
+          "unidade_descricao": "Unidade"
+        }
+      },
+      "UnidadeInput": {
+        "type": "object",
+        "properties": {
+          "unidade_descricao": {
+            "type": "string",
+            "description": "Descrição da unidade"
+          }
+        },
+        "example": {
+          "unidade_descricao": "Unidade"
+        }
+      },
+      "MovimentacaoEstoque": {
+        "type": "object",
+        "properties": {
+          "movimento_id": {
+            "type": "integer",
+            "description": "ID único da movimentação"
+          },
+          "movimento_produto_id": {
+            "type": "integer",
+            "description": "ID do produto relacionado à movimentação"
+          },
+          "movimento_quantidade": {
+            "type": "number",
+            "description": "Quantidade movimentada"
+          },
+          "movimento_tipo": {
+            "type": "string",
+            "description": "Tipo de movimentação (entrada ou saída)"
+          },
+          "movimento_data": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da movimentação"
+          },
+          "movimento_observacao": {
+            "type": "string",
+            "description": "Observações sobre a movimentação"
+          }
+        },
+        "example": {
+          "movimento_id": 1,
+          "movimento_produto_id": 1,
+          "movimento_quantidade": 10,
+          "movimento_tipo": "entrada",
+          "movimento_data": "2024-10-13T12:00:00Z",
+          "movimento_observacao": "Entrada de novos produtos"
+        }
+      },
+      "MovimentacaoEstoqueInput": {
+        "type": "object",
+        "properties": {
+          "movimento_produto_id": {
+            "type": "integer",
+            "description": "ID do produto relacionado à movimentação"
+          },
+          "movimento_quantidade": {
+            "type": "number",
+            "description": "Quantidade movimentada"
+          },
+          "movimento_tipo": {
+            "type": "string",
+            "description": "Tipo de movimentação (entrada ou saída)"
+          },
+          "movimento_data": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data da movimentação"
+          },
+          "movimento_observacao": {
+            "type": "string",
+            "description": "Observações sobre a movimentação"
+          }
+        },
+        "example": {
+          "movimento_produto_id": 1,
+          "movimento_quantidade": 10,
+          "movimento_tipo": "entrada",
+          "movimento_data": "2024-10-13T12:00:00Z",
+          "movimento_observacao": "Entrada de novos produtos"
+        }
+      },
+      "Usuario": {
+        "type": "object",
+        "properties": {
+          "usuario_id": {
+            "type": "integer",
+            "description": "ID único do usuário"
+          },
+          "usuario_nome": {
+            "type": "string",
+            "description": "Nome do usuário"
+          },
+          "usuario_email": {
+            "type": "string",
+            "description": "Email do usuário"
+          },
+          "usuario_password": {
+            "type": "string",
+            "description": "Senha do usuário"
+          },
+          "usuario_nome_completo": {
+            "type": "string",
+            "description": "Nome completo do usuário"
+          },
+          "usuario_inscricao": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data de inscrição do usuário"
+          },
+          "usuario_perfil_id": {
+            "type": "integer",
+            "description": "ID do perfil do usuário"
+          },
+          "usuario_status": {
+            "type": "boolean",
+            "description": "Status do usuário (ativo ou inativo)"
+          }
+        },
+        "example": {
+          "usuario_id": 1,
+          "usuario_nome": "usuario_exemplo",
+          "usuario_email": "usuario@example.com",
+          "usuario_password": "senha123",
+          "usuario_nome_completo": "Usuário Exemplo",
+          "usuario_inscricao": "2024-10-13T12:00:00Z",
+          "usuario_perfil_id": 1,
+          "usuario_status": true
+        }
+      },
+      "UsuarioInput": {
+        "type": "object",
+        "properties": {
+          "usuario_nome": {
+            "type": "string",
+            "description": "Nome do usuário"
+          },
+          "usuario_email": {
+            "type": "string",
+            "description": "Email do usuário"
+          },
+          "usuario_password": {
+            "type": "string",
+            "description": "Senha do usuário"
+          },
+          "usuario_nome_completo": {
+            "type": "string",
+            "description": "Nome completo do usuário"
+          },
+          "usuario_perfil_id": {
+            "type": "integer",
+            "description": "ID do perfil do usuário"
+          },
+          "usuario_status": {
+            "type": "boolean",
+            "description": "Status do usuário (ativo ou inativo)"
+          }
+        },
+        "example": {
+          "usuario_nome": "usuario_exemplo",
+          "usuario_email": "usuario@example.com",
+          "usuario_password": "senha123",
+          "usuario_nome_completo": "Usuário Exemplo",
+          "usuario_perfil_id": 1,
+          "usuario_status": true
+        }
+      },
+      "Perfil": {
+        "type": "object",
+        "properties": {
+          "perfil_id": {
+            "type": "integer",
+            "description": "ID único do perfil"
+          },
+          "perfil_nome": {
+            "type": "string",
+            "description": "Nome do perfil"
+          }
+        },
+        "example": {
+          "perfil_id": 1,
+          "perfil_nome": "Administrador"
+        }
+      },
+      "PerfilInput": {
+        "type": "object",
+        "properties": {
+          "perfil_nome": {
+            "type": "string",
+            "description": "Nome do perfil"
+          }
+        },
+        "example": {
+          "perfil_nome": "Administrador"
+        }
+      }
+    }
+  }
+}

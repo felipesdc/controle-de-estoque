@@ -1,0 +1,13 @@
+.repository-history/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.angular/
+data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.DS_Store
+backup-estoque/

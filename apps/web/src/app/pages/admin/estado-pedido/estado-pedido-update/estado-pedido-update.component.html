@@ -1,0 +1,44 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Alterar um Estado de Pedido </mat-card-title>
+  <form [formGroup]="estadoPedidoForm">
+    <mat-form-field>
+      <input
+        placeholder="ID de um Estado de Pedido"
+        matInput
+        formControlName="estado_pedido_id"
+        name="estado_pedido_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Descrição de um Estado de Pedido"
+        matInput
+        formControlName="estado_pedido_descricao"
+        name="estado_pedido_descricao"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          estadoPedidoFormControl.estado_pedido_descricao.touched &&
+          estadoPedidoFormControl.estado_pedido_descricao.errors?.required
+        "
+        class="text-danger"
+      >
+        Descrição do Estado de Pedido obrigatória
+      </span>
+    </p>
+  </form>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="updateEstadoPedido()"
+    [disabled]="estadoPedidoForm.invalid"
+  >
+    Alterar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

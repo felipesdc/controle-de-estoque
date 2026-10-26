@@ -1,0 +1,105 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Inativar um Usuário </mat-card-title>
+  <form [formGroup]="usuarioForm">
+    <mat-form-field>
+      <input
+        placeholder="ID do Usuário"
+        matInput
+        formControlName="usuario_id"
+        name="usuario_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Nome do Usuário"
+        matInput
+        formControlName="usuario_nome"
+        name="usuario_nome"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Email do Usuário"
+        matInput
+        formControlName="usuario_email"
+        name="usuario_email"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        type="password"
+        placeholder="Senha do Usuário"
+        matInput
+        formControlName="usuario_password"
+        name="usuario_password"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Nome Completo do Usuário"
+        matInput
+        formControlName="usuario_nome_completo"
+        name="usuario_nome_completo"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Inscrição do Usuário"
+        matInput
+        formControlName="usuario_inscricao"
+        name="usuario_inscricao"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="ID do Perfil do Usuário"
+        matInput
+        formControlName="usuario_perfil_id"
+        name="usuario_perfil_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Perfil do Usuário"
+        matInput
+        formControlName="usuario_perfil"
+        name="usuario_perfil"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Status do Usuário"
+        matInput
+        formControlName="usuario_status"
+        name="usuario_status"
+        readonly=""
+      />
+    </mat-form-field>
+  </form>
+
+  <button
+    mat-raised-button
+    color="warn"
+    (click)="deleteUsuario()"
+    [disabled]="usuarioForm.invalid"
+  >
+    Inativar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

@@ -1,0 +1,159 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Alterar um Usuário </mat-card-title>
+  <form [formGroup]="usuarioForm">
+    <mat-form-field>
+      <input
+        placeholder="ID do Usuário"
+        matInput
+        formControlName="usuario_id"
+        name="usuario_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Nome do Usuário"
+        matInput
+        formControlName="usuario_nome"
+        name="usuario_nome"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          usuarioFormControl.usuario_nome.touched &&
+          usuarioFormControl.usuario_nome.errors?.required
+        "
+        class="text-danger"
+      >
+        Nome do Usuário obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Email do Usuário"
+        matInput
+        formControlName="usuario_email"
+        name="usuario_email"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          usuarioFormControl.usuario_email.touched &&
+          usuarioFormControl.usuario_email.errors?.required
+        "
+        class="text-danger"
+      >
+        Email do Usuário obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        type="password"
+        placeholder="Nova senha (opcional) do Usuário"
+        matInput
+        formControlName="usuario_password"
+        name="usuario_password"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          usuarioFormControl.usuario_password.touched &&
+          usuarioFormControl.usuario_password.errors?.required
+        "
+        class="text-danger"
+      >
+        Senha do Usuário obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Nome Completo do Usuário"
+        matInput
+        formControlName="usuario_nome_completo"
+        name="usuario_nome_completo"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          usuarioFormControl.usuario_nome_completo.touched &&
+          usuarioFormControl.usuario_nome_completo.errors?.required
+        "
+        class="text-danger"
+      >
+        Nome Completo do Usuário obrigatório
+      </span>
+    </p>
+
+    <mat-form-field>
+      <input
+        placeholder="Inscrição do Usuário"
+        matInput
+        formControlName="usuario_inscricao"
+        name="usuario_inscricao"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>ID do Perfil do Usuário</mat-label>
+      <mat-select
+        formControlName="usuario_perfil_id"
+        name="usuario_perfil_id"
+        (selectionChange)="alteraNomeDoPerfil($event.value)"
+      >
+        @for (perfil of perfis; track perfil) {
+        <mat-option [value]="perfil.perfil_id">{{
+          perfil.perfil_id + " - " + perfil.perfil_nome
+        }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Perfil do Usuário"
+        matInput
+        formControlName="usuario_perfil"
+        name="usuario_perfil"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Status do Usuário</mat-label>
+      <mat-select formControlName="usuario_status" name="usuario_status">
+        <mat-option value="true">Ativo</mat-option>
+        <mat-option value="false">Inativo</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          usuarioFormControl.usuario_status.touched &&
+          usuarioFormControl.usuario_status.errors?.required
+        "
+        class="text-danger"
+      >
+        Status do Usuário obrigatório
+      </span>
+    </p>
+  </form>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="updateUsuario()"
+    [disabled]="usuarioForm.invalid"
+  >
+    Alterar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>

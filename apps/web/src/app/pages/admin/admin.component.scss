@@ -1,0 +1,23 @@
+.admin-crud-container {
+  height: calc(100vh - 240px);
+  overflow-y: auto;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.cabecalho-painel {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+mat-button-toggle-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+mat-card-content {
+  padding: 20px;
+}

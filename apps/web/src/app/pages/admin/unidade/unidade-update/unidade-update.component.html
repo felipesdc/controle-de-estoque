@@ -1,0 +1,44 @@
+<mat-card class="mat-elevation-z4">
+  <mat-card-title> Alterar uma unidade </mat-card-title>
+  <form [formGroup]="unidadeForm">
+    <mat-form-field>
+      <input
+        placeholder="ID da Unidade"
+        matInput
+        formControlName="unidade_id"
+        name="unidade_id"
+        readonly=""
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <input
+        placeholder="Descrição da Unidade"
+        matInput
+        formControlName="unidade_descricao"
+        name="unidade_descricao"
+      />
+    </mat-form-field>
+    <p>
+      <span
+        *ngIf="
+          unidadeFormControl.unidade_descricao.touched &&
+          unidadeFormControl.unidade_descricao.errors?.required
+        "
+        class="text-danger"
+      >
+        Descrição da unidade obrigatória
+      </span>
+    </p>
+  </form>
+
+  <button
+    mat-raised-button
+    color="primary"
+    (click)="updateUnidade()"
+    [disabled]="unidadeForm.invalid"
+  >
+    Alterar
+  </button>
+  <button mat-raised-button (click)="cancel()">Cancelar</button>
+</mat-card>
