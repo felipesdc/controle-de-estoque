@@ -1,43 +1,4 @@
-<mat-card class="mat-elevation-z2">
-  <mat-card-title>Área Administrativa</mat-card-title>
-  <mat-card-content>
-    <div class="cabecalho-painel">
-      <h2>Painel de Administração</h2>
-      <p>Escolha uma seção para gerenciar:</p>
-
-      <button mat-raised-button color="primary" routerLink="/home">
-        Voltar para Home
-      </button>
-    </div>
-    <mat-button-toggle-group appearance="standard">
-      <mat-button-toggle [routerLink]="'produto'">Produtos</mat-button-toggle>
-      <mat-button-toggle [routerLink]="'pedido'">Pedidos</mat-button-toggle>
-      <mat-button-toggle [routerLink]="'categoria'"
-        >Categorias</mat-button-toggle
-      >
-      <mat-button-toggle [routerLink]="'estado-pedido'"
-        >Estados de Pedido</mat-button-toggle
-      >
-      <mat-button-toggle [routerLink]="'fornecedor'"
-        >Fornecedores</mat-button-toggle
-      >
-      <mat-button-toggle [routerLink]="'usuario'">Usuários</mat-button-toggle>
-      <mat-button-toggle [routerLink]="'unidade'">Unidades</mat-button-toggle>
-      <mat-button-toggle [routerLink]="'perfil'">Perfis</mat-button-toggle>
-      <mat-button-toggle [routerLink]="'preco'">Preços</mat-button-toggle>
-      <mat-button-toggle [routerLink]="'movimentacao-estoque'"
-        >Movimentações</mat-button-toggle
-      >
-      <mat-button-toggle [routerLink]="'item-pedido'"
-        >Itens de Pedido</mat-button-toggle
-      >
-      <mat-button-toggle [routerLink]="'historico-estado-pedido'"
-        >Histórico</mat-button-toggle
-      >
-    </mat-button-toggle-group>
-
-    <div class="admin-crud-container">
-      <router-outlet></router-outlet>
-    </div>
-  </mat-card-content>
-</mat-card>
+<section class="admin"><header><div><span class="eyebrow">GERENCIAMENTO DO SISTEMA</span><h1>Administração</h1><p>Escolha uma área para organizar os dados e os acessos.</p></div><a mat-stroked-button routerLink="/home/dashboard">Voltar à visão geral</a></header>
+  <ng-container *ngIf="inicio; else detalhes"><div class="cards"><section *ngFor="let s of secoes"><h2>{{ s.titulo }}</h2><p>{{ s.texto }}</p><nav [attr.aria-label]="s.titulo"><a *ngFor="let l of s.links" [routerLink]="l.url"><mat-icon>{{ l.icone }}</mat-icon><span>{{ l.nome }}</span><mat-icon class="arrow">arrow_forward</mat-icon></a></nav></section></div></ng-container>
+  <ng-template #detalhes><a class="back" routerLink="/admin"><mat-icon>arrow_back</mat-icon> Todas as áreas administrativas</a><div class="admin-crud-container"><router-outlet></router-outlet></div></ng-template>
+</section>

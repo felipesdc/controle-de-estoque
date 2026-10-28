@@ -8,6 +8,8 @@ export class HeaderComponent {
   get titulo(): string {
     const url = this.router.url;
     if (url.startsWith('/admin')) return 'Administração';
+    if (url.includes('/pedidos')) return 'Pedidos';
+    if (url.includes('/cadastros')) return 'Cadastros';
     if (url.includes('/produtos')) return 'Produtos';
     if (url.includes('/movimentacoes')) return 'Movimentações';
     return 'Visão geral';

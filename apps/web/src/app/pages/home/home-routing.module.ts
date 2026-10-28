@@ -1,6 +1,8 @@
+import { PedidosComponent } from './pedidos/pedidos.component';
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { CadastrosComponent } from './cadastros/cadastros.component';
 import { HomeComponent } from './home.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ProdutosComponent } from './produtos/produtos.component';
@@ -16,8 +18,11 @@ const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'produtos', component: ProdutosComponent },
+      { path: 'pedidos', component: PedidosComponent },
       { path: 'movimentacoes', component: MovimentacoesComponent },
-      { path: 'fornecedores', component: FornecedoresComponent },
+      { path: 'cadastros', redirectTo: 'cadastros/categorias', pathMatch: 'full' },
+      { path: 'cadastros/:tipo', component: CadastrosComponent },
+      { path: 'fornecedores', redirectTo: 'cadastros/fornecedores', pathMatch: 'full' },
       { path: 'relatorios', component: RelatoriosComponent },
     ],
   },

@@ -25,3 +25,6 @@ small { display: block; color: #637388; font-size: 11px; margin-top: 6px; }
 .empty { background: #f4f7fb; border-radius: 10px; padding: 28px; color: #53647c; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 @media (max-width: 720px) { .movimentacoes { padding: 0; } .campos { grid-template-columns: 1fr; gap: 0; } .registro { padding: 16px; } }
+
+.filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+.filtros .botoes { align-items: center; flex-wrap: wrap; }

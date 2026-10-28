@@ -6,9 +6,14 @@ import {
   updateExistingHistoricoEstadoPedido,
   deleteExistingHistoricoEstadoPedido,
 } from "../controllers/historico-estado-pedido-controller";
-import { authenticateToken } from "../middlewares/auth";
+import { authenticateToken, requireManager } from "../middlewares/auth";
 
 const router = Router();
+// Legacy reads remain available. All writes go through transactional purchasing operations.
+router.use('/historico-estado-pedido', (req,res,next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') { next(); return; }
+  authenticateToken(req,res,()=>requireManager(req,res,()=>{ res.status(405).json({message:'Use o fluxo de compras em /v1/compras/pedidos. Registros antigos são somente consulta.'}); }));
+});
 
 router.get(
   "/historico-estado-pedido",
@@ -22,17 +27,17 @@ router.get(
 ); // Consultar histórico de estado de pedido por ID
 router.post(
   "/historico-estado-pedido",
-  authenticateToken,
+  authenticateToken, requireManager,
   createNewHistoricoEstadoPedido
 ); // Criar novo histórico de estado de pedido
 router.put(
   "/historico-estado-pedido/:historico_id",
-  authenticateToken,
+  authenticateToken, requireManager,
   updateExistingHistoricoEstadoPedido
 ); // Atualizar histórico de estado de pedido por ID
 router.delete(
   "/historico-estado-pedido/:historico_id",
-  authenticateToken,
+  authenticateToken, requireManager,
   deleteExistingHistoricoEstadoPedido
 ); // Deletar histórico de estado de pedido por ID
 

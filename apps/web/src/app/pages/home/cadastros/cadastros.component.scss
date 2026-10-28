@@ -1,0 +1,33 @@
+.cadastros { max-width: 1280px; margin: auto; color: #233447; }
+header, .section-heading, .actions, .search-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.eyebrow { font-size: 11px; letter-spacing: 1.8px; color: #64768a; }
+h1 { font-size: 32px; font-weight: 600; letter-spacing: -1px; margin: 8px 0; }
+header p, .section-heading p { color: #6a7a8c; margin: 0; font-size: 13px; line-height: 1.6; }
+.tabs { display: flex; gap: 8px; margin: 28px 0; border-bottom: 1px solid #dfe7ec; flex-wrap: wrap; }
+.tabs a { text-decoration: none; display: flex; align-items: center; gap: 8px; padding: 14px 18px; color: #6c7e8b; font-size: 13px; border-bottom: 3px solid transparent; }
+.tabs a.active { color: #237b68; border-color: #237b68; background: #edf6f2; }
+.tabs mat-icon { font-size: 21px; width: 21px; height: 21px; }
+h2 { font-size: 20px; font-weight: 500; margin: 0 0 6px; }
+.actions { gap: 10px; }
+.search-row { margin: 24px 0 0; justify-content: flex-start; }
+.search-row mat-form-field { width: min(100%,430px); } .search-row mat-icon { color: #7d9288; margin-right: 8px; }
+.result { margin-left: auto; font-size: 12px; color: #708394; }
+.table-wrap { overflow-x: auto; background: white; border: 1px solid #dfe7ec; border-radius: 12px 12px 0 0; }
+table { width: 100%; border-collapse: collapse; text-align: left; }
+th, td { padding: 16px; border-bottom: 1px solid #edf1f5; }
+th { background: #f8fafc; font-size: 11px; color: #738195; font-weight: 500; }
+td { font-size: 13px; min-width: 130px; } td:first-child { min-width: 200px; max-width: 350px; overflow-wrap: anywhere; }
+strong { font-weight: 500; } small { display: block; font-size: 11px; color: #7d8999; margin-top: 6px; }
+.contact { max-width: 350px; overflow-wrap: anywhere; }
+.links { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge { padding: 4px 8px; background: #edf6f2; color: #237b68; border-radius: 6px; font-size: 11px; }
+.unused, .note { color: #7c8999; font-size: 11px; }
+.product-link { display: inline-block; font-size: 11px; margin-top: 8px; color: #237b68; }
+.note { line-height: 1.7; margin-top: 16px; }
+mat-paginator { border: 1px solid #dfe7ec; border-top: 0; border-radius: 0 0 12px 12px; }
+.feedback { border-radius: 8px; padding: 14px 18px; font-size: 13px; }
+.error { color: #a74337; background: #fff0ed; } .success { color: #237b68; background: #e9f6f1; }
+.empty { text-align: center; background: white; border: 1px solid #dfe7ec; border-radius: 12px; padding: 45px 20px; color: #738195; }
+.empty h3 { font-size: 18px; color: #445e50; } .empty p { font-size: 13px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+@media(max-width: 550px) { h1 { font-size: 28px; } .tabs a { padding: 12px 8px; font-size: 12px; } .tabs { gap: 0; } .result { margin-left: 0; margin-bottom: 16px; } }

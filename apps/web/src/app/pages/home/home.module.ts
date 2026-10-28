@@ -1,3 +1,7 @@
+import { PedidosComponent } from './pedidos/pedidos.component';
+import { ProdutoStatusDialogComponent } from './produtos/produto-status-dialog.component';
+import { CadastrosComponent } from './cadastros/cadastros.component';
+import { CadastroDialogComponent } from './cadastros/cadastro-dialog.component';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HomeComponent } from './home.component';
@@ -21,10 +25,14 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   ],
   declarations: [
     HomeComponent,
+    PedidosComponent,
+    CadastrosComponent,
+    CadastroDialogComponent,
     DashboardComponent,
     FornecedoresComponent,
     MovimentacoesComponent,
     ProdutosComponent,
+    ProdutoStatusDialogComponent,
     ProdutosCreateDialogComponent,
     RelatoriosComponent,
   ],

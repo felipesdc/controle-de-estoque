@@ -1,5 +1,9 @@
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
+.intro, .note { font-size: 12px; line-height: 1.6; color: #6a7a8c; }
+form { display: flex; flex-direction: column; gap: 6px; margin-top: 20px; }
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+mat-form-field { width: 100%; }
+.feedback { color: #a74337; background: #fff0ed; padding: 12px; border-radius: 8px; font-size: 13px; }
+.balance { background: #eff6f3; padding: 14px; border-radius: 8px; font-size: 13px; color: #315c4e; }
+.balance small { display: block; line-height: 1.6; margin-top: 6px; color: #647d73; }
+mat-dialog-actions { padding: 12px 24px 20px; }
+@media(max-width: 450px) { .columns { grid-template-columns: 1fr; gap: 6px; } }

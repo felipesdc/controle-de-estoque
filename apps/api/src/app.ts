@@ -17,7 +17,11 @@ import itemPedidoRoutes from "./routes/item-pedido-routes";
 import estadoPedidoRoutes from "./routes/estado-pedido-routes";
 import historicoEstadoPedidoRoutes from "./routes/historico-estado-pedido-routes";
 
+import acessosRoutes from "./routes/acessos-routes";
+import cadastrosRoutes from "./routes/cadastros-routes";
 import dashboardRoutes from "./routes/dashboard-routes";
+
+import comprasRoutes from './routes/compras-routes';
 
 const app = express();
 
@@ -40,7 +44,10 @@ app.get("/health", async (_req, res) => {
 });
 
 // Rotas
+app.use("/v1", comprasRoutes);
 app.use("/v1", dashboardRoutes);
+app.use("/v1", acessosRoutes);
+app.use("/v1", cadastrosRoutes);
 app.use("/v1", perfilRoutes);
 app.use("/v1", usuarioRoutes);
 app.use("/v1", precoRoutes);

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
@@ -18,6 +18,15 @@ export class MovimentacaoEstoqueService {
       verticalPosition: 'top',
       panelClass: [css],
     });
+  }
+
+  historico(filtros: Record<string, string | number>): Observable<{itens: MovimentacaoEstoque[]; total: number; pagina: number; tamanho: number}> {
+    let params = new HttpParams();
+    for (const [key,value] of Object.entries(filtros)) if (value !== '') params = params.set(key,value);
+    return this.http.get<{itens: MovimentacaoEstoque[]; total: number; pagina: number; tamanho: number}>(`${environment.apiurl}/movimentacao-estoque/historico`, {params});
+  }
+  responsaveis(): Observable<{id: number; nome: string}[]> {
+    return this.http.get<{id: number; nome: string}[]>(`${environment.apiurl}/movimentacao-estoque/responsaveis`);
   }
 
   getMovimentacoesEstoque(): Observable<MovimentacaoEstoque[]> {

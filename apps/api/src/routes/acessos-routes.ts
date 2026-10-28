@@ -1,0 +1,13 @@
+import { Router } from "express";
+import { authenticateToken,requireAdmin,AuthenticatedRequest } from "../middlewares/auth";
+import pool from "../config/db";
+import { usuarios,listarUsuarios,salvarUsuario,perfis } from "../services/acessos";
+import { falhaAcesso } from "../controllers/usuario-controller";
+const router=Router();
+router.get('/sessao',authenticateToken,(req:AuthenticatedRequest,res)=>{try{res.set('Cache-Control','no-store').json({usuario:usuarios(req.userId),expira_em:req.expiresAt});}catch(e){falhaAcesso(res,e);}});
+router.post('/sessao/sair',authenticateToken,async(req:AuthenticatedRequest,res)=>{try{await pool.query('DELETE FROM pi2_sessoes WHERE sessao_id=$1',[req.sessionId]);res.status(204).send();}catch(e){falhaAcesso(res,e);}});
+router.get('/acessos/usuarios',authenticateToken,requireAdmin,(req,res)=>{try{res.set('Cache-Control','no-store').json(listarUsuarios(req.query));}catch(e){falhaAcesso(res,e);}});
+router.post('/acessos/usuarios',authenticateToken,requireAdmin,(req:AuthenticatedRequest,res)=>{try{res.status(201).json(salvarUsuario(req.body,req.userId!));}catch(e){falhaAcesso(res,e);}});
+router.patch('/acessos/usuarios/:id',authenticateToken,requireAdmin,(req:AuthenticatedRequest,res)=>{try{res.json(salvarUsuario(req.body,req.userId!,req.params.id));}catch(e){falhaAcesso(res,e);}});
+router.get('/acessos/perfis',authenticateToken,requireAdmin,(_req,res)=>{try{res.json(perfis());}catch(e){falhaAcesso(res,e);}});
+export default router;

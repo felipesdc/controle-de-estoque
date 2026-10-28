@@ -1,3 +1,5 @@
+import { AcessosComponent } from './acessos/acessos.component';
+import { AcessoDialogComponent } from './acessos/acesso-dialog.component';
 import { LOCALE_ID, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -67,6 +69,8 @@ import { HistoricoEstadoPedidoDeleteComponent } from './historico-estado-pedido/
   ],
   declarations: [
     AdminComponent,
+    AcessosComponent,
+    AcessoDialogComponent,
     ProdutoCreateComponent,
     ProdutoUpdateComponent,
     ProdutoComponent,
@@ -118,6 +122,8 @@ import { HistoricoEstadoPedidoDeleteComponent } from './historico-estado-pedido/
   ],
   exports: [
     AdminComponent,
+    AcessosComponent,
+    AcessoDialogComponent,
     ProdutoCreateComponent,
     ProdutoUpdateComponent,
     ProdutoComponent,

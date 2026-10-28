@@ -1,51 +1,23 @@
-<h1 mat-dialog-title>
-  {{ data?.produto_id ? "Editar Produto" : "Adicionar Novo Produto" }}
-</h1>
-<div mat-dialog-content>
-  <form [formGroup]="produtoForm" class="form">
-    <mat-form-field appearance="fill">
-      <mat-label>Nome do Produto</mat-label>
-      <input matInput formControlName="produto_descricao" />
-    </mat-form-field>
-
-    <mat-form-field appearance="fill">
-      <mat-label>Categoria</mat-label>
-      <mat-select formControlName="produto_categoria_id">
-        <mat-option
-          *ngFor="let categoria of categorias"
-          [value]="categoria.categoria_id"
-        >
-          {{ categoria.categoria_descricao }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="fill">
-      <mat-label>{{ data ? "Saldo atual" : "Saldo inicial" }}</mat-label>
-      <input
-        matInput
-        type="number"
-        formControlName="produto_quantidade_estoque"
-        [readonly]="!!data"
-        min="0" step="0.001"
-      />
-      <mat-hint *ngIf="data">Altere o saldo pela tela de Movimentações.</mat-hint>
-    </mat-form-field>
-    <mat-form-field appearance="fill">
-      <mat-label>Validade (opcional)</mat-label>
-      <input matInput type="date" formControlName="produto_data_validade" />
-    </mat-form-field>
+<h1 mat-dialog-title>{{ data ? 'Editar produto' : 'Novo produto' }}</h1>
+<mat-dialog-content>
+  <p class="intro">{{ data ? 'Atualize os dados cadastrais sem alterar o saldo.' : 'Organize o catálogo e informe o saldo inicial, se houver.' }}</p>
+  <p class="feedback" role="alert" *ngIf="error">{{ error }}</p>
+  <p role="status" *ngIf="loading">Carregando opções do cadastro…</p>
+  <p class="feedback" *ngIf="optionsError" role="alert">Não foi possível carregar as opções. <button mat-button (click)="carregarOpcoes()">Tentar novamente</button></p>
+  <form [formGroup]="form" (ngSubmit)="salvar()" id="produto-form">
+    <mat-form-field appearance="outline"><mat-label>Nome do produto</mat-label><input matInput formControlName="produto_descricao" maxlength="200" autocomplete="off"><mat-error>Informe um nome de até 200 caracteres.</mat-error></mat-form-field>
+    <div class="columns">
+      <mat-form-field appearance="outline"><mat-label>Categoria</mat-label><mat-select formControlName="produto_categoria_id"><mat-option [value]="null">Sem categoria</mat-option><mat-option *ngFor="let c of categorias" [value]="c.categoria_id">{{ c.categoria_descricao }}</mat-option></mat-select></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Unidade de medida</mat-label><mat-select formControlName="produto_unidade_id"><mat-option [value]="null">Não informada</mat-option><mat-option *ngFor="let u of unidades" [value]="u.unidade_id">{{ u.unidade_descricao }}</mat-option></mat-select></mat-form-field>
+    </div>
+    <mat-form-field appearance="outline"><mat-label>Fornecedor (opcional)</mat-label><mat-select formControlName="produto_fornecedor_id"><mat-option [value]="null">Não informado</mat-option><mat-option *ngFor="let f of fornecedores" [value]="f.fornecedor_id">{{ f.fornecedor_nome }}</mat-option></mat-select></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Código de barras (opcional)</mat-label><input matInput formControlName="produto_codigo_barras" maxlength="80" autocomplete="off"><mat-error>Use até 80 caracteres.</mat-error></mat-form-field>
+    <div class="columns">
+      <mat-form-field appearance="outline" *ngIf="!data"><mat-label>Saldo inicial</mat-label><input matInput type="number" min="0" max="1000000000" step="0.001" formControlName="produto_quantidade_estoque"><mat-error>Use um valor de 0 a 1 bilhão, com até três casas decimais.</mat-error></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Validade (opcional)</mat-label><input matInput type="date" formControlName="produto_data_validade"><mat-error>Informe uma data válida.</mat-error></mat-form-field>
+    </div>
+    <p class="balance" *ngIf="data">Saldo na abertura: <strong>{{ data.produto_quantidade_estoque | number:'1.0-3' }}</strong><small>Quantidades são alteradas somente por movimentações. {{ data.produto_estado ? '' : 'Este produto está inativo e continuará inativo após salvar.' }}</small></p>
+    <p class="note">{{ data ? 'A validade é do produto. O controle por lote ainda não está disponível.' : 'Um saldo inicial maior que zero gera uma entrada no histórico automaticamente.' }}</p>
   </form>
-</div>
-
-<div mat-dialog-actions align="end">
-  <button mat-button (click)="onCancel()">Cancelar</button>
-  <button
-    mat-raised-button
-    color="primary"
-    (click)="onSave()"
-    [disabled]="produtoForm.invalid"
-  >
-    Salvar
-  </button>
-</div>
+</mat-dialog-content>
+<mat-dialog-actions align="end"><button mat-button (click)="cancelar()" [disabled]="saving">Cancelar</button><button mat-flat-button color="primary" type="submit" form="produto-form" [disabled]="form.invalid || loading || optionsError || saving">{{ saving ? 'Salvando…' : 'Salvar produto' }}</button></mat-dialog-actions>

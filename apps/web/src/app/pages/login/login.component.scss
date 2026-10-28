@@ -1,39 +1,13 @@
-body {
-  background: rgb(180, 173, 176);
-  background: radial-gradient(
-    circle,
-    rgba(180, 173, 176, 1) 0%,
-    rgba(24, 54, 89, 1) 100%
-  );
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.card {
-  width: 50%;
-  height: 40vh;
-  text-align: center;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: 300;
-  padding: 20px 0;
-}
-
-button {
-  margin-top: 20px;
-  width: 60%;
-}
-
-mat-form-field {
-  width: 100%;
-  margin-bottom: 16px;
-}
+.login { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; background: #f2f6f3; }
+mat-card { width: 430px; max-width: 100%; padding: 34px; border: 1px solid #dce7df; border-radius: 16px; box-shadow: 0 12px 40px #1c47320a; }
+.brand { display: flex; align-items: center; gap: 12px; font-size: 23px; font-weight: 600; color: #285840; margin-bottom: 32px; }
+.brand mat-icon { background: #247c67; color: white; padding: 10px; width: 44px; height: 44px; border-radius: 10px; }
+.brand small { display: block; font-size: 8px; letter-spacing: 1.8px; margin-top: 5px; }
+h1 { font-size: 25px; font-weight: 600; margin: 0 0 8px; color: #233447; }
+p { color: #6a7a8c; font-size: 13px; line-height: 1.7; }
+form { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+form > button { min-height: 44px; }
+.session-note { font-size: 10px; color: #7b8d80; line-height: 1.7; margin-top: 24px; }
+.notice,.error { padding: 12px; border-radius: 8px; }
+.notice { background: #e9f3ee; color: #326c53; }.error { background: #fff0ed; color: #a74337; }
+@media(max-width: 450px) { mat-card { padding: 24px; } }

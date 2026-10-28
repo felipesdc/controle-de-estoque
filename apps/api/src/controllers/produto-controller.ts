@@ -61,10 +61,10 @@ export const createNewProduto = async (
     } = req.body;
     const newProduto = await createProduto(
       produto_descricao,
-      produto_fornecedor_id || null,
-      produto_preco_id || null,
-      produto_unidade_id || null,
-      produto_categoria_id || null,
+      produto_fornecedor_id ?? null,
+      produto_preco_id ?? null,
+      produto_unidade_id ?? null,
+      produto_categoria_id ?? null,
       produto_quantidade_estoque ?? 0,
       produto_data_validade,
       produto_codigo_barras,

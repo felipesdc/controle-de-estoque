@@ -1,5 +1,6 @@
 import pool from "../config/db";
 import { EstoqueError, quantidade, registrar } from "../services/estoque";
+import { validarCamposProduto } from "../services/catalogo";
 import { randomUUID } from "node:crypto";
 
 export type Produto = {
@@ -46,18 +47,19 @@ export const createProduto = async (
   if (typeof produto_descricao !== "string" || !produto_descricao.trim() || produto_descricao.length > 200) throw new EstoqueError(400, "Informe uma descrição de até 200 caracteres.");
   quantidade(produto_quantidade_estoque);
   return pool.transaction(execute => {
+  const dados = validarCamposProduto(execute, { produto_descricao, produto_fornecedor_id, produto_preco_id, produto_unidade_id, produto_categoria_id, produto_data_validade, produto_codigo_barras, produto_estado }) as any;
   const res = execute(
     "INSERT INTO pi2_produtos (produto_descricao, produto_fornecedor_id, produto_preco_id, produto_unidade_id, produto_categoria_id, produto_quantidade_estoque, produto_data_validade, produto_codigo_barras, produto_estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
     [
-      produto_descricao,
-      produto_fornecedor_id,
-      produto_preco_id,
-      produto_unidade_id,
-      produto_categoria_id,
+      dados.produto_descricao,
+      dados.produto_fornecedor_id,
+      dados.produto_preco_id,
+      dados.produto_unidade_id,
+      dados.produto_categoria_id,
       0,
-      produto_data_validade,
-      produto_codigo_barras,
-      produto_estado,
+      dados.produto_data_validade,
+      dados.produto_codigo_barras,
+      dados.produto_estado,
     ]
   );
   const row = res.rows[0];

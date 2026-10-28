@@ -1,145 +1,77 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
-
-import { ProdutosCreateDialogComponent } from './produtos-create-dialog/produtos-create-dialog.component';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormBuilder } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { ProdutoService } from 'src/app/shared/services/produto.service';
-import { Produto } from 'src/app/shared/models/produto.model';
+import { PageEvent } from '@angular/material/paginator';
+import { ActivatedRoute } from '@angular/router';
+import { Subject, of } from 'rxjs';
+import { catchError, debounceTime, finalize, switchMap, takeUntil } from 'rxjs/operators';
+import { Catalogo, ProdutoCatalogo } from 'src/app/shared/models/catalogo.model';
 import { Categoria } from 'src/app/shared/models/categoria.model';
+import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { CategoriaService } from 'src/app/shared/services/categoria.service';
-import { forkJoin } from 'rxjs';
+import { AuthService } from 'src/app/shared/services/auth.service';
+import { ProdutosCreateDialogComponent } from './produtos-create-dialog/produtos-create-dialog.component';
+import { ProdutoStatusDialogComponent } from './produto-status-dialog.component';
 
-@Component({
-  selector: 'app-produtos',
-  templateUrl: './produtos.component.html',
-  styleUrls: ['./produtos.component.scss'],
-})
-export class ProdutosComponent implements OnInit, AfterViewInit {
-  produtos: Produto[];
-  categorias: Categoria[];
-
-  dataSource: MatTableDataSource<Produto>;
-
-  displayedColumns: string[] = [
-    'id',
-    'descricao',
-    'categoria',
-    'quantidade',
-    'acoes',
-  ];
-
-  // produtos = [
-  //   {
-  //     produto_id: 1,
-  //     produto_descricao: 'Hamburguer',
-  //     categoria_nome: 'Lanches',
-  //     produto_quantidade: 50,
-  //   },
-  //   {
-  //     produto_id: 2,
-  //     produto_descricao: 'Batata Frita',
-  //     categoria_nome: 'Acompanhamentos',
-  //     produto_quantidade: 3,
-  //   },
-  //   {
-  //     produto_id: 3,
-  //     produto_descricao: 'Refrigerante',
-  //     categoria_nome: 'Bebidas',
-  //     produto_quantidade: 20,
-  //   },
-  // ];
-
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
-
-  constructor(
-    private dialog: MatDialog,
-    private produtoService: ProdutoService,
-    private categoriaService: CategoriaService
-  ) {}
-
+@Component({ selector: 'app-produtos', templateUrl: './produtos.component.html', styleUrls: ['./produtos.component.scss'] })
+export class ProdutosComponent implements OnInit, OnDestroy {
+  catalogo: Catalogo | null = null;
+  categorias: Categoria[] = [];
+  loading = false;
+  error = '';
+  success = '';
+  opcoesError = false;
+  pagina = 1;
+  tamanho = 10;
+  private reload = new Subject<void>();
+  private destroy = new Subject<void>();
+  filtros = this.fb.group({ q: [''], estado: ['ativos'], estoque: ['todos'], vencimento: ['todos'], categoria: [''], ordem: ['nome'] });
+  constructor(private fb: FormBuilder, private service: ProdutoService, private categoriaService: CategoriaService, private dialog: MatDialog, public auth: AuthService, private route: ActivatedRoute) {}
+  get podeAlterar(): boolean { return this.auth.isAdmin() || this.auth.isGerente(); }
   ngOnInit(): void {
-    this.loadProdutos();
+    const params = this.route.snapshot.queryParamMap;
+    const initial: Record<string, string> = {};
+    const choices: Record<string, string[]> = { estoque: ['todos','baixo','zerado','disponivel'], vencimento: ['todos','vencido','em_breve','sem_validade'], estado: ['ativos','inativos','todos'] };
+    Object.entries(choices).forEach(([key, options]) => { const value = params.get(key); if (value && options.includes(value)) initial[key] = value; });
+    const categoria = params.get('categoria');
+    if (categoria && (categoria === 'sem' || (/^\d+$/.test(categoria) && Number(categoria) > 0))) initial.categoria = categoria;
+    this.filtros.patchValue(initial, { emitEvent: false });
+    this.reload.pipe(switchMap(() => {
+      this.loading = true; this.error = '';
+      return this.service.getCatalogo({ ...this.filtros.getRawValue(), pagina: this.pagina, tamanho: this.tamanho, direcao: this.filtros.value.ordem === 'recentes' ? 'desc' : 'asc' } as Record<string, string | number>)
+        .pipe(catchError(err => { this.error = err.error?.message || 'Não foi possível carregar o catálogo. Tente novamente.'; return of(null); }), finalize(() => this.loading = false));
+    }), takeUntil(this.destroy)).subscribe(data => { if (data) { this.catalogo = data; this.pagina = data.pagina; } });
+    this.filtros.valueChanges.pipe(debounceTime(300), takeUntil(this.destroy)).subscribe(() => { this.pagina = 1; this.success = ''; this.atualizar(); });
+    this.carregarOpcoes(); this.atualizar();
   }
-
-  ngAfterViewInit() {}
-
-  loadProdutos(): void {
-    forkJoin({
-      produtos: this.produtoService.getProdutos(),
-      categorias: this.categoriaService.getCategorias(),
-    }).subscribe(({ produtos, categorias }) => {
-      this.produtos = produtos.filter((produto) => produto.produto_estado);
-      this.categorias = categorias;
-
-      // Adiciona o nome da categoria a cada produto
-      this.produtos.forEach((produto) => {
-        const categoria = categorias.find(
-          (c) => c.categoria_id === produto.produto_categoria_id
-        );
-        produto.produto_categoria = categoria
-          ? categoria.categoria_descricao
-          : 'Sem categoria';
-      });
-
-      this.dataSource = new MatTableDataSource(this.produtos);
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
-    });
+  carregarOpcoes(): void {
+    this.opcoesError = false;
+    this.categoriaService.getCategorias().pipe(takeUntil(this.destroy)).subscribe({ next: data => this.categorias = data, error: () => this.opcoesError = true });
   }
-
-  onAddProduto() {
-    const dialogRef = this.dialog.open(ProdutosCreateDialogComponent, {
-      width: '400px',
-    });
-
-    dialogRef.afterClosed().subscribe((novoProduto) => {
-      if (novoProduto) {
-        this.produtoService
-          .createNewProduto(novoProduto)
-          .subscribe({ next: () => this.loadProdutos(), error: err => this.produtoService.showMessage(err.error?.message || 'Não foi possível cadastrar o produto.', 'msg-error') });
+  atualizar(): void { this.reload.next(); }
+  limpar(): void { this.filtros.reset({ q: '', estado: 'ativos', estoque: 'todos', vencimento: 'todos', categoria: '', ordem: 'nome' }); }
+  paginar(event: PageEvent): void { this.pagina = event.pageIndex + 1; this.tamanho = event.pageSize; this.atualizar(); }
+  novo(): void {
+    if (!this.podeAlterar) return;
+    this.dialog.open(ProdutosCreateDialogComponent, { width: '560px', maxWidth: '95vw', autoFocus: 'first-tabbable' }).afterClosed().pipe(takeUntil(this.destroy)).subscribe(saved => {
+      if (saved) {
+        this.filtros.reset({ q: '', estado: 'ativos', estoque: 'todos', vencimento: 'todos', categoria: '', ordem: 'recentes' }, { emitEvent: false });
+        this.success = saved.produto_quantidade_estoque > 0 ? 'Produto cadastrado. O saldo inicial foi registrado no histórico.' : 'Produto cadastrado com saldo zero.';
+        this.pagina = 1; this.atualizar();
       }
     });
   }
-
-  onEditProduto(produtoId: number): void {
-    const produto = this.produtos.find((p) => p.produto_id === produtoId);
-
-    if (!produto) return;
-
-    const dialogRef = this.dialog.open(ProdutosCreateDialogComponent, {
-      width: '400px',
-      data: { ...produto }, // já inclui produto_descricao e categoria_nome
-    });
-
-    dialogRef.afterClosed().subscribe((produtoEditado) => {
-      if (produtoEditado) {
-        this.produtoService
-          .updateExistingProduto(produtoEditado, produtoId)
-          .subscribe({ next: () => this.loadProdutos(), error: err => this.produtoService.showMessage(err.error?.message || 'Não foi possível atualizar o produto.', 'msg-error') });
-      }
+  editar(produto: ProdutoCatalogo): void {
+    if (!this.podeAlterar) return;
+    this.dialog.open(ProdutosCreateDialogComponent, { width: '560px', maxWidth: '95vw', data: produto }).afterClosed().pipe(takeUntil(this.destroy)).subscribe(saved => {
+      if (saved) { this.success = 'Dados do produto atualizados. O saldo foi preservado.'; this.atualizar(); }
     });
   }
-
-  onDeleteProduto(produtoId: number): void {
-    this.produtoService.getProduto(produtoId).subscribe((produto) => {
-      const produtoAtualizado = {
-        ...produto,
-        produto_estado: false,
-
-      };
-
-      this.produtoService
-        .updateExistingProduto(produtoAtualizado, produtoId)
-        .subscribe({ next: () => this.loadProdutos(), error: err => this.produtoService.showMessage(err.error?.message || 'Não foi possível inativar o produto.', 'msg-error') });
+  alterarEstado(produto: ProdutoCatalogo): void {
+    if (!this.podeAlterar) return;
+    this.dialog.open(ProdutoStatusDialogComponent, { width: '460px', maxWidth: '95vw', data: produto }).afterClosed().pipe(takeUntil(this.destroy)).subscribe(saved => {
+      if (saved) { this.success = produto.produto_estado ? 'Produto inativado. Saldo e histórico preservados.' : 'Produto reativado.'; this.atualizar(); }
     });
   }
-
-  applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
-  }
-
+  ngOnDestroy(): void { this.destroy.next(); this.destroy.complete(); }
 }

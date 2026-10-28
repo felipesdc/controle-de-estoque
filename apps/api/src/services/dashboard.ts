@@ -1,17 +1,8 @@
 import pool from "../config/db";
+import { periodoValidade, validadeSql as validade, dataValidaSql as dataValida } from "./datas";
 
 export function getDashboard(now = new Date()) {
-  const parts = new Intl.DateTimeFormat("en", {
-    timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit",
-  }).formatToParts(now);
-  const part = (type: string) => parts.find(p => p.type === type)!.value;
-  const hoje = `${part("year")}-${part("month")}-${part("day")}`;
-  const limite = new Date(`${hoje}T00:00:00.000Z`);
-  limite.setUTCDate(limite.getUTCDate() + 30);
-  const ate = limite.toISOString().slice(0, 10);
-  // Dates are calendar dates. Ignore malformed legacy values instead of inventing expiry alerts.
-  const validade = "substr(p.produto_data_validade, 1, 10)";
-  const dataValida = `(${validade} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(${validade}, '+0 days') = ${validade})`;
+  const { hoje, ate } = periodoValidade(now);
   return pool.transaction(execute => {
     const totais = execute(`SELECT COUNT(*) AS produtos_ativos,
       COALESCE(SUM(CASE WHEN COALESCE(p.produto_quantidade_estoque, 0) < 5 THEN 1 ELSE 0 END), 0) AS estoque_baixo,

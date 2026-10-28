@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AcessosComponent } from './acessos/acessos.component';
 import { AdminComponent } from './admin.component';
 
 import { ProdutoComponent } from './produto/produto.component';
@@ -68,6 +69,8 @@ const routes: Routes = [
     path: '',
     component: AdminComponent,
     children: [
+      { path: 'acessos', redirectTo: 'acessos/usuarios', pathMatch: 'full' },
+      { path: 'acessos/:aba', component: AcessosComponent },
       { path: 'produto/create', component: ProdutoCreateComponent },
       { path: 'produto/delete/:produto_id', component: ProdutoDeleteComponent },
       {
@@ -75,66 +78,54 @@ const routes: Routes = [
         component: ProdutoUpdateComponent,
       },
       { path: 'produto', component: ProdutoComponent },
-      { path: 'pedido/create', component: PedidoCreateComponent },
-      { path: 'pedido/delete/:pedido_id', component: PedidoDeleteComponent },
-      { path: 'pedido/update/:pedido_id', component: PedidoUpdateComponent },
-      { path: 'pedido', component: PedidoComponent },
-      { path: 'categoria/create', component: CategoriaCreateComponent },
+      { path: 'pedido/create', redirectTo: '/home/pedidos', pathMatch: 'full', },
+      { path: 'pedido/delete/:pedido_id', redirectTo: '/home/pedidos', pathMatch: 'full', },
+      { path: 'pedido/update/:pedido_id', redirectTo: '/home/pedidos', pathMatch: 'full', },
+      { path: 'pedido', redirectTo: '/home/pedidos', pathMatch: 'full', },
+      { path: 'categoria/create', redirectTo: '/home/cadastros/categorias', pathMatch: 'full', },
       {
-        path: 'categoria/delete/:categoria_id',
-        component: CategoriaDeleteComponent,
+        path: 'categoria/delete/:categoria_id', redirectTo: '/home/cadastros/categorias', pathMatch: 'full',
       },
       {
-        path: 'categoria/update/:categoria_id',
-        component: CategoriaUpdateComponent,
+        path: 'categoria/update/:categoria_id', redirectTo: '/home/cadastros/categorias', pathMatch: 'full',
       },
-      { path: 'categoria', component: CategoriaComponent },
-      { path: 'estado-pedido/create', component: EstadoPedidoCreateComponent },
+      { path: 'categoria', redirectTo: '/home/cadastros/categorias', pathMatch: 'full', },
+      { path: 'estado-pedido/create', redirectTo: '/home/pedidos', pathMatch: 'full', },
       {
-        path: 'estado-pedido/delete/:estado_pedido_id',
-        component: EstadoPedidoDeleteComponent,
+        path: 'estado-pedido/delete/:estado_pedido_id', redirectTo: '/home/pedidos', pathMatch: 'full',
       },
       {
-        path: 'estado-pedido/update/:estado_pedido_id',
-        component: EstadoPedidoUpdateComponent,
+        path: 'estado-pedido/update/:estado_pedido_id', redirectTo: '/home/pedidos', pathMatch: 'full',
       },
-      { path: 'estado-pedido', component: EstadoPedidoComponent },
-      { path: 'fornecedor/create', component: FornecedorCreateComponent },
+      { path: 'estado-pedido', redirectTo: '/home/pedidos', pathMatch: 'full', },
+      { path: 'fornecedor/create', redirectTo: '/home/cadastros/fornecedores', pathMatch: 'full', },
       {
-        path: 'fornecedor/delete/:fornecedor_id',
-        component: FornecedorDeleteComponent,
+        path: 'fornecedor/delete/:fornecedor_id', redirectTo: '/home/cadastros/fornecedores', pathMatch: 'full',
       },
       {
-        path: 'fornecedor/update/:fornecedor_id',
-        component: FornecedorUpdateComponent,
+        path: 'fornecedor/update/:fornecedor_id', redirectTo: '/home/cadastros/fornecedores', pathMatch: 'full',
       },
-      { path: 'fornecedor', component: FornecedorComponent },
+      { path: 'fornecedor', redirectTo: '/home/cadastros/fornecedores', pathMatch: 'full', },
       {
-        path: 'historico-estado-pedido/create',
-        component: HistoricoEstadoPedidoCreateComponent,
+        path: 'historico-estado-pedido/create', redirectTo: '/home/pedidos', pathMatch: 'full',
       },
       {
-        path: 'historico-estado-pedido/delete/:historico_id',
-        component: HistoricoEstadoPedidoDeleteComponent,
+        path: 'historico-estado-pedido/delete/:historico_id', redirectTo: '/home/pedidos', pathMatch: 'full',
       },
       {
-        path: 'historico-estado-pedido/update/:historico_id',
-        component: HistoricoEstadoPedidoUpdateComponent,
+        path: 'historico-estado-pedido/update/:historico_id', redirectTo: '/home/pedidos', pathMatch: 'full',
       },
       {
-        path: 'historico-estado-pedido',
-        component: HistoricoEstadoPedidoComponent,
+        path: 'historico-estado-pedido', redirectTo: '/home/pedidos', pathMatch: 'full',
       },
-      { path: 'item-pedido/create', component: ItemPedidoCreateComponent },
+      { path: 'item-pedido/create', redirectTo: '/home/pedidos', pathMatch: 'full', },
       {
-        path: 'item-pedido/delete/:produto_id',
-        component: ItemPedidoDeleteComponent,
+        path: 'item-pedido/delete/:produto_id', redirectTo: '/home/pedidos', pathMatch: 'full',
       },
       {
-        path: 'item-pedido/update/:produto_id',
-        component: ItemPedidoUpdateComponent,
+        path: 'item-pedido/update/:produto_id', redirectTo: '/home/pedidos', pathMatch: 'full',
       },
-      { path: 'item-pedido', component: ItemPedidoComponent },
+      { path: 'item-pedido', redirectTo: '/home/pedidos', pathMatch: 'full', },
       {
         path: 'movimentacao-estoque/create', redirectTo: '/home/movimentacoes', pathMatch: 'full',
       },
@@ -147,22 +138,22 @@ const routes: Routes = [
       {
         path: 'movimentacao-estoque', redirectTo: '/home/movimentacoes', pathMatch: 'full',
       },
-      { path: 'perfil/create', component: PerfilCreateComponent },
-      { path: 'perfil/delete/:produto_id', component: PerfilDeleteComponent },
-      { path: 'perfil/update/:produto_id', component: PerfilUpdateComponent },
-      { path: 'perfil', component: PerfilComponent },
+      { path: 'perfil/create', redirectTo: '/admin/acessos/perfis', pathMatch: 'full', },
+      { path: 'perfil/delete/:produto_id', redirectTo: '/admin/acessos/perfis', pathMatch: 'full', },
+      { path: 'perfil/update/:produto_id', redirectTo: '/admin/acessos/perfis', pathMatch: 'full', },
+      { path: 'perfil', redirectTo: '/admin/acessos/perfis', pathMatch: 'full', },
       { path: 'preco/create', component: PrecoCreateComponent },
       { path: 'preco/delete/:preco_id', component: PrecoDeleteComponent },
       { path: 'preco/update/:preco_id', component: PrecoUpdateComponent },
       { path: 'preco', component: PrecoComponent },
-      { path: 'unidade/create', component: UnidadeCreateComponent },
-      { path: 'unidade/delete/:unidade_id', component: UnidadeDeleteComponent },
-      { path: 'unidade/update/:unidade_id', component: UnidadeUpdateComponent },
-      { path: 'unidade', component: UnidadeComponent },
-      { path: 'usuario/create', component: UsuarioCreateComponent },
-      { path: 'usuario/delete/:usuario_id', component: UsuarioDeleteComponent },
-      { path: 'usuario/update/:usuario_id', component: UsuarioUpdateComponent },
-      { path: 'usuario', component: UsuarioComponent },
+      { path: 'unidade/create', redirectTo: '/home/cadastros/unidades', pathMatch: 'full', },
+      { path: 'unidade/delete/:unidade_id', redirectTo: '/home/cadastros/unidades', pathMatch: 'full', },
+      { path: 'unidade/update/:unidade_id', redirectTo: '/home/cadastros/unidades', pathMatch: 'full', },
+      { path: 'unidade', redirectTo: '/home/cadastros/unidades', pathMatch: 'full', },
+      { path: 'usuario/create', redirectTo: '/admin/acessos/usuarios', pathMatch: 'full', },
+      { path: 'usuario/delete/:usuario_id', redirectTo: '/admin/acessos/usuarios', pathMatch: 'full', },
+      { path: 'usuario/update/:usuario_id', redirectTo: '/admin/acessos/usuarios', pathMatch: 'full', },
+      { path: 'usuario', redirectTo: '/admin/acessos/usuarios', pathMatch: 'full', },
     ],
   },
 ];

@@ -10,7 +10,7 @@ export function quantidade(value: unknown): number {
   return value;
 }
 type Execute = Parameters<Parameters<typeof pool.transaction>[0]>[0];
-export function registrar(execute: Execute, produtoId: number, valor: number, tipo: string, observacao: string, usuarioId: number, chave: string, estornoDe?: number) {
+export function registrar(execute: Execute, produtoId: number, valor: number, tipo: string, observacao: string, usuarioId: number, chave: string, estornoDe?: number, permitirInativo = false) {
   quantidade(valor);
   if (valor <= 0 || !["entrada", "saida"].includes(tipo)) throw new EstoqueError(400, "Informe entrada ou saída e quantidade maior que zero.");
   if (!Number.isSafeInteger(produtoId) || produtoId <= 0) throw new EstoqueError(400, "Produto inválido.");
@@ -25,7 +25,7 @@ export function registrar(execute: Execute, produtoId: number, valor: number, ti
   }
   const produto = execute("SELECT * FROM pi2_produtos WHERE produto_id = $1", [produtoId]).rows[0];
   if (!produto) throw new EstoqueError(404, "Produto não encontrado.");
-  if (!produto.produto_estado && !estornoDe) throw new EstoqueError(409, "O produto está inativo.");
+  if (!produto.produto_estado && !estornoDe && !permitirInativo) throw new EstoqueError(409, "O produto está inativo.");
   const saldo = quantidade(produto.produto_quantidade_estoque ?? 0);
   const novo = (Math.round(saldo * 1000) + (tipo === "entrada" ? 1 : -1) * Math.round(valor * 1000)) / 1000;
   if (novo < 0) throw new EstoqueError(409, "Saldo insuficiente para esta operação.");
@@ -45,6 +45,7 @@ export function estornar(id: number, motivo: string, usuarioId: number, chave: s
   if (typeof motivo !== "string" || motivo.trim().length < 3 || motivo.length > 450) throw new EstoqueError(400, "Informe um motivo de 3 a 450 caracteres.");
   return pool.transaction(execute => {
     const original = execute("SELECT * FROM pi2_movimentos_estoque WHERE movimento_id = $1", [id]).rows[0];
+    if (original?.movimento_item_pedido_id || execute('SELECT 1 FROM pi2_entrega_itens WHERE movimento_id=$1',[id]).rows.length) throw new EstoqueError(409, "Movimento vinculado a entrega de pedido. Use a devolução no pedido para preservar as quantidades recebidas.");
     if (!original) throw new EstoqueError(404, "Movimentação não encontrada.");
     if (original.movimento_estorno_de || original.movimento_saldo_anterior === null) throw new EstoqueError(409, "Esta movimentação não pode ser estornada.");
     const existente = execute("SELECT * FROM pi2_movimentos_estoque WHERE movimento_estorno_de = $1", [id]).rows[0];

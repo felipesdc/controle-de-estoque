@@ -14,11 +14,12 @@
       <section class="panel" id="estoque-baixo" #baixo><div class="panel-heading"><div><h2>Prioridade de reposição</h2><p>Até 6 produtos com menor saldo.</p></div><span class="count amber">{{ d.totais.estoque_baixo }}</span></div>
         <div class="empty" *ngIf="!d.baixo_estoque.length"><mat-icon>check_circle_outline</mat-icon><h3>{{ d.totais.produtos_ativos ? 'Estoque em dia' : 'Seu catálogo começa aqui' }}</h3><p>{{ d.totais.produtos_ativos ? 'Nenhum produto ativo está abaixo do limite de estoque.' : 'Cadastre seu primeiro produto para acompanhar os indicadores.' }}</p><a mat-stroked-button routerLink="/home/produtos">Ver produtos</a></div>
         <ul class="alert-list"><li *ngFor="let p of d.baixo_estoque"><div class="item-name"><strong>{{ p.produto_descricao }}</strong><small>#{{ p.produto_id }} · {{ p.unidade || 'Unidade não informada' }}</small></div><span class="stock" [class.zero]="p.quantidade === 0">{{ p.quantidade | number:'1.0-3' }}<small>{{ p.quantidade === 0 ? 'Sem estoque' : 'Disponível' }}</small></span></li></ul>
-        <a class="panel-link" routerLink="/home/produtos" *ngIf="d.baixo_estoque.length">Consultar catálogo <mat-icon>arrow_forward</mat-icon></a>
+        <a class="panel-link" routerLink="/home/produtos" [queryParams]="{ estoque: 'baixo' }" *ngIf="d.baixo_estoque.length">Consultar catálogo <mat-icon>arrow_forward</mat-icon></a>
       </section>
       <section class="panel" id="vencimentos" #vencimentos><div class="panel-heading"><div><h2>Atenção à validade</h2><p>Até 6 produtos com saldo, por data de validade.</p></div><span class="count red">{{ d.totais.vencidos + d.totais.vencem_em_breve }}</span></div>
         <div class="empty" *ngIf="!d.vencimentos.length"><mat-icon>event_available</mat-icon><h3>Nenhum alerta de validade</h3><p>Produtos com saldo e validade informada aparecem aqui quando vencem ou faltam até 30 dias.</p></div>
         <ul class="alert-list"><li *ngFor="let p of d.vencimentos"><div class="item-name"><strong>{{ p.produto_descricao }}</strong><small>{{ p.validade | date:'dd/MM/yyyy' }} · Saldo {{ p.quantidade | number:'1.0-3' }}</small></div><span class="badge" [class.expired]="p.situacao === 'vencido'">{{ p.situacao === 'vencido' ? 'Vencido' : p.situacao === 'hoje' ? 'Vence hoje' : 'Em breve' }}</span></li></ul>
+        <a class="panel-link" routerLink="/home/produtos" [queryParams]="{ vencimento: 'vencido' }" *ngIf="d.totais.vencidos">Consultar vencidos <mat-icon>arrow_forward</mat-icon></a>
         <p class="panel-note" *ngIf="d.vencimentos.length">Validade acompanha o produto; o controle por lote ainda não está disponível.</p>
       </section>
     </div>

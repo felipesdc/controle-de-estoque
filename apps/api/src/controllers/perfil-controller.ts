@@ -1,79 +1,10 @@
-import { Request, Response } from "express";
-import {
-  createPerfil,
-  deletePerfil,
-  getAllPerfis,
-  getPerfilById,
-  updatePerfil,
-} from "../models/perfil";
-
-// Consultar todos os perfis
-export const getPerfis = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const perfis = await getAllPerfis();
-    res.json(perfis);
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar perfis" });
-  }
-};
-
-// Consultar um perfil específico
-export const getPerfil = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const perfil = await getPerfilById(Number(req.params.perfil_id));
-    if (perfil) {
-      res.json(perfil);
-    } else {
-      res.status(404).json({ message: "Perfil não encontrado" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao buscar perfil" });
-  }
-};
-
-// Criar novo perfil
-export const createNewPerfil = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { perfil_nome } = req.body;
-    const newPerfil = await createPerfil(perfil_nome);
-    res.status(201).json(newPerfil);
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao criar perfil" });
-  }
-};
-
-// Atualizar um perfil específico
-export const updateExistingPerfil = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const perfil_id = Number(req.params.perfil_id);
-    const { perfil_nome } = req.body;
-    const updatedPerfil = await updatePerfil(perfil_id, perfil_nome);
-    if (updatedPerfil) {
-      res.json(updatedPerfil);
-    } else {
-      res.status(404).json({ message: "Perfil não encontrado" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao atualizar perfil" });
-  }
-};
-
-// Deletar um perfil específico
-export const deleteExistingPerfil = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const perfil_id = Number(req.params.perfil_id);
-    await deletePerfil(perfil_id);
-    res.status(204).send();
-  } catch (error) {
-    res.status(500).json({ message: "Erro ao deletar perfil" });
-  }
-};
+import { Response } from "express";
+import { AuthenticatedRequest } from "../middlewares/auth";
+import { perfis,salvarPerfil,excluirPerfil } from "../services/acessos";
+import { EstoqueError } from "../services/estoque";
+import { falhaAcesso } from "./usuario-controller";
+export const getPerfis=(_req:AuthenticatedRequest,res:Response)=>{try{res.json(perfis());}catch(e){falhaAcesso(res,e);}};
+export const getPerfil=(req:AuthenticatedRequest,res:Response)=>{try{const p=perfis().find(p=>p.perfil_id===Number(req.params.perfil_id));if(!p)throw new EstoqueError(404,'Perfil não encontrado.');res.json(p);}catch(e){falhaAcesso(res,e);}};
+export const createNewPerfil=(req:AuthenticatedRequest,res:Response)=>{try{res.status(201).json(salvarPerfil(req.body,req.userId!));}catch(e){falhaAcesso(res,e);}};
+export const updateExistingPerfil=(req:AuthenticatedRequest,res:Response)=>{try{res.json(salvarPerfil(req.body,req.userId!,req.params.perfil_id));}catch(e){falhaAcesso(res,e);}};
+export const deleteExistingPerfil=(req:AuthenticatedRequest,res:Response)=>{try{excluirPerfil(req.params.perfil_id,req.userId!);res.status(204).send();}catch(e){falhaAcesso(res,e);}};

@@ -1,4 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { Catalogo } from '../models/catalogo.model';
+import { timeout } from 'rxjs/operators';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable } from 'rxjs';
@@ -18,6 +20,16 @@ export class ProdutoService {
       verticalPosition: 'top',
       panelClass: [css],
     });
+  }
+
+  getCatalogo(filtros: Record<string, string | number>): Observable<Catalogo> {
+    let params = new HttpParams();
+    Object.entries(filtros).forEach(([key, value]) => { if (value !== '') params = params.set(key, String(value)); });
+    return this.http.get<Catalogo>(`${environment.apiurl}/catalogo/produtos`, { params }).pipe(timeout(15000));
+  }
+
+  patchProduto(id: number, dados: Partial<Produto>): Observable<Produto> {
+    return this.http.patch<Produto>(`${environment.apiurl}/produto/${id}`, dados).pipe(timeout(15000));
   }
 
   getProdutos(): Observable<Produto[]> {

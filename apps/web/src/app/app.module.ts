@@ -1,3 +1,5 @@
+import { MatPaginatorIntl } from '@angular/material/paginator';
+import { PaginacaoPt } from './shared/services/paginacao-pt';
 import { LOCALE_ID, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideNativeDateAdapter } from '@angular/material/core';
@@ -66,6 +68,7 @@ registerLocaleData(localePt);
     LoginModule,
   ],
   providers: [
+    { provide: MatPaginatorIntl, useClass: PaginacaoPt },
     CategoriaService,
     EstadoPedidoService,
     FornecedorService,

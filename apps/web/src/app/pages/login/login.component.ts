@@ -1,29 +1,10 @@
 import { Component } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { AuthService } from 'src/app/shared/services/auth.service';
-
-@Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
-})
+@Component({selector:'app-login',templateUrl:'./login.component.html',styleUrls:['./login.component.scss']})
 export class LoginComponent {
-  usuario_login: string = '';
-  usuario_password: string = '';
-  errorMessage: string = '';
-  isLoading: boolean = false;
-
-  constructor(private authService: AuthService) {}
-
-  login(): void {
-    this.isLoading = true;
-    this.authService
-      .login(this.usuario_login, this.usuario_password)
-      .subscribe((success) => {
-        this.isLoading = false;
-        if (!success) {
-          this.errorMessage = 'Usuário ou senha inválidos!';
-          this.authService.showMessage(this.errorMessage, 'backsnack');
-        }
-      });
-  }
+  usuario_login='';usuario_password='';errorMessage='';isLoading=false;
+  constructor(private auth:AuthService,private route:ActivatedRoute){}
+  get aviso():string{const motivo=this.route.snapshot.queryParamMap.get('motivo');return motivo==='atualizada'?'Sua senha foi atualizada. Entre novamente.':motivo==='expirada'?'Sua sessão foi encerrada ou expirou. Entre novamente.':'';}
+  login():void{if(this.isLoading)return;this.isLoading=true;this.errorMessage='';this.auth.login(this.usuario_login,this.usuario_password).subscribe(success=>{this.isLoading=false;if(!success)this.errorMessage=this.auth.loginError;});}
 }
