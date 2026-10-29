@@ -1,7 +1,12 @@
+import { MatDialog } from '@angular/material/dialog';
+import { CadastroDialogComponent } from '../../cadastros/cadastro-dialog.component';
+import { Cadastro, TipoCadastro } from 'src/app/shared/services/cadastros.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { finalize, timeout } from 'rxjs/operators';
 import { Produto } from 'src/app/shared/models/produto.model';
 import { Categoria } from 'src/app/shared/models/categoria.model';
@@ -28,6 +33,9 @@ export class ProdutosCreateDialogComponent implements OnInit {
   optionsError = false;
   saving = false;
   error = '';
+  legadoInvalido=false;
+  precoCompra=this.fb.control('',[(c:AbstractControl)=>!c.value||(/^\d+([.,]\d{1,2})?$/.test(c.value)&&Number(String(c.value).replace(',','.'))<=1e10)?null:{preco:true}]);
+  precoVenda=this.fb.control('',[(c:AbstractControl)=>!c.value||(/^\d+([.,]\d{1,2})?$/.test(c.value)&&Number(String(c.value).replace(',','.'))<=1e10)?null:{preco:true}]);
   form = this.fb.group({
     produto_descricao: [this.data?.produto_descricao || '', [Validators.required, Validators.maxLength(200), nomeValido]],
     produto_codigo_barras: [this.data?.produto_codigo_barras || '', Validators.maxLength(80)],
@@ -37,7 +45,7 @@ export class ProdutosCreateDialogComponent implements OnInit {
     produto_quantidade_estoque: [this.data?.produto_quantidade_estoque ?? 0, [Validators.required, quantidadeValida]],
     produto_data_validade: [String(this.data?.produto_data_validade || '').slice(0,10), dataValida],
   });
-  constructor(private fb: FormBuilder, private ref: MatDialogRef<ProdutosCreateDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: Produto | null, private categoriaService: CategoriaService, private unidadeService: UnidadeService, private service: ProdutoService, private fornecedorService: FornecedorService) {}
+  constructor(private fb: FormBuilder, private dialog: MatDialog, private http: HttpClient, private ref: MatDialogRef<ProdutosCreateDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: Produto | null, private categoriaService: CategoriaService, private unidadeService: UnidadeService, private service: ProdutoService, private fornecedorService: FornecedorService) {}
   ngOnInit(): void {
     if (this.data) {
       this.form.controls.produto_quantidade_estoque.clearValidators();
@@ -47,13 +55,23 @@ export class ProdutosCreateDialogComponent implements OnInit {
   }
   carregarOpcoes(): void {
     this.loading = true; this.optionsError = false;
-    forkJoin({ categorias: this.categoriaService.getCategorias(), unidades: this.unidadeService.getUnidades(), fornecedores: this.fornecedorService.getFornecedores() }).pipe(timeout(15000), finalize(() => this.loading = false)).subscribe({
-      next: data => { this.categorias = data.categorias; this.unidades = data.unidades; this.fornecedores = data.fornecedores; },
+    forkJoin({ categorias: this.categoriaService.getCategorias(), unidades: this.unidadeService.getUnidades(), fornecedores: this.fornecedorService.getFornecedores(), precos:this.data?.produto_id?this.http.get<{compra_centavos:number|null;venda_centavos:number|null;legado_invalido:boolean}>(`${environment.apiurl}/produto/${this.data.produto_id}/precos`):of({compra_centavos:null,venda_centavos:null,legado_invalido:false}) }).pipe(timeout(15000), finalize(() => this.loading = false)).subscribe({
+      next: data => { this.categorias = data.categorias; this.unidades = data.unidades; this.fornecedores = data.fornecedores; if(!this.precoCompra.dirty&&!this.precoVenda.dirty){this.precoCompra.setValue(data.precos.compra_centavos===null?'':(data.precos.compra_centavos/100).toFixed(2));this.precoVenda.setValue(data.precos.venda_centavos===null?'':(data.precos.venda_centavos/100).toFixed(2));this.legadoInvalido=data.precos.legado_invalido;} },
       error: () => this.optionsError = true,
     });
   }
+  cadastro(tipo:'categorias'|'unidades',editar=false):void {
+    const id=tipo==='categorias'?this.form.value.produto_categoria_id:this.form.value.produto_unidade_id;
+    const nome=tipo==='categorias'?this.categorias.find(c=>c.categoria_id===id)?.categoria_descricao:this.unidades.find(u=>u.unidade_id===id)?.unidade_descricao;
+    if(editar&&!id)return;
+    this.dialog.open(CadastroDialogComponent,{width:'520px',maxWidth:'95vw',data:{tipo,excluir:false,...(editar?{registro:{id,nome,total_vinculos:0}}:{})}}).afterClosed().subscribe((saved:Cadastro|undefined)=>{
+      if(!saved||!saved.id)return;
+      if(tipo==='categorias'){this.categorias=this.categorias.filter(c=>c.categoria_id!==saved.id).concat([{categoria_id:saved.id,categoria_descricao:saved.nome}]);this.form.patchValue({produto_categoria_id:saved.id});}
+      else{this.unidades=this.unidades.filter(u=>u.unidade_id!==saved.id).concat([{unidade_id:saved.id,unidade_descricao:saved.nome}]);this.form.patchValue({produto_unidade_id:saved.id});}
+    });
+  }
   salvar(): void {
-    if (this.form.invalid || this.saving || this.loading || this.optionsError) { this.form.markAllAsTouched(); return; }
+    if (this.precoCompra.invalid || this.precoVenda.invalid || this.form.invalid || this.saving || this.loading || this.optionsError) { this.form.markAllAsTouched(); return; }
     this.error = '';
     const values = this.form.getRawValue();
     const dados = {
@@ -64,6 +82,10 @@ export class ProdutosCreateDialogComponent implements OnInit {
       produto_data_validade: values.produto_data_validade || null,
       produto_codigo_barras: values.produto_codigo_barras?.trim() || null,
     } as unknown as Partial<Produto>;
+    if(this.precoCompra.dirty||this.precoVenda.dirty){
+      const cents=(v:string|null)=>v?Math.round(Number(v.replace(',','.'))*100):null;
+      Object.assign(dados,{produto_precos:{compra_centavos:cents(this.precoCompra.value),venda_centavos:cents(this.precoVenda.value)}});
+    }
     const request = this.data?.produto_id
       ? this.service.patchProduto(this.data.produto_id, dados)
       : this.service.createNewProduto({ ...dados, produto_quantidade_estoque: values.produto_quantidade_estoque, produto_estado: true } as Produto);

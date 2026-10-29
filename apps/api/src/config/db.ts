@@ -128,6 +128,13 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 5) {
   } catch(error) { db.exec("ROLLBACK"); throw error; }
 }
 
+// Explicit stock operation permission; existing consultation accounts keep read-only access.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 6) {
+  db.exec("BEGIN IMMEDIATE");
+  try { db.exec("ALTER TABLE pi2_usuarios ADD COLUMN usuario_operar_estoque INTEGER NOT NULL DEFAULT 0 CHECK(usuario_operar_estoque IN (0,1)); PRAGMA user_version=6; COMMIT;"); }
+  catch(error) {db.exec("ROLLBACK");throw error;}
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;
@@ -148,7 +155,7 @@ if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   }
 }
 
-const booleanColumns = new Set(["produto_estado", "usuario_status"]);
+const booleanColumns = new Set(["produto_estado", "usuario_status", "usuario_operar_estoque"]);
 const query = (sql: string, values: unknown[] = []): { rows: any[] } => {
     // Preserve the existing model API while binding each placeholder by its number.
     const bindings: SQLInputValue[] = [];

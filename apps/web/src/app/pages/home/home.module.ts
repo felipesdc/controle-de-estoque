@@ -1,3 +1,4 @@
+import { OperarEstoqueComponent } from './movimentacoes/operar-estoque.component';
 import { PedidosComponent } from './pedidos/pedidos.component';
 import { ProdutoStatusDialogComponent } from './produtos/produto-status-dialog.component';
 import { CadastrosComponent } from './cadastros/cadastros.component';
@@ -25,6 +26,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   ],
   declarations: [
     HomeComponent,
+    OperarEstoqueComponent,
     PedidosComponent,
     CadastrosComponent,
     CadastroDialogComponent,

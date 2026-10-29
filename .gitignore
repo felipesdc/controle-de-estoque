@@ -11,3 +11,5 @@ data/
 *.sqlite-wal
 .DS_Store
 backup-estoque/
+
+backups/

@@ -29,7 +29,7 @@ export function listarUsuarios(params:Record<string,unknown>){
 }
 export function salvarUsuario(body:unknown,actorId:number,value?:unknown,legado=false){
   if(!body||typeof body!=='object'||Array.isArray(body))throw new EstoqueError(400,'Dados do usuário inválidos.');
-  const userId=value===undefined?undefined:id(value);const allowed=['usuario_nome','usuario_email','usuario_nome_completo','usuario_password','usuario_perfil_id','usuario_status'];
+  const userId=value===undefined?undefined:id(value);const allowed=['usuario_nome','usuario_email','usuario_nome_completo','usuario_password','usuario_perfil_id','usuario_status','usuario_operar_estoque'];
   const data:Record<string,any>={};
   for(const [field,val] of Object.entries(body)){if(!allowed.includes(field)){if(legado)continue;throw new EstoqueError(400,'Campo de usuário não permitido.');}data[field]=val;}
   for(const field of ['usuario_nome','usuario_email','usuario_nome_completo']){
@@ -40,6 +40,7 @@ export function salvarUsuario(body:unknown,actorId:number,value?:unknown,legado=
   if(data.usuario_nome!==undefined&&!/^[A-Za-z0-9._-]{3,50}$/.test(data.usuario_nome))throw new EstoqueError(400,'Usuário deve ter de 3 a 50 letras, números, ponto, hífen ou sublinhado.');
   if(data.usuario_email!==undefined){data.usuario_email=data.usuario_email.toLowerCase();if(data.usuario_email.length>254||!/^[^\s@]+@[^\s@]+$/.test(data.usuario_email))throw new EstoqueError(400,'Informe um e-mail válido.');}
   if(data.usuario_nome_completo?.length>200)throw new EstoqueError(400,'Nome completo deve ter até 200 caracteres.');
+  if(data.usuario_operar_estoque!==undefined&&typeof data.usuario_operar_estoque!=='boolean')throw new EstoqueError(400,'Permissão deve ser verdadeira ou falsa.');
   if(data.usuario_status!==undefined&&typeof data.usuario_status!=='boolean')throw new EstoqueError(400,'Situação deve ser verdadeira ou falsa.');
   if(data.usuario_perfil_id!==undefined)data.usuario_perfil_id=id(data.usuario_perfil_id);
   if(!userId){data.usuario_status??=true;data.usuario_perfil_id??=3;}
@@ -64,7 +65,7 @@ export function salvarUsuario(body:unknown,actorId:number,value?:unknown,legado=
     if(rows.some(u=>u.usuario_id!==userId&&((data.usuario_nome!==undefined&&key(u.usuario_nome)===key(data.usuario_nome))||(data.usuario_email!==undefined&&key(u.usuario_email)===key(data.usuario_email)))))throw new EstoqueError(409,'Usuário ou e-mail já cadastrado.');
     let target=userId;
     if(!target){data.usuario_inscricao=new Date().toISOString();const keys=Object.keys(data);target=execute(`INSERT INTO pi2_usuarios (${keys.join(',')}) VALUES (${keys.map((_,i)=>`$${i+1}`).join(',')}) RETURNING usuario_id`,Object.values(data)).rows[0].usuario_id;}
-    else{const keys=Object.keys(data);execute(`UPDATE pi2_usuarios SET ${keys.map((k,i)=>`${k}=$${i+2}`).join(',')} WHERE usuario_id=$1`,[target,...Object.values(data)]);if(hash||perfil!==current.usuario_perfil_id||ativo!==current.usuario_status)execute('DELETE FROM pi2_sessoes WHERE usuario_id=$1',[target]);}
+    else{const keys=Object.keys(data);execute(`UPDATE pi2_usuarios SET ${keys.map((k,i)=>`${k}=$${i+2}`).join(',')} WHERE usuario_id=$1`,[target,...Object.values(data)]);if(hash||perfil!==current.usuario_perfil_id||ativo!==current.usuario_status||(data.usuario_operar_estoque!==undefined&&data.usuario_operar_estoque!==current.usuario_operar_estoque))execute('DELETE FROM pi2_sessoes WHERE usuario_id=$1',[target]);}
     return publicUser(get(execute,target!));
   });
 }
@@ -86,7 +87,7 @@ export async function entrar(login:unknown,password:unknown){
   if(!user||!matches||!user.usuario_status)throw new EstoqueError(401,'Usuário ou senha inválidos.');
   return pool.transaction(execute=>{const current=get(execute,user.usuario_id);if(!current.usuario_status||current.usuario_password!==user.usuario_password)throw new EstoqueError(401,'Usuário ou senha inválidos.');const now=Math.floor(Date.now()/1000),exp=now+7200,sessao=randomUUID();
     execute('DELETE FROM pi2_sessoes WHERE expira_em <= $1',[now]);
-    const token=jwt.sign({usuario_id:current.usuario_id,usuario_perfil_id:current.usuario_perfil_id},process.env.JWT_SECRET!,{expiresIn:7200,jwtid:sessao});
+    const token=jwt.sign({usuario_id:current.usuario_id,usuario_perfil_id:current.usuario_perfil_id,usuario_operar_estoque:!!current.usuario_operar_estoque},process.env.JWT_SECRET!,{expiresIn:7200,jwtid:sessao});
     execute('INSERT INTO pi2_sessoes (sessao_id,usuario_id,expira_em) VALUES ($1,$2,$3)',[sessao,current.usuario_id,exp]);
     return {token,usuario:publicUser(current),expira_em:exp};});
 }

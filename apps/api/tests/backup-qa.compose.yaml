@@ -1,0 +1,20 @@
+# Disposable restore test. Never references the production volume or credentials.
+name: estoque-backup-qa
+services:
+  api:
+    image: controle-de-estoque-api:latest
+    network_mode: none
+    environment:
+      SQLITE_PATH: /data/backup-qa.sqlite
+      JWT_SECRET: backup-qa-jwt-only-disposable-2026-key
+      ADMIN_PASSWORD: backup-qa-only-password-2026
+      ADMIN_EMAIL: qa@backup.local
+    volumes:
+      - backup-qa-data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 1s
+      timeout: 3s
+      retries: 20
+volumes:
+  backup-qa-data:

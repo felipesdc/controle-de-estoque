@@ -3,7 +3,7 @@
 ## Implementado
 
 - Monorepositório com `apps/web` e `apps/api`, Docker Compose, Nginx e SQLite persistente.
-- Migração incremental da base até a versão 5, preservando saldos, credenciais e registros anteriores.
+- Migração incremental da base até a versão 6, preservando saldos, credenciais e registros anteriores.
 - Entrada e saída com saldo e histórico gravados na mesma transação. Saída sem saldo é rejeitada sem gravar movimento.
 - Quantidades positivas com até três casas decimais e limite de 1 bilhão. Os cálculos de saldo usam milésimos para evitar resíduos de ponto flutuante.
 - Saldo inicial de novos produtos registrado como entrada, junto do cadastro. Alterações posteriores de saldo passam exclusivamente por movimentações.
@@ -90,6 +90,35 @@
 - Recebimentos exigem produto ativo e unidade igual à do pedido. Devoluções aceitam produto inativo, mas exigem a mesma unidade e saldo suficiente. Limites são calculados em milésimos inteiros.
 - Estorno isolado de movimentos de pedidos é bloqueado; histórico direciona para Pedidos. Entregas e devoluções não têm edição, exclusão nem desfazimento nesta etapa.
 
+## Relatório de posição de estoque
+
+- Área Relatórios no menu, com consulta paginada, busca, categoria, situação, saldo, validade e ordenação equivalentes ao catálogo.
+- Resumo calculado sobre toda a seleção, incluindo contagem de ativos/inativos, zerados, abaixo de 5, vencidos com saldo e vencimentos em até 30 dias. Quantidades de unidades diferentes não são somadas e não há avaliação monetária de estoque.
+- Consulta, indicadores e linhas são obtidos em uma transação consistente. A tela mostra o horário de geração e os critérios de validade no calendário de São Paulo.
+- CSV UTF-8 com BOM, separador ponto e vírgula, saldo com três casas e vírgula decimal. Exporta todos os produtos filtrados (até 10.000), independentemente da página, com data de geração e filtros em cada linha.
+- Campos textuais têm escape e proteção contra interpretação como fórmula. Códigos de barras recebem apóstrofo para preservar zeros ao abrir em planilhas; o arquivo não é destinado a reimportação automática sem tratamento.
+- Exportação usa a posição atual no momento do download, podendo diferir de uma consulta anterior se houver movimentações. Filtros alterados precisam ser aplicados antes de exportar. Todos os perfis autenticados podem consultar e exportar.
+- Não há migração de banco nesta etapa. Relatórios de compras, pendências, devoluções e evolução histórica continuam pendentes.
+
+## Operação em tablet e cadastro contextual
+
+- Tela `/home/operar` com busca no servidor por produto, código ou ID, até dez opções, cartões de seleção e controles de toque com altura mínima de 52 px. Entrada/saída, quantidade fracionária e observação são revisadas antes da confirmação.
+- Funcionário autorizado entra diretamente na operação rápida, com menu concentrado em operação e histórico. Consulta sem autorização permanece sem escrita. O acesso de leitura às demais rotas não é removido.
+- Administrador concede `usuario_operar_estoque` por usuário em Gestão de acessos. Permite entradas e saídas, mas não estornos, produtos, cadastros, preços ou pedidos. Mudança revoga sessões. Migração 6 inicia a permissão desativada para todas as contas existentes; administradores e gerentes mantêm sua permissão implícita.
+- Cadastro/edição de produto permite criar categoria ou unidade e editar a selecionada sem fechar o formulário. Criação seleciona o registro automaticamente. Renomear é global e não converte quantidades; avisos explicam esse efeito. Cadastros salvos separadamente permanecem mesmo se o produto for cancelado.
+- Preços de compra e venda opcionais no formulário, enviados em centavos inteiros e persistidos como decimal exato no modelo legado. Alterar preços cria um novo registro associado ao produto, preservando preços compartilhados e valores de pedidos antigos. Falha no produto reverte também a gravação do preço.
+- Preços omitidos na edição são preservados; os dois campos vazios quando alterados removem a associação. Preços legados não reconhecidos são sinalizados, sem conversão automática.
+- Operação rápida exige conexão, revalida autorização e saldo no servidor e mantém a chave de idempotência nas tentativas da mesma operação. Não há fila offline, captura por câmera ou mudança automática de perfil.
+
+## Backup e restauração
+
+- Comando único para backup online consistente, com data UTC, pasta privada, checksum, esquema e contagens/digests de tabelas. Diretório padrão ignorado pelo Git; caminho externo configurável.
+- Cada backup é restaurado e conferido em container sem rede externa, sem portas e sem volume da aplicação principal. A API é iniciada na cópia para verificar saúde e consultas autenticadas, sem precisar de senhas reais.
+- Restauração operacional cria uma cópia de segurança anterior, para a API, consolida o WAL, instala o banco validado e verifica saúde. Falha tenta recuperar automaticamente o banco anterior.
+- Sessões antigas são invalidadas na restauração, preservando senhas, usuários, permissões, saldos e histórico. Arquivos anteriores e backups não são apagados automaticamente.
+- Teste completo em projeto Docker descartável cobre dados de estoque/compras, corrupção, credenciais e rollback. A base real não é restaurada durante a validação.
+- Não há agendamento instalado, retenção, criptografia ou sincronização remota. Procedimento detalhado em `docs/backup.md`.
+
 ## Compatibilidade com a base anterior
 
 Movimentações anteriores à versão 2 são preservadas como histórico legado, sem recalcular o saldo existente e sem inventar responsáveis. Elas não podem ser estornadas, pois o sistema anterior não garantia que tivessem atualizado o saldo. Corrija eventuais diferenças por uma nova entrada ou saída, com observação explicativa.
@@ -103,6 +132,6 @@ Os perfis 1 e 2 seguem a convenção já usada pelo frontend: administrador e ge
 3. Atualizar dependências vulneráveis e revisar o Swagger, ainda com contratos antigos. As novas operações estão documentadas no README.
 4. Definir unidades e valores monetários em centavos; as quantidades agora têm precisão explícita, mas os contratos de preço continuam legados.
 5. Melhorar seleções de produtos e responsáveis com busca remota conforme o volume de dados.
-6. Verificar restauração de backup e adicionar exportação de relatórios.
+6. Ampliar relatórios e exportação para compras, pendências e devoluções; definir rotina de agendamento e cópia externa dos backups.
 
 As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A aproximação visual deve ser feita quando seus códigos ou referências estiverem disponíveis.

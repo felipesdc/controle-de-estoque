@@ -1,0 +1,45 @@
+const assert=require('node:assert/strict');const {spawn}=require('node:child_process');
+const child=spawn(process.execPath,['/app/dist/app.js'],{env:{...process.env,PORT:'3110',SQLITE_PATH:':memory:'},stdio:['ignore','ignore','inherit']});
+(async()=>{
+ const base='http://127.0.0.1:3110/v1';for(let i=0;i<100;i++){try{if((await fetch('http://127.0.0.1:3110/health')).ok)break;}catch{}if(i===99)throw Error('API not ready');await new Promise(r=>setTimeout(r,100));}
+ let admin;async function req(path,method='GET',body,token=admin,key){const r=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`} : {}),...(key?{'Idempotency-Key':key}:{})},body:body===undefined?undefined:JSON.stringify(body)});return{status:r.status,data:r.status===204?null:await r.json()};}
+ const login=async(name,password)=>{const r=await req('/usuario/login','POST',{usuario_login:name,usuario_password:password});assert.equal(r.status,200);return r.data.token;};
+ admin=await login('admin',process.env.ADMIN_PASSWORD);
+ const cat=await req('/cadastros/categorias','POST',{nome:'Categoria contextual'}),unit=await req('/cadastros/unidades','POST',{nome:'kg'});
+ assert.equal(cat.status,201);assert.equal(unit.status,201);
+ const payload={produto_descricao:'Produto contextual',produto_categoria_id:cat.data.id,produto_unidade_id:unit.data.id,produto_quantidade_estoque:3,produto_precos:{compra_centavos:1299,venda_centavos:1999}};
+ let p=await req('/produto','POST',payload);assert.equal(p.status,201,JSON.stringify(p));const pid=p.data.produto_id,oldPrice=p.data.produto_preco_id;
+ assert.deepEqual((await req(`/produto/${pid}/precos`)).data,{compra_centavos:1299,venda_centavos:1999,legado_invalido:false});
+ const countPrices=(await req('/preco')).data.length;assert.equal((await req('/produto','POST',{...payload,produto_descricao:'Inválido',produto_unidade_id:999})).status,400);assert.equal((await req('/preco')).data.length,countPrices,'failed product rolls back contextual price');
+ assert.equal((await req('/produto','POST',{...payload,produto_preco_id:oldPrice})).status,400);
+ const second=await req('/produto','POST',{produto_descricao:'Compartilhado',produto_preco_id:oldPrice});assert.equal(second.status,201);
+ let edited=await req('/produto/'+pid,'PATCH',{produto_precos:{compra_centavos:1400,venda_centavos:2050}});assert.equal(edited.status,200);assert.notEqual(edited.data.produto_preco_id,oldPrice);assert.equal(edited.data.produto_quantidade_estoque,3);
+ assert.equal((await req(`/produto/${second.data.produto_id}/precos`)).data.compra_centavos,1299,'editing price does not change shared price');
+ assert.equal((await req('/produto/'+pid,'PATCH',{produto_precos:{compra_centavos:-1,venda_centavos:null}})).status,400);
+ assert.equal((await req('/produto/'+pid,'PATCH',{produto_precos:{compra_centavos:1.5,venda_centavos:null}})).status,400);
+ assert.equal((await req('/produto/'+pid,'PATCH',{produto_precos:{compra_centavos:1e13,venda_centavos:null}})).status,400);
+ assert.equal((await req('/produto/'+pid,'PATCH',{produto_precos:{compra_centavos:1,venda_centavos:null},produto_preco_id:oldPrice})).status,400);
+ assert.equal((await req('/produto/'+pid,'PATCH',{produto_precos:{compra_centavos:null,venda_centavos:null}})).data.produto_preco_id,null);
+ await req('/cadastros/categorias/'+cat.data.id,'PATCH',{nome:'Categoria renomeada'});assert.equal((await req('/catalogo/produtos?q=Produto%20contextual')).data.itens[0].produto_categoria,'Categoria renomeada');
+ const userBody={usuario_nome:'funcionario',usuario_nome_completo:'Funcionário QA',usuario_email:'funcionario@test.local',usuario_password:'funcionario-qa-2026',usuario_perfil_id:3,usuario_status:true};
+ const user=await req('/acessos/usuarios','POST',userBody);assert.equal(user.status,201);assert.equal(user.data.usuario_operar_estoque,false);
+ let worker=await login('funcionario',userBody.usuario_password);
+ const move={movimento_produto_id:pid,movimento_tipo:'saida',movimento_quantidade:1.25};
+ assert.equal((await req('/movimentacao-estoque','POST',move,worker,'tablet-sem-acesso-01')).status,403);
+ assert.equal((await req('/acessos/usuarios/'+user.data.usuario_id,'PATCH',{usuario_operar_estoque:true},worker)).status,403);
+ assert.equal((await req('/acessos/usuarios/'+user.data.usuario_id,'PATCH',{usuario_operar_estoque:true})).status,200);
+ assert.equal((await req('/sessao','GET',undefined,worker)).status,401,'permission change revokes session');
+ worker=await login('funcionario',userBody.usuario_password);
+ const saida=await req('/movimentacao-estoque','POST',move,worker,'tablet-saida-unica01');assert.equal(saida.status,201);assert.equal(saida.data.movimento_saldo_posterior,1.75);
+ const repeated=await req('/movimentacao-estoque','POST',move,worker,'tablet-saida-unica01');assert.equal(repeated.status,201);assert.equal(repeated.data.movimento_id,saida.data.movimento_id);
+ assert.equal((await req('/movimentacao-estoque','POST',{...move,movimento_tipo:'entrada',movimento_quantidade:.25},worker,'tablet-entrada-0001')).status,201);
+ assert.equal((await req(`/movimentacao-estoque/${saida.data.movimento_id}/estorno`,'POST',{motivo:'Não autorizado'},worker,'tablet-estorno-negado')).status,403);
+ assert.equal((await req('/produto','POST',{produto_descricao:'Bloqueado'},worker)).status,403);
+ assert.equal((await req('/cadastros/unidades','POST',{nome:'Bloqueada'},worker)).status,403);
+ assert.equal((await req('/produto/'+pid,'PATCH',{produto_precos:{compra_centavos:100,venda_centavos:100}},worker)).status,403);
+ assert.equal((await req('/compras/pedidos','POST',{},worker,'tablet-pedido-negado')).status,403);
+ await req('/acessos/usuarios/'+user.data.usuario_id,'PATCH',{usuario_operar_estoque:false});
+ assert.equal((await req('/movimentacao-estoque','POST',move,worker,'tablet-revogado-001')).status,401);
+ worker=await login('funcionario',userBody.usuario_password);assert.equal((await req('/movimentacao-estoque','POST',move,worker,'tablet-revogado-002')).status,403);
+ console.log('PASS: contextual relations and price isolation, money validation, stock preservation, explicit employee permission, session revocation, exact retry and manager-only management/reversals.');
+})().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>child.kill());

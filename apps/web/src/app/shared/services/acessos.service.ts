@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient,HttpParams } from '@angular/common/http';
 import { timeout } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-export interface UsuarioAcesso {usuario_id:number;usuario_nome:string;usuario_email:string;usuario_nome_completo:string;usuario_perfil_id:number;usuario_perfil_nome:string;usuario_status:boolean;usuario_inscricao:string;}
+export interface UsuarioAcesso {usuario_operar_estoque:boolean;usuario_id:number;usuario_nome:string;usuario_email:string;usuario_nome_completo:string;usuario_perfil_id:number;usuario_perfil_nome:string;usuario_status:boolean;usuario_inscricao:string;}
 export interface PerfilAcesso {perfil_id:number;perfil_nome:string;nivel:string;protegido:boolean;usuarios:number;}
 export interface PaginaUsuarios {itens:UsuarioAcesso[];total:number;pagina:number;tamanho:number;}
 @Injectable({providedIn:'root'})

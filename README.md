@@ -26,15 +26,26 @@ A API cria o esquema versionado e um administrador somente na primeira inicializ
 
 O arquivo `/data/estoque.sqlite` fica no volume nomeado `estoque-data` do Compose, juntamente com os arquivos WAL. O banco usa chaves estrangeiras e índices nas relações. Reiniciar ou reconstruir os containers preserva os dados. `docker compose down -v` **apaga a base**.
 
-Para backup consistente, pare a API e copie o diretório completo:
+Backup consistente com a API em execução:
 
 ```sh
-docker compose stop api
-docker compose cp api:/data ./backup-estoque
-docker compose start api
+./scripts/backup.sh
 ```
 
-Guarde o backup fora do repositório. Restaure com a API parada, copiando os arquivos de volta e mantendo a permissão de escrita do usuário `node`.
+O comando cria um diretório com data em `backups/` (ignorado pelo Git), banco SQLite e manifesto SHA-256; também verifica a restauração em um container isolado. Para guardar em outro local, defina `BACKUP_DIR` para um diretório dedicado.
+
+```sh
+./scripts/verificar-backup.sh "backups/estoque-DATA-SUFIXO"
+./scripts/restaurar-backup.sh "backups/estoque-DATA-SUFIXO"
+```
+
+A restauração substitui a base atual, cria antes um backup de segurança, para a API durante a troca e exige novo login. Em falha de saúde, tenta recuperar o banco anterior. Execute em janela de manutenção. Nenhuma restauração da base principal é feita automaticamente pelo teste.
+
+```sh
+./scripts/testar-backup.sh
+```
+
+Veja [procedimento completo, verificações e recuperação](docs/backup.md). O backup não inclui `.env`, código nem imagem da aplicação; não há retenção automática ou envio a outro disco/nuvem.
 
 ## Desenvolvimento
 
@@ -306,3 +317,61 @@ docker compose exec -T api node < apps/api/tests/entregas-migracao.cjs
 ```
 
 Na base descartável de QA, após `seed-pedidos-qa.cjs`, execute `seed-entregas-qa.cjs` para preparar um pedido confirmado com dois itens pendentes para conferência visual. Essa fixture exige a base temporária de QA e não funciona no banco principal.
+
+
+## Relatório de estoque e CSV
+
+Abra http://localhost:8080/home/relatorios ou use **Relatórios** no menu. Todos os usuários autenticados podem consultar e exportar. O relatório mostra a posição atual, com filtros de produto/código/ID, situação, categoria, estoque e validade. Os critérios são compartilhados com o catálogo: estoque baixo abaixo de 5 (inclui zerados), vencidos e vencimentos em até 30 dias somente com saldo, usando o calendário de São Paulo.
+
+Os indicadores correspondem à seleção inteira, e a tabela tem páginas de 10, 25 ou 50 produtos. Não há soma de quantidades de unidades distintas, valoração monetária ou reconstrução de estoque histórico. Falhas são exibidas sem manter uma lista anterior associada aos filtros novos.
+
+**Exportar CSV** baixa toda a seleção, não apenas a página. São permitidos até 10.000 produtos; acima disso, refine os filtros. Filtros editados devem ser aplicados antes da exportação. Cada consulta/download usa sua própria transação consistente; movimentações entre a consulta e o download podem alterar os resultados.
+
+O CSV usa UTF-8 com BOM, ponto e vírgula, células entre aspas, quebra CRLF e saldo com três casas e vírgula decimal. Cada linha inclui horário UTC da exportação, referência de São Paulo, janela de vencimento, limite de estoque baixo e filtros aplicados. Exportação vazia contém somente os cabeçalhos. Textos potencialmente interpretáveis como fórmulas são prefixados por apóstrofo, e códigos de barras também recebem esse prefixo para preservar zeros. Esses prefixos podem ficar visíveis conforme a ferramenta de importação; o arquivo é de consulta e não um formato de reimportação automática.
+
+API:
+
+- `GET /v1/relatorios/estoque`: mesmos parâmetros do catálogo (`q`, `estado`, `estoque`, `vencimento`, `categoria`, `ordem`, `direcao`, `pagina`, `tamanho`). Retorna catálogo paginado com `resumo`, `gerado_em`, `filtros` e `criterios`. O resumo vale para todo o filtro, independentemente da página.
+- `GET /v1/relatorios/estoque.csv`: mesmos filtros; paginação é validada, mas não limita o arquivo. Retorna anexo `estoque.csv`. Ambos exigem autenticação e retornam `Cache-Control: no-store`. Filtros inválidos ou exportação acima do limite retornam 400 em JSON.
+
+Testes isolados:
+
+```sh
+docker compose exec -T -e SQLITE_PATH=:memory: api node < apps/api/tests/relatorios.cjs
+docker compose exec -T api node < apps/api/tests/relatorios-http.cjs
+```
+
+Relatórios de compras, pendências e devoluções serão acrescentados em outra etapa. A atualização de dependências, revisão do Swagger e teste de restauração do backup continuam no plano de consolidação.
+
+
+## Operação simples para tablet
+
+Abra http://localhost:8080/home/operar. Selecione um produto pela busca (nome, código ou ID), escolha **Retirar · Saída** ou **Repor · Entrada**, informe a quantidade e revise antes de confirmar. A tela exibe saldo consultado e saldo previsto; o servidor revalida o saldo na confirmação. Botões maiores e menu recolhível facilitam o toque. A busca mostra até dez opções e pede refinamento para catálogos maiores.
+
+Para um funcionário, entre como administrador em **Administração → Usuários** e habilite **Autorizar entradas e saídas de estoque** na conta. Essa autorização não concede estornos, produtos, preços, cadastros ou pedidos. Ao entrar, o funcionário autorizado é direcionado à operação rápida, com menu de operação/histórico. A alteração da autorização encerra as sessões da conta. Perfis de consulta continuam somente leitura enquanto a opção estiver desativada. Não há necessidade de criar um perfil por nome nem reutilizar um ID fixo de perfil.
+
+A migração SQLite 6 adiciona `usuario_operar_estoque`, inicialmente falso para contas existentes. Administradores e gerentes continuam podendo movimentar. O servidor verifica a autorização atual em cada pedido e novamente na transação de movimentação. O endpoint de estorno continua exclusivo de gestores. A permissão pode ser definida nos endpoints administrativos de usuário; só administradores podem modificá-la, e valores não booleanos são rejeitados.
+
+É necessário estar conectado. O fluxo não guarda operações offline. Falhas mantêm os dados e a chave da operação para tentativa sem duplicação enquanto a tela permanecer aberta. Busca por código aceita digitação e leitores que funcionam como teclado; captura por câmera ainda não está implementada.
+
+## Categorias, unidades e preços durante o cadastro
+
+No formulário **Novo produto** ou **Editar produto**, use **Nova** ou **Editar selecionada** junto a Categoria/Unidade. O formulário principal permanece preenchido e o registro criado é selecionado automaticamente. Essas ações salvam um cadastro independente: cancelar depois o produto não remove a categoria/unidade criada. Renomear altera o rótulo em todos os registros associados e não converte saldos; para outra unidade de medida, crie um novo cadastro em vez de renomear a unidade compartilhada.
+
+Preços de compra/venda em reais são opcionais e aceitam duas casas decimais, com ponto ou vírgula. Máximo de R$ 10 bilhões por valor. Ao salvar, os valores são validados como centavos inteiros e gravados com duas casas no armazenamento legado. Alterar preços associa um novo registro ao produto, sem mudar outros produtos que compartilhavam o preço nem os valores históricos de pedidos. Preço e produto são salvos na mesma transação.
+
+Campos de preço não alterados preservam a associação existente. Alterar os campos para vazio remove a associação; zero é um preço válido e diferente de vazio. Valores antigos em formato não reconhecido geram aviso e permanecem intactos quando não editados. Ao substituir valores antigos, confira os dois campos, pois o par é atualizado em conjunto. O CRUD antigo de preços ainda existe; a edição contextual evita sua alteração compartilhada.
+
+API complementar:
+
+- `GET /v1/produto/:id/precos`, administrador/gerente: `{compra_centavos, venda_centavos, legado_invalido}`.
+- `POST /v1/produto` e `PATCH /v1/produto/:id` aceitam `produto_precos: {compra_centavos: inteiro|null, venda_centavos: inteiro|null}`. Ambos os campos são obrigatórios dentro do objeto, com limite de 1 trilhão de centavos; o objeto omitido mantém o comportamento anterior. Não pode ser enviado junto com `produto_preco_id`.
+- Categorias/unidades usam os endpoints já existentes de cadastros, com as mesmas validações e permissões. Funcionários autorizados a movimentar não podem gravar esses cadastros.
+
+Teste integrado isolado:
+
+```sh
+docker compose exec -T api node < apps/api/tests/tablet-produtos-http.cjs
+```
+
+Na base de QA, execute `seed-dashboard-qa.cjs` e depois `seed-tablet-qa.cjs` para preparar produtos e o funcionário `funcionario` / `funcionario-tablet-2026`, exclusivo dessa instância temporária. Nenhuma conta real recebe autorização automaticamente.

@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
-interface Claims { usuario_id:number;usuario_perfil_id:number;exp:number;jti:string; }
+interface Claims { usuario_operar_estoque?:boolean; usuario_id:number;usuario_perfil_id:number;exp:number;jti:string; }
 @Injectable({providedIn:'root'})
 export class SessionStateService implements OnDestroy {
   private value:string|null=null;

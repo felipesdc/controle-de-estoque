@@ -21,7 +21,7 @@ export class CadastroDialogComponent {
     const payload={nome:values.nome!.trim(),...(this.data.tipo==='fornecedores'?{contato:values.contato?.trim()||'',endereco:values.endereco?.trim()||''}:{})};
     const request: Observable<Cadastro | void>=this.data.excluir?this.service.excluir(this.data.tipo,this.data.registro!.id):this.service.salvar(this.data.tipo,payload,this.data.registro?.id);
     this.saving=true;this.error='';this.ref.disableClose=true;this.form.disable({emitEvent:false});
-    request.pipe(finalize(()=>{this.saving=false;this.ref.disableClose=false;this.form.enable({emitEvent:false});})).subscribe({next:()=>this.ref.close(true),error:err=>this.error=err.error?.message||'Não foi possível concluir. Seus dados foram mantidos neste formulário.'});
+    request.pipe(finalize(()=>{this.saving=false;this.ref.disableClose=false;this.form.enable({emitEvent:false});})).subscribe({next:saved=>this.ref.close(saved || true),error:err=>this.error=err.error?.message||'Não foi possível concluir. Seus dados foram mantidos neste formulário.'});
   }
   cancelar():void{if(!this.saving)this.ref.close();}
 }

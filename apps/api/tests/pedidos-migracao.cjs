@@ -12,7 +12,7 @@ try{
  INSERT INTO pi2_historico_estados_pedido(historico_pedido_id,historico_estado_id,historico_observacao) VALUES(1,1,'Registro anterior');
  PRAGMA user_version=1;`);db.close();
  const child=spawnSync(process.execPath,['-e',"require('/app/dist/config/db')"],{env:{...process.env,SQLITE_PATH:path},encoding:'utf8'});assert.equal(child.status,0,child.stderr);
- const migrated=new DatabaseSync(path);assert.equal(migrated.prepare('PRAGMA user_version').get().user_version,5);
+ const migrated=new DatabaseSync(path);assert.equal(migrated.prepare('PRAGMA user_version').get().user_version,6);
  const order=migrated.prepare('SELECT * FROM pi2_pedidos').get();assert.equal(order.pedido_fluxo,null);assert.equal(order.pedido_total,123.45);assert.equal(order.pedido_estado_id,1);assert.equal(order.pedido_total_centavos,null);
  assert.equal(migrated.prepare('SELECT produto_quantidade_estoque AS saldo FROM pi2_produtos').get().saldo,15);
  assert.equal(migrated.prepare('SELECT COUNT(*) AS n FROM pi2_movimentos_estoque').get().n,0);

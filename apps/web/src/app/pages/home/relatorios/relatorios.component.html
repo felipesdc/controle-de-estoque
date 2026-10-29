@@ -1,1 +1,27 @@
-<p>relatorios works!</p>
+<section>
+ <header><div><span class="eyebrow">CONSULTA E EXPORTAÇÃO</span><h1>Relatório de estoque</h1><p>Consulte a posição atual dos produtos e exporte a seleção para uma planilha.</p></div><button mat-raised-button color="primary" (click)="exportar()" [disabled]="loading || exporting || !relatorio || filtrosAlterados || (relatorio.total>10000)"><mat-icon>download</mat-icon>{{exporting?'Exportando…':'Exportar CSV'}}</button></header>
+ <form [formGroup]="filtros" (ngSubmit)="aplicar()" class="filters">
+  <mat-form-field appearance="outline"><mat-label>Produto, código ou ID</mat-label><input matInput formControlName="q" maxlength="100"></mat-form-field>
+  <mat-form-field appearance="outline"><mat-label>Situação</mat-label><mat-select formControlName="estado"><mat-option value="ativos">Ativos</mat-option><mat-option value="inativos">Inativos</mat-option><mat-option value="todos">Todos</mat-option></mat-select></mat-form-field>
+  <mat-form-field appearance="outline"><mat-label>Estoque</mat-label><mat-select formControlName="estoque"><mat-option value="todos">Todos</mat-option><mat-option value="baixo">Abaixo de 5 (inclui zerados)</mat-option><mat-option value="zerado">Zerado</mat-option><mat-option value="disponivel">Com saldo</mat-option></mat-select></mat-form-field>
+  <mat-form-field appearance="outline"><mat-label>Validade</mat-label><mat-select formControlName="vencimento"><mat-option value="todos">Todas</mat-option><mat-option value="vencido">Vencidos com saldo</mat-option><mat-option value="em_breve">Vencem em até 30 dias com saldo</mat-option><mat-option value="sem_validade">Não informada ou inválida</mat-option></mat-select></mat-form-field>
+  <mat-form-field appearance="outline"><mat-label>Categoria</mat-label><mat-select formControlName="categoria"><mat-option value="">Todas</mat-option><mat-option value="sem">Sem categoria</mat-option><mat-option *ngFor="let c of categorias" [value]="''+c.categoria_id">{{c.categoria_descricao}}</mat-option></mat-select></mat-form-field>
+  <mat-form-field appearance="outline"><mat-label>Ordenar por</mat-label><mat-select formControlName="ordem"><mat-option value="nome">Nome</mat-option><mat-option value="saldo">Saldo</mat-option><mat-option value="validade">Validade</mat-option><mat-option value="recentes">Cadastro mais recente</mat-option></mat-select></mat-form-field>
+  <div class="actions"><button mat-stroked-button type="submit" [disabled]="loading || exporting">Aplicar filtros</button><button mat-button type="button" (click)="limpar()" [disabled]="loading || exporting">Limpar</button></div>
+ </form>
+ <p class="notice" role="status" *ngIf="filtrosAlterados">Há filtros alterados. Aplique para atualizar o relatório e habilitar a exportação.</p>
+ <p class="notice" *ngIf="opcoesError">Não foi possível carregar as categorias. Os demais filtros continuam disponíveis.</p>
+ <p role="alert" class="error" *ngIf="error">{{error}} <button mat-button (click)="carregar()">Tentar novamente</button></p>
+ <p role="alert" class="error" *ngIf="exportError">{{exportError}}</p>
+ <p role="status" *ngIf="loading">Gerando relatório…</p>
+ <ng-container *ngIf="relatorio as r">
+  <p class="meta">Consulta de {{r.gerado_em | date:'dd/MM/yyyy HH:mm:ss':'-0300'}} (São Paulo). Indicadores correspondem a todos os produtos da seleção.</p>
+  <div class="summary"><article><span>Produtos</span><strong>{{r.resumo.produtos}}</strong><small>Ativos: {{r.resumo.ativos}} · Inativos: {{r.resumo.inativos}}</small></article><article><span>Estoque abaixo de 5</span><strong>{{r.resumo.baixos}}</strong><small>Zerados: {{r.resumo.zerados}}</small></article><article><span>Vencidos com saldo</span><strong>{{r.resumo.vencidos}}</strong></article><article><span>Vencem em até 30 dias</span><strong>{{r.resumo.vencem_em_breve}}</strong><small>Com saldo disponível</small></article></div>
+  <p class="meta">Referência: {{r.criterios.data_referencia | date:'dd/MM/yyyy':'UTC'}}. Janela de vencimento até {{r.criterios.vencimento_ate | date:'dd/MM/yyyy':'UTC'}}. Quantidades são exibidas por produto e unidade, sem somar unidades diferentes.</p>
+  <p class="notice" *ngIf="r.total>10000">Refine os filtros para exportar até 10.000 produtos.</p>
+  <p class="meta">O CSV inclui toda a seleção e usa os dados atuais no momento da exportação. Pode haver diferenças se o estoque mudar após esta consulta.</p>
+  <p *ngIf="!r.total">Nenhum produto encontrado para os filtros aplicados.</p>
+  <div class="table-wrap" *ngIf="r.total"><table><caption>Posição de estoque · Produtos na seleção: {{r.total}}</caption><thead><tr><th>Produto / código</th><th>Categoria</th><th>Unidade</th><th>Situação</th><th>Saldo</th><th>Validade</th></tr></thead><tbody><tr *ngFor="let p of r.itens"><td><strong>{{p.produto_descricao}}</strong><small>#{{p.produto_id}} · {{p.produto_codigo_barras || 'Sem código'}}</small></td><td>{{p.produto_categoria || 'Sem categoria'}}</td><td>{{p.produto_unidade || 'Não informada'}}</td><td>{{p.produto_estado?'Ativo':'Inativo'}}</td><td>{{(p.produto_quantidade_estoque || 0) | number:'1.0-3'}}</td><td>{{p.validade_catalogo ? (p.validade_catalogo | date:'dd/MM/yyyy':'UTC') : 'Não informada ou inválida'}}</td></tr></tbody></table></div>
+  <mat-paginator [length]="r.total" [pageIndex]="pagina-1" [pageSize]="tamanho" [pageSizeOptions]="[10,25,50]" [disabled]="loading || exporting || filtrosAlterados" showFirstLastButtons (page)="paginar($event)" aria-label="Paginação do relatório"></mat-paginator>
+ </ng-container>
+</section>

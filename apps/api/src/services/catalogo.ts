@@ -1,8 +1,11 @@
+import { gravarPrecosProduto } from './precos-produto';
 import pool from "../config/db";
 import { EstoqueError } from "./estoque";
 import { periodoValidade, validadeSql as validade, dataValidaSql as dataValida } from "./datas";
 
-export function getCatalogo(input: Record<string, unknown>, now = new Date()) {
+export function getCatalogo(input: Record<string, unknown>, now = new Date()) { return consultarCatalogo(input,now,'catalogo'); }
+export function getRelatorioEstoque(input: Record<string, unknown>, now = new Date(), exportar = false) { return consultarCatalogo(input,now,exportar?'csv':'relatorio'); }
+function consultarCatalogo(input: Record<string, unknown>, now: Date, modo: 'catalogo'|'relatorio'|'csv') {
   const text = (name: string, fallback = "") => {
     const value = input[name] ?? fallback;
     if (typeof value !== "string") throw new EstoqueError(400, `Parâmetro ${name} inválido.`);
@@ -52,6 +55,15 @@ export function getCatalogo(input: Record<string, unknown>, now = new Date()) {
   const order = `${ordem === "validade" ? `CASE WHEN ${dataValida} THEN 0 ELSE 1 END ASC,` : ""} ${orders[ordem as keyof typeof orders]} ${direcao.toUpperCase()}, p.produto_id ASC`;
   return pool.transaction(execute => {
     const total = execute(`SELECT COUNT(*) AS total FROM pi2_produtos p ${where}`, values).rows[0].total;
+    if(modo==='csv' && total>10000) throw new EstoqueError(400,'A exportação permite até 10.000 produtos. Refine os filtros.');
+    const resumo=modo==='catalogo'?undefined:execute(`SELECT COUNT(*) AS produtos,
+      COALESCE(SUM(CASE WHEN p.produto_estado=1 THEN 1 ELSE 0 END),0) AS ativos,
+      COALESCE(SUM(CASE WHEN p.produto_estado=0 THEN 1 ELSE 0 END),0) AS inativos,
+      COALESCE(SUM(CASE WHEN COALESCE(p.produto_quantidade_estoque,0)=0 THEN 1 ELSE 0 END),0) AS zerados,
+      COALESCE(SUM(CASE WHEN COALESCE(p.produto_quantidade_estoque,0)<5 THEN 1 ELSE 0 END),0) AS baixos,
+      COALESCE(SUM(CASE WHEN ${dataValida} AND p.produto_quantidade_estoque>0 AND ${validade}<${bind(hoje)} THEN 1 ELSE 0 END),0) AS vencidos,
+      COALESCE(SUM(CASE WHEN ${dataValida} AND p.produto_quantidade_estoque>0 AND ${validade}>=${bind(hoje)} AND ${validade}<=${bind(ate)} THEN 1 ELSE 0 END),0) AS vencem_em_breve
+      FROM pi2_produtos p ${where}`,values).rows[0];
     const paginas = Math.max(1, Math.ceil(total / tamanho));
     const pagina = Math.min(solicitada, paginas);
     const itens = execute(`SELECT p.*, c.categoria_descricao AS produto_categoria, u.unidade_descricao AS produto_unidade,
@@ -59,13 +71,13 @@ export function getCatalogo(input: Record<string, unknown>, now = new Date()) {
       CASE WHEN NOT COALESCE(${dataValida},0) THEN 'sem_validade' WHEN ${validade} < ${bind(hoje)} THEN 'vencido' WHEN ${validade} <= ${bind(ate)} THEN 'em_breve' ELSE 'regular' END AS situacao_validade
       FROM pi2_produtos p LEFT JOIN pi2_categorias c ON c.categoria_id = p.produto_categoria_id
       LEFT JOIN pi2_unidades u ON u.unidade_id = p.produto_unidade_id ${where}
-      ORDER BY ${order} LIMIT ${bind(tamanho)} OFFSET ${bind((pagina - 1) * tamanho)}`, values).rows;
-    return { itens, total, pagina, tamanho, paginas, criterios: { data_referencia: hoje, vencimento_ate: ate, estoque_baixo_abaixo_de: 5 } };
+      ORDER BY ${order} LIMIT ${bind(modo==='csv'?10000:tamanho)} OFFSET ${bind(modo==='csv'?0:(pagina - 1) * tamanho)}`, values).rows;
+    return { itens, total, pagina, tamanho, paginas, ...(modo==='catalogo'?{}:{resumo,gerado_em:now.toISOString(),filtros:{q,estado,estoque,vencimento,categoria,ordem,direcao}}), criterios: { data_referencia: hoje, vencimento_ate: ate, estoque_baixo_abaixo_de: 5 } };
   });
 }
 
 // Only metadata is patchable here. Balance changes always belong to stock movements.
-const fields = new Set(["produto_descricao", "produto_categoria_id", "produto_unidade_id", "produto_fornecedor_id", "produto_preco_id", "produto_data_validade", "produto_codigo_barras", "produto_estado"]);
+const fields = new Set(["produto_precos", "produto_descricao", "produto_categoria_id", "produto_unidade_id", "produto_fornecedor_id", "produto_preco_id", "produto_data_validade", "produto_codigo_barras", "produto_estado"]);
 export function patchProduto(id: number, body: unknown) {
   if (!Number.isSafeInteger(id) || id <= 0) throw new EstoqueError(400, "Produto inválido.");
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new EstoqueError(400, "Dados do produto inválidos.");
@@ -81,6 +93,7 @@ export function patchProduto(id: number, body: unknown) {
 
 type Execute = Parameters<Parameters<typeof pool.transaction>[0]>[0];
 export function validarCamposProduto(execute: Execute, body: Record<string, unknown>) {
+  if ('produto_precos' in body && 'produto_preco_id' in body) throw new EstoqueError(400,'Envie preços ou um vínculo existente, não os dois.');
   const result: Record<string, unknown> = {};
   const refs: Record<string, [string, string]> = {
     produto_categoria_id: ["pi2_categorias", "categoria_id"], produto_unidade_id: ["pi2_unidades", "unidade_id"],
@@ -88,7 +101,8 @@ export function validarCamposProduto(execute: Execute, body: Record<string, unkn
   };
   for (const [key, value] of Object.entries(body)) {
     if (!fields.has(key)) continue;
-    if (key === "produto_descricao") {
+    if(key==='produto_precos') {result.produto_preco_id=gravarPrecosProduto(execute,value);}
+    else if (key === "produto_descricao") {
       if (typeof value !== "string" || !value.trim() || value.trim().length > 200) throw new EstoqueError(400, "Informe uma descrição de até 200 caracteres.");
       result[key] = value.trim();
     } else if (key === "produto_estado") {

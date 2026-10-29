@@ -122,3 +122,45 @@ A validação visual usou exclusivamente localhost:8081 e banco temporário; nã
 - Histórico exibiu entrada 1,25 e saída 0,25, com saldo final 1 e links para Pedido #1 no lugar de estorno. Foi necessária atualização forçada do navegador para descartar arquivos antigos em cache durante a inspeção. Layout de itens e entregas conferido por captura visual.
 
 Dados sintéticos foram usados exclusivamente em localhost:8081, com SQLite temporário. Nenhuma entrega ou devolução de teste foi gravada no banco principal. Os containers descartáveis foram encerrados ao concluir, e a aplicação principal permaneceu em localhost:8080 com a migração de esquema 5. Não há reembolso financeiro, conversão de unidades nem edição/desfazimento das entregas nesta etapa.
+
+## Décima etapa — relatório de posição de estoque e CSV (28/10/2026)
+
+- Docker Desktop estava parado; foi iniciado para compilar e validar a atualização. Build de API e frontend aprovado, com pacote inicial de aproximadamente 1,20 MB e avisos de orçamento anteriores abaixo dos limites de erro.
+- Teste isolado do relatório aprovado: seleção vazia, resumo sobre todos os resultados, paginação, combinação de filtros, ativos/inativos, estoque baixo, zerados, validade no calendário de São Paulo e exportação além da primeira página.
+- CSV validado com UTF-8/BOM, ponto e vírgula, aspas, quebras em células, acentos, saldo decimal, códigos com zeros à esquerda e proteção contra fórmulas em campos textuais. Mais de 10.000 produtos bloqueiam a exportação sem impedir a consulta paginada.
+- Teste HTTP aprovado: autenticação obrigatória, consulta/exportação para perfil de consulta, cabeçalhos de anexo e no-store, validação de filtros e CSV com todos os produtos da seleção.
+- Regressões do catálogo em serviço e HTTP aprovadas, incluindo ordenação, limites de datas, filtros literais, validação de cadastro e edição cadastral preservando saldo.
+- Chrome na base descartável: relatório mostrou 16 ativos, 2 abaixo de 5, 1 zerado, 1 vencido e 2 vencimentos em até 30 dias. Segunda página exibiu 11–16 de 16 sem reduzir os indicadores ao tamanho da página.
+- Download acionado na segunda página concluiu como estoque.csv. Arquivo efetivamente baixado foi lido com parser CSV: 16 linhas de produtos das duas páginas, filtros ativos, BOM e horário de geração único.
+- Alterar busca para Arroz bloqueou exportação/paginação e exibiu aviso de filtro não aplicado. Aplicar retornou à primeira página, com um produto e resumo coerente, reabilitando exportação. Layout conferido por captura visual; rótulos de contagem foram ajustados para não depender de singular/plural.
+
+Dados sintéticos e download foram usados exclusivamente em localhost:8081. Nenhum produto ou saldo foi alterado na base principal e não houve migração de esquema. Containers de QA encerrados ao concluir; aplicação principal em localhost:8080. O relatório é de posição atual, não de evolução histórica nem avaliação monetária. Compras, pendências e devoluções permanecem como futuros relatórios.
+
+## Décima primeira etapa — operação para tablet e produto contextual (28/10/2026)
+
+- Build de produção aprovado. Pacote inicial de aproximadamente 1,23 MB; avisos de orçamento anteriores permanecem abaixo dos limites de erro.
+- Teste HTTP integrado aprovado: criação de categorias/unidades, produto com preços em centavos, edição de preço sem alterar saldo nem produto que compartilhava o preço anterior, limpeza da associação e rejeição de valores fracionários em centavos, negativos, excessivos e campos ambíguos.
+- Falha no cadastro do produto reverteu também a criação do preço, sem registro órfão. Preços associados a pedidos anteriores não são reescritos pelo fluxo contextual.
+- Autorização de funcionário verificada: consulta começou sem escrita; concessão explícita pelo administrador revogou a sessão anterior; novo login permitiu entrada/saída e repetição idempotente. Estorno, produto, preço, cadastro e pedido continuaram bloqueados. Funcionário não pôde conceder a própria autorização. Revogação encerrou a sessão e bloqueou novas movimentações.
+- Regressões de estoque transacional e acessos aprovadas; após os ajustes finais, testes de catálogo, cadastros, integração e migração também passaram. Migração 6 preservou contas, saldos e perfis e iniciou a nova autorização desativada.
+- Chrome na base descartável: funcionário entrou diretamente em Operar estoque. Seleção por cartões, saída fracionária de 0,5, revisão com saldo previsto e confirmação concluída; saldo do Arroz QA passou de 2 para 1,5 e o movimento recebeu responsável autenticado.
+- Conferência em largura reduzida por zoom de 200%: menu recolhido, botões grandes e revisão legível. Zoom restaurado. Isso não substitui ensaio em tablet físico, teclado virtual ou leitura por câmera. Foco e rolagem da revisão foram ajustados ao final.
+- Versão final conferida com funcionário: menu limitado a Operar estoque e Movimentações, marca retornando à operação e nenhuma administração. Acesso de leitura existente às demais rotas continua possível por URL.
+- Gestor abriu Novo produto, preencheu nome, criou categoria e unidade em diálogos contextuais e voltou com ambos selecionados, sem perder o nome. Renomeou a unidade selecionada no mesmo fluxo, com aviso de efeito nos vínculos.
+- Preços de compra R$ 12,99 e venda R$ 19,99 foram salvos com o produto. Ao reabrir, ambos apareceram; venda foi alterada para R$ 20,99. Leitura da base temporária confirmou 1299/2099 centavos e o saldo permaneceu zero.
+
+A validação usou apenas localhost:8081 e credenciais sintéticas. Nenhuma conta real foi autorizada, e nenhum produto ou preço de teste foi gravado na base principal. O ambiente temporário foi encerrado ao concluir; a aplicação principal recebeu somente a atualização e a migração 6. Não há operação offline nem captura por câmera. O CRUD antigo de preços continua legado; o novo fluxo contextual cria associações isoladas por produto.
+
+## Décima segunda etapa — backup e restauração (28/10/2026)
+
+- Imagem da API atualizada para incluir ferramenta operacional em Node/SQLite, sem dependências novas nem migração de esquema. Sintaxe de scripts Bash e CommonJS conferida; diff sem erros de whitespace.
+- Backup online gerou arquivo SQLite e manifesto com SHA-256, esquema e contagens/digests das tabelas. Foi necessário inspecionar uma cópia temporária gravável para evitar dependência de sidecars WAL/SHM em um volume de backup somente leitura.
+- Verificação isolada passou: checksum, integrity_check, foreign_key_check, todas as tabelas e preservação dos dados essenciais. A API iniciou na cópia com JWT temporário e respondeu ao painel, pedidos, usuários e histórico mediante autenticação criada exclusivamente na cópia.
+- Teste completo usou somente o projeto estoque-backup-qa, com volume e credenciais descartáveis e sem rede externa ou portas publicadas. Usuários, hashes de senha, autorização do funcionário, saldo, pedido parcial, recebimento, devolução e movimentos foram preservados após restaurar.
+- Arquivo corrompido foi recusado antes de parar a API. Bloqueio no volume impediu uma restauração concorrente. Backup de segurança anterior à troca foi criado e validado.
+- Sessões restauradas foram invalidadas; token anterior recebeu 401, e administrador/funcionário entraram com as senhas preservadas.
+- Falha de saúde forçada no projeto descartável acionou recuperação: arquivo anterior recolocado, API reiniciada e saldo/histórico posteriores ao backup preservados. Cópias de segurança continuaram verificáveis. Um ensaio anterior foi invalidado por alteração de script durante a execução; a versão estabilizada passou pelo ciclo completo sem novas alterações durante o teste.
+- Containers e volume de QA foram removidos ao concluir. A API principal foi atualizada e o Nginx reiniciado; /health respondeu ok pelo frontend.
+- Primeiro backup real criado em `backups/estoque-20261029T001418Z-azrJqW` (nome em UTC). Verificação isolada aprovada com esquema 6 e 16 tabelas. Diretórios 0700 e arquivos 0600; manifesto confirmado como ignorado pelo Git.
+
+A base principal não foi restaurada nem substituída. Somente a cópia foi iniciada no verificador, sem modificar sessões, credenciais ou saldos da origem. Restauração operacional exige API inicialmente em execução para criar a cópia de segurança prévia; não foi implementado um fluxo automático de recuperação de uma base principal que já não consegue iniciar. Não há agendamento instalado, retenção automática, criptografia ou cópia remota; esses limites estão documentados no procedimento.

@@ -1,3 +1,4 @@
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
@@ -22,6 +23,7 @@ import { MatDialogModule } from '@angular/material/dialog';
   imports: [CommonModule],
   exports: [
     MatButtonModule,
+    MatCheckboxModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,

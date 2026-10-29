@@ -8,11 +8,13 @@ export class HeaderComponent {
   get titulo(): string {
     const url = this.router.url;
     if (url.startsWith('/admin')) return 'Administração';
+    if (url.includes('/operar')) return 'Operar estoque';
+    if (url.includes('/relatorios')) return 'Relatórios';
     if (url.includes('/pedidos')) return 'Pedidos';
     if (url.includes('/cadastros')) return 'Cadastros';
     if (url.includes('/produtos')) return 'Produtos';
     if (url.includes('/movimentacoes')) return 'Movimentações';
     return 'Visão geral';
   }
-  get perfil(): string { return this.auth.isAdmin() ? 'Administrador' : this.auth.isGerente() ? 'Gerente' : 'Consulta'; }
+  get perfil(): string { return this.auth.isAdmin() ? 'Administrador' : this.auth.isGerente() ? 'Gerente' : this.auth.podeOperarEstoque() ? 'Funcionário' : 'Consulta'; }
 }

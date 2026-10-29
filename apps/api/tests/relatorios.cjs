@@ -1,0 +1,28 @@
+const assert=require('node:assert/strict');
+const pool=require('/app/dist/config/db').default;
+const {getRelatorioEstoque,getCatalogo}=require('/app/dist/services/catalogo');
+const {estoqueCsv,csvCell}=require('/app/dist/services/relatorios');
+const now=new Date('2026-10-28T02:30:00Z');
+(async()=>{
+ let empty=getRelatorioEstoque({},now);assert.equal(empty.total,0);assert.deepEqual(empty.resumo,{produtos:0,ativos:0,inativos:0,zerados:0,baixos:0,vencidos:0,vencem_em_breve:0});
+ assert.ok(estoqueCsv(getRelatorioEstoque({},now,true)).startsWith('\uFEFF"ID";'));
+ await pool.query("INSERT INTO pi2_categorias(categoria_descricao) VALUES ('Alimentos')");
+ await pool.query("INSERT INTO pi2_unidades(unidade_descricao) VALUES ('kg'),('pacote')");
+ const fixtures=[['Arroz',1.25,1,'2026-10-26',1],['Feijão',0,1,null,1],['Óleo',3,1,'2026-11-26',2],['Inativo',2,0,'2026-10-20',1],['=HYPERLINK("bad");\ntexto',10,1,'data antiga',1],...Array.from({length:58},(_,i)=>['Extra '+i,10,1,null,1])];
+ for(const [nome,saldo,ativo,validade,unidade]of fixtures)await pool.query('INSERT INTO pi2_produtos(produto_descricao,produto_quantidade_estoque,produto_estado,produto_data_validade,produto_categoria_id,produto_unidade_id,produto_codigo_barras) VALUES($1,$2,$3,$4,1,$5,$6)',[nome,saldo,ativo,validade,unidade,'001234']);
+ let r=getRelatorioEstoque({},now);assert.equal(r.total,62);assert.equal(r.itens.length,10);assert.equal(r.resumo.produtos,62);assert.equal(r.resumo.baixos,3);assert.equal(r.resumo.zerados,1);assert.equal(r.resumo.vencidos,1);assert.equal(r.resumo.vencem_em_breve,1);assert.equal(r.criterios.data_referencia,'2026-10-27');
+ const paged=getRelatorioEstoque({pagina:'2'},now);assert.deepEqual(paged.resumo,r.resumo);
+ assert.equal(getRelatorioEstoque({estado:'todos'},now).resumo.inativos,1);
+ assert.equal(getRelatorioEstoque({categoria:'1',estoque:'baixo',vencimento:'vencido'},now).total,1);
+ const full=getRelatorioEstoque({pagina:'2'},now,true);assert.equal(full.itens.length,62,'CSV includes all pages');
+ const csv=estoqueCsv(full);assert.ok(csv.includes('"\'=HYPERLINK(""bad"");\ntexto"'));assert.ok(csv.includes('"\'001234"'));assert.ok(csv.includes('"1,250"'));assert.ok(csv.includes('"2026-10-28T02:30:00.000Z"'));
+ for(const value of ['=1+1','+SUM(A1:A2)','-1+2','@x','  =SUM(A1)','\ttext','\rtext','\ntext'])assert.ok(csvCell(value).startsWith('"\''));
+ assert.equal(csvCell('a;"b"\nc'),'"a;""b""\nc"');assert.equal(csvCell(null),'""');
+ assert.equal(getCatalogo({},now).itens.length,10,'catalog remains paginated');
+ assert.equal(getRelatorioEstoque({q:'%'},now).total,0);
+ for(const params of [{tamanho:'100'},{q:['x']},{estado:'bad'},{ordem:'1; DROP TABLE pi2_produtos'}])assert.throws(()=>getRelatorioEstoque(params,now),e=>e.status===400);
+ await pool.query(`INSERT INTO pi2_produtos(produto_descricao,produto_estado,produto_quantidade_estoque) SELECT 'Limite',1,0 FROM (WITH RECURSIVE n(x) AS (SELECT 1 UNION ALL SELECT x+1 FROM n WHERE x<10001) SELECT x FROM n)`);
+ assert.throws(()=>getRelatorioEstoque({},now,true),e=>e.status===400);
+ assert.ok(getRelatorioEstoque({},now).total>10000,'JSON remains paginated beyond export cap');
+ console.log('PASS: filtered report summaries, all pages CSV, São Paulo criteria, formula protection, quoting/Unicode/codes, invalid filters and export cap.');
+})().catch(e=>{console.error(e);process.exitCode=1});

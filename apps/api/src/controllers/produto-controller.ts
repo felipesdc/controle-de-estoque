@@ -47,6 +47,7 @@ export const createNewProduto = async (
   res: Response
 ): Promise<void> => {
   try {
+    if(req.body.produto_precos!==undefined && req.body.produto_preco_id!==undefined)throw new EstoqueError(400,'Envie preços ou um vínculo existente, não os dois.');
     const {
       produto_descricao,
       produto_fornecedor_id,
@@ -69,7 +70,8 @@ export const createNewProduto = async (
       produto_data_validade,
       produto_codigo_barras,
       produto_estado ?? true,
-      req.userId!
+      req.userId!,
+      req.body.produto_precos
     );
     res.status(201).json(newProduto);
   } catch (error) {

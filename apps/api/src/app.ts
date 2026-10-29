@@ -23,6 +23,7 @@ import dashboardRoutes from "./routes/dashboard-routes";
 
 import comprasRoutes from './routes/compras-routes';
 
+import relatoriosRoutes from './routes/relatorios-routes';
 const app = express();
 
 setupSwagger(app);
@@ -44,6 +45,7 @@ app.get("/health", async (_req, res) => {
 });
 
 // Rotas
+app.use("/v1", relatoriosRoutes);
 app.use("/v1", comprasRoutes);
 app.use("/v1", dashboardRoutes);
 app.use("/v1", acessosRoutes);

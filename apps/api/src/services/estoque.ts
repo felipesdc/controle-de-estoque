@@ -38,7 +38,11 @@ export function registrar(execute: Execute, produtoId: number, valor: number, ti
     [produtoId, valor, tipo, new Date().toISOString(), observacao, usuarioId, chave, estornoDe, saldo, novo]).rows[0];
 }
 export function movimentar(body: any, usuarioId: number, chave: string) {
-  return pool.transaction(execute => registrar(execute, body.movimento_produto_id, body.movimento_quantidade, body.movimento_tipo, body.movimento_observacao ?? "", usuarioId, chave));
+  return pool.transaction(execute => {
+    const user=execute('SELECT usuario_perfil_id,usuario_status,usuario_operar_estoque FROM pi2_usuarios WHERE usuario_id=$1',[usuarioId]).rows[0];
+    if(!user?.usuario_status||(![1,2].includes(user.usuario_perfil_id)&&!user.usuario_operar_estoque))throw new EstoqueError(403,'Esta conta não está autorizada a operar o estoque.');
+    return registrar(execute,body.movimento_produto_id,body.movimento_quantidade,body.movimento_tipo,body.movimento_observacao??'',usuarioId,chave);
+  });
 }
 export function estornar(id: number, motivo: string, usuarioId: number, chave: string) {
   if (!Number.isSafeInteger(id) || id <= 0) throw new EstoqueError(400, "Movimentação inválida.");

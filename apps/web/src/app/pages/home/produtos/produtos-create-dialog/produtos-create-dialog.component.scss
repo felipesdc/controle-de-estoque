@@ -7,3 +7,5 @@ mat-form-field { width: 100%; }
 .balance small { display: block; line-height: 1.6; margin-top: 6px; color: #647d73; }
 mat-dialog-actions { padding: 12px 24px 20px; }
 @media(max-width: 450px) { .columns { grid-template-columns: 1fr; gap: 6px; } }
+
+.inline-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}.inline-actions button{min-height:48px}
