@@ -9,7 +9,7 @@ import extractDate from 'src/app/shared/helpers/extract-date';
 import { Preco } from 'src/app/shared/models/preco.model';
 import { PrecoService } from 'src/app/shared/services/preco.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-preco-create',
   templateUrl: './preco-create.component.html',
   styleUrls: ['./preco-create.component.scss'],

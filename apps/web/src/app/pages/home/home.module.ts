@@ -1,3 +1,4 @@
+import { ReposicaoComponent } from './reposicao/reposicao.component';
 import { OperarEstoqueComponent } from './movimentacoes/operar-estoque.component';
 import { PedidosComponent } from './pedidos/pedidos.component';
 import { ProdutoStatusDialogComponent } from './produtos/produto-status-dialog.component';
@@ -28,6 +29,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     HomeComponent,
     OperarEstoqueComponent,
     PedidosComponent,
+    ReposicaoComponent,
     CadastrosComponent,
     CadastroDialogComponent,
     DashboardComponent,

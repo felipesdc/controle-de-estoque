@@ -85,3 +85,54 @@ Também testa rejeição de arquivo corrompido antes de parar a API, preservaç�
 - Backups contêm todos os dados pessoais existentes no banco; mantenha o diretório privado e fora do Git. A pasta padrão já é ignorada, mas um `git add -f` pode forçar sua inclusão.
 - Não copie apenas um arquivo SQLite de uma base ativa por meios externos. Para cópia manual, pare a API e preserve o conjunto correto de arquivos; prefira o comando online documentado acima.
 - O fluxo não faz sincronização em nuvem, criptografia, retenção automática ou recuperação até um instante entre backups.
+
+## Agendamento diário e cópia externa (macOS)
+
+A rotina `scripts/backup-agendado.py` cria e verifica o backup local; depois copia banco e manifesto para a pasta externa e executa novamente a verificação completa de restauração na cópia. O nome final só é publicado após a verificação. Arquivos ficam em 0600 e cada pasta de backup em 0700. Uma execução em andamento bloqueia outra chamada da mesma rotina.
+
+Escolha uma pasta existente em disco externo, servidor montado ou pasta sincronizada. Use uma pasta dedicada e fora do repositório. Uma pasta no mesmo disco não protege contra a perda desse disco; uma pasta sincronizada depende do cliente de sincronização para concluir o envio remoto. A rotina verifica os arquivos locais dessa pasta, não confirma o recebimento na nuvem e não envia credenciais a serviços.
+
+Prepare a configuração (ainda não ativa o agendamento):
+
+```sh
+python3 scripts/agendar-backup.py --destino "/Volumes/MeuDisco/BackupsEstoque" --hora 20:00
+```
+
+Execute uma vez e confirme sucesso antes de ativar:
+
+```sh
+python3 scripts/backup-agendado.py
+```
+
+Instale no launchd do usuário:
+
+```sh
+python3 scripts/agendar-backup.py --destino "/Volumes/MeuDisco/BackupsEstoque" --hora 20:00 --instalar
+```
+
+O instalador gera `.backup-config.json` (privado, ignorado pelo Git) e `.local/backup/agendamento.plist`, valida o plist e, com `--instalar`, grava `~/Library/LaunchAgents/br.local.controle-de-estoque.backup.plist` e ativa o serviço. Usa caminhos absolutos para Python, Docker, projeto e destino; não depende do PATH de um terminal interativo. Mover o projeto ou trocar o Python/Docker exige gerar e instalar novamente.
+
+O horário é local ao computador. O serviço funciona durante a sessão do usuário; não inicia Docker nem a aplicação. Docker Desktop e API precisam estar em execução. O launchd pode executar um evento perdido ao retornar do repouso; computador desligado, sessão encerrada, disco ausente ou falhas do Docker não garantem uma cópia naquele dia. Não há repetição automática em caso de falha; execute manualmente ou aguarde a próxima execução. Restrições de acesso do macOS à pasta Downloads, discos e pastas protegidas também podem exigir ajuste de permissões no sistema; confira o log após a primeira execução agendada.
+
+Consultar o serviço e o log:
+
+```sh
+launchctl print "gui/$(id -u)/br.local.controle-de-estoque.backup"
+tail -n 50 .local/backup/rotina.log
+```
+
+O log registra os caminhos de backups concluídos e falhas; gira com 1 MiB e até três arquivos anteriores. O diretório externo deve existir: se estiver desconectado, a rotina falha sem recriar o caminho e preserva o backup local concluído. Uma cópia externa rejeitada não recebe nome de backup final. Interrupção abrupta pode deixar pasta `.incompleto-*`. Não sobrescreve cópias existentes nem apaga backups por idade. A rotina seguinte cria um novo backup, sem reenviar automaticamente os anteriores; cópias locais feitas durante indisponibilidade podem ser verificadas e copiadas separadamente.
+
+Para desativar, preservando dados e logs:
+
+```sh
+python3 scripts/agendar-backup.py --remover
+```
+
+Para testar a lógica com arquivos fictícios, sem instalar serviço nem usar a base real:
+
+```sh
+python3 scripts/testar-backup-agendado.py
+```
+
+No Linux, a rotina de cópia pode ser chamada por cron/systemd com Python 3 e Docker. O instalador disponibilizado é específico do macOS. Criptografia, retenção/expurgo e confirmação de envio pelo provedor de nuvem não fazem parte desta etapa.

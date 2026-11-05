@@ -5,7 +5,7 @@ import { finalize, takeUntil, timeout } from 'rxjs/operators';
 import { Categoria } from 'src/app/shared/models/categoria.model';
 import { CategoriaService } from 'src/app/shared/services/categoria.service';
 import { RelatoriosService, RelatorioEstoque } from 'src/app/shared/services/relatorios.service';
-@Component({selector:'app-relatorios',templateUrl:'./relatorios.component.html',styleUrl:'./relatorios.component.scss'})
+@Component({ standalone: false,selector:'app-relatorios',templateUrl:'./relatorios.component.html',styleUrl:'./relatorios.component.scss'})
 export class RelatoriosComponent implements OnInit, OnDestroy {
  relatorio:RelatorioEstoque|null=null; categorias:Categoria[]=[];
  loading=false;exporting=false;error='';exportError='';opcoesError=false;pagina=1;tamanho=10;

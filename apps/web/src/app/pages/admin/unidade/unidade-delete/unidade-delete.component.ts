@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-unidade-delete',
   templateUrl: './unidade-delete.component.html',
   styleUrls: ['./unidade-delete.component.scss'],

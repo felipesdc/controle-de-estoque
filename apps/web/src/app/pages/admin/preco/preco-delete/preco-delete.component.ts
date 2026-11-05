@@ -9,7 +9,7 @@ import extractLocaleDate from 'src/app/shared/helpers/extract-locale-date';
 import { Preco } from 'src/app/shared/models/preco.model';
 import { PrecoService } from 'src/app/shared/services/preco.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-preco-delete',
   templateUrl: './preco-delete.component.html',
   styleUrls: ['./preco-delete.component.scss'],

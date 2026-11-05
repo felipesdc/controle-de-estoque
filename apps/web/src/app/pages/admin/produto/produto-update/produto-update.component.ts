@@ -16,7 +16,7 @@ import { PrecoService } from 'src/app/shared/services/preco.service';
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-produto-update',
   templateUrl: './produto-update.component.html',
   styleUrls: ['./produto-update.component.scss'],

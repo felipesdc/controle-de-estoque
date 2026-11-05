@@ -24,7 +24,7 @@ const dataValida = (c: AbstractControl) => {
   const date = new Date(c.value + 'T00:00:00Z');
   return /^\d{4}-\d{2}-\d{2}$/.test(c.value) && !Number.isNaN(date.getTime()) && date.toISOString().slice(0,10) === c.value ? null : { data: true };
 };
-@Component({ selector: 'app-produtos-create-dialog', templateUrl: './produtos-create-dialog.component.html', styleUrls: ['./produtos-create-dialog.component.scss'] })
+@Component({ standalone: false, selector: 'app-produtos-create-dialog', templateUrl: './produtos-create-dialog.component.html', styleUrls: ['./produtos-create-dialog.component.scss'] })
 export class ProdutosCreateDialogComponent implements OnInit {
   categorias: Categoria[] = [];
   unidades: Unidade[] = [];
@@ -42,6 +42,7 @@ export class ProdutosCreateDialogComponent implements OnInit {
     produto_categoria_id: [this.data?.produto_categoria_id ?? null],
     produto_unidade_id: [this.data?.produto_unidade_id ?? null],
     produto_fornecedor_id: [this.data?.produto_fornecedor_id ?? null],
+    produto_estoque_minimo: [this.data?.produto_estoque_minimo ?? 5, [Validators.required, quantidadeValida]],
     produto_quantidade_estoque: [this.data?.produto_quantidade_estoque ?? 0, [Validators.required, quantidadeValida]],
     produto_data_validade: [String(this.data?.produto_data_validade || '').slice(0,10), dataValida],
   });
@@ -76,6 +77,7 @@ export class ProdutosCreateDialogComponent implements OnInit {
     const values = this.form.getRawValue();
     const dados = {
       produto_descricao: values.produto_descricao!.trim(),
+      produto_estoque_minimo: values.produto_estoque_minimo!,
       produto_categoria_id: values.produto_categoria_id,
       produto_unidade_id: values.produto_unidade_id,
       produto_fornecedor_id: values.produto_fornecedor_id,

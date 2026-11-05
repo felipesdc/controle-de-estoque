@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-fornecedor-update',
   templateUrl: './fornecedor-update.component.html',
   styleUrls: ['./fornecedor-update.component.scss'],

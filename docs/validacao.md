@@ -164,3 +164,32 @@ A validação usou apenas localhost:8081 e credenciais sintéticas. Nenhuma cont
 - Primeiro backup real criado em `backups/estoque-20261029T001418Z-azrJqW` (nome em UTC). Verificação isolada aprovada com esquema 6 e 16 tabelas. Diretórios 0700 e arquivos 0600; manifesto confirmado como ignorado pelo Git.
 
 A base principal não foi restaurada nem substituída. Somente a cópia foi iniciada no verificador, sem modificar sessões, credenciais ou saldos da origem. Restauração operacional exige API inicialmente em execução para criar a cópia de segurança prévia; não foi implementado um fluxo automático de recuperação de uma base principal que já não consegue iniciar. Não há agendamento instalado, retenção automática, criptografia ou cópia remota; esses limites estão documentados no procedimento.
+
+## Estoque mínimo por produto
+
+- Build Docker da API e do frontend concluído.
+- `estoque-minimo.cjs`: criação com padrão 5, fracionários, zero, igualdade, rejeição de valores inválidos, preservação de saldo e consistência entre painel, catálogo, relatório e CSV.
+- Regressões `catalogo.cjs` e `relatorios.cjs` aprovadas em SQLite em memória.
+- Migrações `acessos-migracao.cjs`, `pedidos-migracao.cjs` e `entregas-migracao.cjs` aprovadas até o esquema 7; mínimo 5 preservado na migração de produto existente. Fixture de entregas ajustada para remover colunas posteriores antes de simular o esquema 4.
+- Sem validação visual em navegador nesta etapa.
+
+## Lista de reposição
+
+- Builds Docker da API e frontend aprovados.
+- `reposicao.cjs` aprovado: milésimos, igualdade/mínimo zero/inativos, pendências, recebimento parcial e devolução, encerramento/cancelamento, divergência de unidade, cobertura integral, busca literal e paginação.
+- `reposicao-http.cjs` aprovado: autenticação, leitura por consulta, validação de filtros, cabeçalho sem cache e criação de compras restrita à gestão.
+- Regressão `pedidos-http.cjs` aprovada. Sem validação visual automatizada nesta etapa.
+
+## Consolidação técnica (4 de novembro de 2026)
+
+- Auditoria npm completa: API 13 → 0; frontend 86 → 21 moderadas, sem altas/críticas. Com `--omit=dev`: zero ocorrências nos dois lockfiles. Pendências e limites em `docs/dependencias.md`.
+- Builds Docker da API e frontend aprovados. Build da API exige OpenAPI válido; 48 caminhos documentados.
+- `openapi-http.cjs`, `stock-http.cjs`, `acessos-http.cjs`, `pedidos-http.cjs`, `tablet-produtos-http.cjs`, `reposicao-http.cjs` e `relatorios-http.cjs`: todos aprovados em bases descartáveis.
+- Chrome com recarga dos novos arquivos: login, painel com 9 ativos/3 alertas, reposição com cobertura parcial/integral, checkbox e transferência do arroz com quantidade 3 ao formulário de pedido; formulário cancelado sem salvar. Aparência do formulário conferida por captura de tela.
+- Aplicação principal e demonstração atualizadas; saúde da principal e OpenAPI conferidos pelo Nginx. Sem migração de esquema nesta etapa. Não foi executada varredura de imagens de sistema nem validação completa em todos os navegadores/tablets.
+
+## Agendamento e cópia externa de backup
+
+- `python3 scripts/testar-backup-agendado.py`: sete testes aprovados, cobrindo cópia/checagem antes da publicação, permissões, proteção contra sobrescrita, rejeição de cópia inválida, destino ausente sem recriação, preservação local, Docker indisponível, lock de execução e geração/validação de plist sem instalar serviço.
+- Fluxo completo executado com `COMPOSE_FILE` apontando para `dashboard-qa.compose.yaml`, usando a base fictícia. Backup local e cópia externa temporária passaram pela verificação real de restauração. Banco principal não foi usado no teste.
+- Nenhum LaunchAgent permanente instalado nesta etapa: destino externo aguardando definição. Não houve teste de sincronização em nuvem nem de execução após repouso/reinicialização.

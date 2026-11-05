@@ -3,7 +3,7 @@ import { Preco } from 'src/app/shared/models/preco.model';
 import { PrecoService } from 'src/app/shared/services/preco.service';
 import extractLocaleDate from 'src/app/shared/helpers/extract-locale-date';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-crud-preco',
   templateUrl: './preco.component.html',
   styleUrls: ['./preco.component.scss'],

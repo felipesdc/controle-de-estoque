@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { Unidade } from 'src/app/shared/models/unidade.model';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-unidade-create',
   templateUrl: './unidade-create.component.html',
   styleUrls: ['./unidade-create.component.scss'],

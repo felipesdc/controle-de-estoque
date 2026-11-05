@@ -9,7 +9,7 @@ import { MovimentacaoEstoqueService } from 'src/app/shared/services/movimentacao
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-movimentacoes',
   templateUrl: './movimentacoes.component.html',
   styleUrl: './movimentacoes.component.scss',

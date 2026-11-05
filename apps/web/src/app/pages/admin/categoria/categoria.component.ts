@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Categoria } from 'src/app/shared/models/categoria.model';
 import { CategoriaService } from 'src/app/shared/services/categoria.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-crud-categoria',
   templateUrl: './categoria.component.html',
   styleUrls: ['./categoria.component.scss'],

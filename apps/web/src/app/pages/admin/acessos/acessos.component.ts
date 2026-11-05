@@ -8,7 +8,7 @@ import { debounceTime,switchMap,catchError,finalize,takeUntil } from 'rxjs/opera
 import { AcessosService,UsuarioAcesso,PerfilAcesso,PaginaUsuarios } from 'src/app/shared/services/acessos.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { AcessoDialogComponent } from './acesso-dialog.component';
-@Component({selector:'app-acessos',templateUrl:'./acessos.component.html',styleUrls:['./acessos.component.scss']})
+@Component({ standalone: false,selector:'app-acessos',templateUrl:'./acessos.component.html',styleUrls:['./acessos.component.scss']})
 export class AcessosComponent implements OnInit,OnDestroy {
   aba='usuarios';perfis:PerfilAcesso[]=[];data:PaginaUsuarios|null=null;pagina=1;tamanho=10;loading=false;error='';success='';
   filtros=this.fb.group({q:[''],estado:['todos'],perfil:['']});private reload=new Subject<void>();private destroy=new Subject<void>();

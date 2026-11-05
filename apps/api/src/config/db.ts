@@ -135,6 +135,13 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 6) {
   catch(error) {db.exec("ROLLBACK");throw error;}
 }
 
+// Preserve the previous alert threshold for all existing products.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 7) {
+  db.exec("BEGIN IMMEDIATE");
+  try { db.exec("ALTER TABLE pi2_produtos ADD COLUMN produto_estoque_minimo REAL NOT NULL DEFAULT 5 CHECK(produto_estoque_minimo >= 0 AND produto_estoque_minimo <= 1000000000 AND ABS(produto_estoque_minimo*1000-ROUND(produto_estoque_minimo*1000)) <= 0.00001); PRAGMA user_version=7; COMMIT;"); }
+  catch(error) { db.exec("ROLLBACK"); throw error; }
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;

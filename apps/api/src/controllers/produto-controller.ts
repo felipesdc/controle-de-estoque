@@ -71,7 +71,8 @@ export const createNewProduto = async (
       produto_codigo_barras,
       produto_estado ?? true,
       req.userId!,
-      req.body.produto_precos
+      req.body.produto_precos,
+      req.body.produto_estoque_minimo
     );
     res.status(201).json(newProduto);
   } catch (error) {

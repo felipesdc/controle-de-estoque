@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-unidade-update',
   templateUrl: './unidade-update.component.html',
   styleUrls: ['./unidade-update.component.scss'],

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({selector:'app-login',templateUrl:'./login.component.html',styleUrls:['./login.component.scss']})
+@Component({ standalone: false,selector:'app-login',templateUrl:'./login.component.html',styleUrls:['./login.component.scss']})
 export class LoginComponent {
   usuario_login='';usuario_password='';errorMessage='';isLoading=false;
   constructor(private auth:AuthService,private route:ActivatedRoute){}

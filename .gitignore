@@ -13,3 +13,6 @@ data/
 backup-estoque/
 
 backups/
+.backup-config.json
+.local/
+__pycache__/

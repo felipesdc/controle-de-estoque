@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { EstadoPedido } from 'src/app/shared/models/estado-pedido.model';
 import { EstadoPedidoService } from 'src/app/shared/services/estado-pedido.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-estado-pedido-create',
   templateUrl: './estado-pedido-create.component.html',
   styleUrls: ['./estado-pedido-create.component.scss'],

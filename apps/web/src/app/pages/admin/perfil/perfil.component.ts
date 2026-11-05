@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Perfil } from 'src/app/shared/models/perfil.model';
 import { PerfilService } from 'src/app/shared/services/perfil.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-crud-perfil',
   templateUrl: './perfil.component.html',
   styleUrls: ['./perfil.component.scss'],

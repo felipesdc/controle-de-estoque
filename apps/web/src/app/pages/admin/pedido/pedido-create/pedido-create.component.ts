@@ -14,7 +14,7 @@ import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 import { PedidoService } from 'src/app/shared/services/pedido.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-pedido-create',
   templateUrl: './pedido-create.component.html',
   styleUrls: ['./pedido-create.component.scss'],

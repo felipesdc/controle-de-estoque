@@ -3,7 +3,7 @@
 ## Implementado
 
 - Monorepositório com `apps/web` e `apps/api`, Docker Compose, Nginx e SQLite persistente.
-- Migração incremental da base até a versão 6, preservando saldos, credenciais e registros anteriores.
+- Migração incremental da base até a versão 7, preservando saldos, credenciais e registros anteriores.
 - Entrada e saída com saldo e histórico gravados na mesma transação. Saída sem saldo é rejeitada sem gravar movimento.
 - Quantidades positivas com até três casas decimais e limite de 1 bilhão. Os cálculos de saldo usam milésimos para evitar resíduos de ponto flutuante.
 - Saldo inicial de novos produtos registrado como entrada, junto do cadastro. Alterações posteriores de saldo passam exclusivamente por movimentações.
@@ -19,7 +19,7 @@
 ## Painel e navegação
 
 - Página inicial redireciona para Visão geral, com indicadores calculados pela API em uma consulta consistente.
-- Produtos ativos, estoque abaixo de 5, vencidos com saldo e vencimentos de hoje até 30 dias, com referência no calendário de São Paulo.
+- Produtos ativos, estoque abaixo do mínimo de cada produto, vencidos com saldo e vencimentos de hoje até 30 dias, com referência no calendário de São Paulo.
 - Listas de até 6 prioridades de reposição, 6 vencimentos e 10 movimentos recentes. Os totais não são limitados pelo tamanho das listas.
 - Datas inválidas de registros antigos não geram alertas nem quebram a exibição do histórico.
 - Estados de carregamento, base vazia e erro; falha na atualização preserva os últimos dados e informa quando foram obtidos. A requisição tem limite de 15 segundos.
@@ -93,7 +93,7 @@
 ## Relatório de posição de estoque
 
 - Área Relatórios no menu, com consulta paginada, busca, categoria, situação, saldo, validade e ordenação equivalentes ao catálogo.
-- Resumo calculado sobre toda a seleção, incluindo contagem de ativos/inativos, zerados, abaixo de 5, vencidos com saldo e vencimentos em até 30 dias. Quantidades de unidades diferentes não são somadas e não há avaliação monetária de estoque.
+- Resumo calculado sobre toda a seleção, incluindo contagem de ativos/inativos, zerados, abaixo do mínimo, vencidos com saldo e vencimentos em até 30 dias. Quantidades de unidades diferentes não são somadas e não há avaliação monetária de estoque.
 - Consulta, indicadores e linhas são obtidos em uma transação consistente. A tela mostra o horário de geração e os critérios de validade no calendário de São Paulo.
 - CSV UTF-8 com BOM, separador ponto e vírgula, saldo com três casas e vírgula decimal. Exporta todos os produtos filtrados (até 10.000), independentemente da página, com data de geração e filtros em cada linha.
 - Campos textuais têm escape e proteção contra interpretação como fórmula. Códigos de barras recebem apóstrofo para preservar zeros ao abrir em planilhas; o arquivo não é destinado a reimportação automática sem tratamento.
@@ -117,7 +117,7 @@
 - Restauração operacional cria uma cópia de segurança anterior, para a API, consolida o WAL, instala o banco validado e verifica saúde. Falha tenta recuperar automaticamente o banco anterior.
 - Sessões antigas são invalidadas na restauração, preservando senhas, usuários, permissões, saldos e histórico. Arquivos anteriores e backups não são apagados automaticamente.
 - Teste completo em projeto Docker descartável cobre dados de estoque/compras, corrupção, credenciais e rollback. A base real não é restaurada durante a validação.
-- Não há agendamento instalado, retenção, criptografia ou sincronização remota. Procedimento detalhado em `docs/backup.md`.
+- Há instalador de agendamento diário para macOS e rotina de cópia externa verificada. A ativação depende do destino configurado. Não há retenção, criptografia ou confirmação de sincronização remota. Procedimento detalhado em `docs/backup.md`.
 
 ## Compatibilidade com a base anterior
 
@@ -127,11 +127,42 @@ Os perfis 1 e 2 seguem a convenção já usada pelo frontend: administrador e ge
 
 ## Próximas etapas
 
-1. Atualizar dependências vulneráveis e contratos Swagger; depois ampliar relatórios de compras, pendências e devoluções.
+1. Ampliar relatórios de compras, pendências e devoluções.
 2. Completar validações, paginação e mensagens padronizadas dos demais cadastros.
-3. Atualizar dependências vulneráveis e revisar o Swagger, ainda com contratos antigos. As novas operações estão documentadas no README.
+3. Concluir a atualização principal das ferramentas do frontend para resolver os avisos moderados remanescentes; ver `docs/dependencias.md`.
 4. Definir unidades e valores monetários em centavos; as quantidades agora têm precisão explícita, mas os contratos de preço continuam legados.
 5. Melhorar seleções de produtos e responsáveis com busca remota conforme o volume de dados.
-6. Ampliar relatórios e exportação para compras, pendências e devoluções; definir rotina de agendamento e cópia externa dos backups.
+6. Ampliar relatórios e exportação para compras, pendências e devoluções; ativar o agendamento e a cópia externa após configurar o destino.
 
 As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A aproximação visual deve ser feita quando seus códigos ou referências estiverem disponíveis.
+
+## Estoque mínimo por produto
+
+- Migração 7 adiciona mínimo por produto, com padrão 5 para preservar os alertas existentes.
+- Cadastro e edição por administradores/gerentes permitem de zero a 1 bilhão, com até três casas decimais, na unidade do produto. Alterar o mínimo não movimenta saldo.
+- Estoque baixo significa saldo estritamente menor que o mínimo. Igualdade não gera alerta; mínimo zero desativa o alerta de estoque baixo, mas o filtro de zerados continua disponível.
+- Painel, catálogo, resumo de relatório e CSV usam o mesmo critério. O mínimo aparece no catálogo, relatório e exportação.
+
+## Planejamento de reposição
+
+- Nova área `/home/reposicao`, com busca por produto/código/ID e paginação de 25 itens. Exibe produtos ativos abaixo do mínimo, saldo, mínimo, quantidade a receber e sugestão de compra.
+- Sugestão em milésimos: máximo entre zero e mínimo menos saldo menos pendências. Conta apenas pedidos confirmados/parciais, descontando recebimentos acumulados. Devoluções não reabrem pendências; rascunhos, cancelados, encerrados, recebidos e legados ficam fora.
+- Pedidos com unidade diferente da unidade atual são sinalizados e desconsiderados no cálculo, sem conversão automática.
+- Consulta autenticada; administradores e gerentes selecionam itens da página para preparar um pedido. O formulário exige fornecedor e permite revisar quantidades e preços, iniciados em zero. Só salvar grava um rascunho; não altera estoque nem confirma compras.
+- Atualização/paginação limpa a seleção. Os valores são sugestões do momento da consulta, sem reserva ou bloqueio contra compras simultâneas; é necessário revisar pedidos existentes, inclusive rascunhos, antes de salvar.
+- Endpoint `GET /v1/compras/reposicao?q=&pagina=1`, sem cache. Sem migração de banco.
+
+## Consolidação de dependências e contratos
+
+- API: auditoria npm reduzida de 13 para zero; frontend de 86 para 21 moderadas, sem altas/críticas. Dependências de produção: zero ocorrências nos dois projetos na consulta desta etapa.
+- Angular 21, Material/CDK 21 e TypeScript 5.9, com módulos preservados, `standalone: false`, Zone explícito e resolução de módulos moderna.
+- OpenAPI com autenticação, permissões e fluxos atuais; URL relativa e Swagger UI com arquivos locais. Documento em `/api-docs/openapi.json`.
+- Validação do OpenAPI obrigatória no build Docker e testes HTTP dos contratos principais. Pendências e limites registrados em `docs/dependencias.md` e `docs/auditoria-dependencias.json`.
+
+## Rotina automática de backup
+
+- `backup-agendado.py` gera backup local verificado e publica a cópia externa somente após conferir arquivos e executar novamente a restauração isolada.
+- Destino indisponível preserva a cópia local; não cria a raiz externa ausente. Sem sobrescrita nem expurgo automático.
+- Lock contra execuções simultâneas e log privado com rotação.
+- Instalador macOS gera configuração privada e LaunchAgent diário com horário local, caminhos absolutos e opção de remoção. Preparar configuração não instala serviço; a ativação usa `--instalar`.
+- Sete testes locais aprovados e fluxo completo conferido com a base fictícia de demonstração. Agendamento permanente ainda depende da escolha do diretório externo.

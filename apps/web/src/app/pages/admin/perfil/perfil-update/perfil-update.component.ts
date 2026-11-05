@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { PerfilService } from 'src/app/shared/services/perfil.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-perfil-update',
   templateUrl: './perfil-update.component.html',
   styleUrls: ['./perfil-update.component.scss'],

@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { EstadoPedidoService } from 'src/app/shared/services/estado-pedido.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-estado-pedido-delete',
   templateUrl: './estado-pedido-delete.component.html',
   styleUrls: ['./estado-pedido-delete.component.scss'],

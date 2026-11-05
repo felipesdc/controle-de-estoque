@@ -1,0 +1,313 @@
+{
+  "data": "2026-11-04",
+  "fonte": "npm audit, lockfiles versionados; não inclui sistema operacional/imagens base",
+  "resultados": {
+    "api": {
+      "antes": {
+        "info": 0,
+        "low": 4,
+        "moderate": 1,
+        "high": 7,
+        "critical": 1,
+        "total": 13
+      },
+      "depois": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      },
+      "pendencias": {},
+      "producao_depois": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    },
+    "web": {
+      "antes": {
+        "info": 0,
+        "low": 8,
+        "moderate": 27,
+        "high": 46,
+        "critical": 5,
+        "total": 86
+      },
+      "depois": {
+        "info": 0,
+        "low": 0,
+        "moderate": 21,
+        "high": 0,
+        "critical": 0,
+        "total": 21
+      },
+      "pendencias": {
+        "@angular-devkit/build-angular": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular-devkit/build-angular",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "@angular-devkit/build-webpack",
+            "webpack-dev-server"
+          ]
+        },
+        "@angular-devkit/build-webpack": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular-devkit/build-angular",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "webpack-dev-server"
+          ]
+        },
+        "@angular/cli": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "pacote"
+          ]
+        },
+        "@npmcli/package-json": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "glob"
+          ]
+        },
+        "@npmcli/run-script": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "@npmcli/package-json"
+          ]
+        },
+        "@sigstore/sign": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "make-fetch-happen"
+          ]
+        },
+        "@sigstore/tuf": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "tuf-js"
+          ]
+        },
+        "@tufjs/models": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "minimatch"
+          ]
+        },
+        "cacache": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "glob"
+          ]
+        },
+        "glob": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            {
+              "titulo": "Glob: AbortSignal cancellation bypass allows post-timeout filesystem traversal",
+              "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4",
+              "versoes": ">=9.0.0 <=14.0.1"
+            },
+            "minimatch"
+          ]
+        },
+        "ignore-walk": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "minimatch"
+          ]
+        },
+        "make-fetch-happen": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "cacache"
+          ]
+        },
+        "minimatch": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            {
+              "titulo": "minimatch has potential denial of service via globparts amplification",
+              "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249",
+              "versoes": ">=7.0.0 <11.0.1"
+            }
+          ]
+        },
+        "npm-packlist": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "ignore-walk"
+          ]
+        },
+        "npm-registry-fetch": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "make-fetch-happen"
+          ]
+        },
+        "pacote": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "@npmcli/package-json",
+            "@npmcli/run-script",
+            "cacache",
+            "npm-packlist",
+            "npm-registry-fetch",
+            "sigstore"
+          ]
+        },
+        "sigstore": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "@sigstore/sign",
+            "@sigstore/tuf"
+          ]
+        },
+        "sockjs": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular-devkit/build-angular",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "uuid"
+          ]
+        },
+        "tuf-js": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular/cli",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "@tufjs/models",
+            "make-fetch-happen"
+          ]
+        },
+        "uuid": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular-devkit/build-angular",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            {
+              "titulo": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+              "url": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+              "versoes": "<11.1.1"
+            }
+          ]
+        },
+        "webpack-dev-server": {
+          "severidade": "moderate",
+          "correcao": {
+            "name": "@angular-devkit/build-angular",
+            "version": "22.2.6",
+            "isSemVerMajor": true
+          },
+          "avisos": [
+            "sockjs"
+          ]
+        }
+      },
+      "producao_depois": {
+        "info": 0,
+        "low": 0,
+        "moderate": 0,
+        "high": 0,
+        "critical": 0,
+        "total": 0
+      }
+    }
+  }
+}

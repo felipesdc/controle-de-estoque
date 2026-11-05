@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { CategoriaService } from 'src/app/shared/services/categoria.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-categoria-update',
   templateUrl: './categoria-update.component.html',
   styleUrls: ['./categoria-update.component.scss'],

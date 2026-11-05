@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { HistoricoEstadoPedidoService } from 'src/app/shared/services/historico-estado-pedido.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-historico-estado-pedido-update',
   templateUrl: './historico-estado-pedido-update.component.html',
   styleUrls: ['./historico-estado-pedido-update.component.scss'],

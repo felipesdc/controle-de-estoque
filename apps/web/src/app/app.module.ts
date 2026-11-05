@@ -1,6 +1,6 @@
 import { MatPaginatorIntl } from '@angular/material/paginator';
 import { PaginacaoPt } from './shared/services/paginacao-pt';
-import { LOCALE_ID, NgModule } from '@angular/core';
+import { LOCALE_ID, NgModule, provideZoneChangeDetection } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -68,6 +68,7 @@ registerLocaleData(localePt);
     LoginModule,
   ],
   providers: [
+    provideZoneChangeDetection(),
     { provide: MatPaginatorIntl, useClass: PaginacaoPt },
     CategoriaService,
     EstadoPedidoService,

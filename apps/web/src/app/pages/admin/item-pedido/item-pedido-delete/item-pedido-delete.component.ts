@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { ItemPedidoService } from 'src/app/shared/services/item-pedido.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-item-pedido-delete',
   templateUrl: './item-pedido-delete.component.html',
   styleUrls: ['./item-pedido-delete.component.scss'],

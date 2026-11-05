@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { HistoricoEstadoPedido } from 'src/app/shared/models/historico-estado-pedido.model';
 import { HistoricoEstadoPedidoService } from 'src/app/shared/services/historico-estado-pedido.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-historico-estado-pedido-create',
   templateUrl: './historico-estado-pedido-create.component.html',
   styleUrls: ['./historico-estado-pedido-create.component.scss'],

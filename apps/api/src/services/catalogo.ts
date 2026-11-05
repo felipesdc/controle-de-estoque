@@ -1,6 +1,6 @@
 import { gravarPrecosProduto } from './precos-produto';
 import pool from "../config/db";
-import { EstoqueError } from "./estoque";
+import { EstoqueError, quantidade } from "./estoque";
 import { periodoValidade, validadeSql as validade, dataValidaSql as dataValida } from "./datas";
 
 export function getCatalogo(input: Record<string, unknown>, now = new Date()) { return consultarCatalogo(input,now,'catalogo'); }
@@ -44,7 +44,7 @@ function consultarCatalogo(input: Record<string, unknown>, now: Date, modo: 'cat
   }
   if (categoria === "sem") conditions.push("p.produto_categoria_id IS NULL");
   else if (categoria) conditions.push(`p.produto_categoria_id = ${bind(Number(categoria))}`);
-  if (estoque === "baixo") conditions.push("COALESCE(p.produto_quantidade_estoque,0) < 5");
+  if (estoque === "baixo") conditions.push("COALESCE(p.produto_quantidade_estoque,0) < p.produto_estoque_minimo");
   if (estoque === "zerado") conditions.push("COALESCE(p.produto_quantidade_estoque,0) = 0");
   if (estoque === "disponivel") conditions.push("p.produto_quantidade_estoque > 0");
   if (vencimento === "vencido") conditions.push(`${dataValida} AND p.produto_quantidade_estoque > 0 AND ${validade} < ${bind(hoje)}`);
@@ -60,7 +60,7 @@ function consultarCatalogo(input: Record<string, unknown>, now: Date, modo: 'cat
       COALESCE(SUM(CASE WHEN p.produto_estado=1 THEN 1 ELSE 0 END),0) AS ativos,
       COALESCE(SUM(CASE WHEN p.produto_estado=0 THEN 1 ELSE 0 END),0) AS inativos,
       COALESCE(SUM(CASE WHEN COALESCE(p.produto_quantidade_estoque,0)=0 THEN 1 ELSE 0 END),0) AS zerados,
-      COALESCE(SUM(CASE WHEN COALESCE(p.produto_quantidade_estoque,0)<5 THEN 1 ELSE 0 END),0) AS baixos,
+      COALESCE(SUM(CASE WHEN COALESCE(p.produto_quantidade_estoque,0)<p.produto_estoque_minimo THEN 1 ELSE 0 END),0) AS baixos,
       COALESCE(SUM(CASE WHEN ${dataValida} AND p.produto_quantidade_estoque>0 AND ${validade}<${bind(hoje)} THEN 1 ELSE 0 END),0) AS vencidos,
       COALESCE(SUM(CASE WHEN ${dataValida} AND p.produto_quantidade_estoque>0 AND ${validade}>=${bind(hoje)} AND ${validade}<=${bind(ate)} THEN 1 ELSE 0 END),0) AS vencem_em_breve
       FROM pi2_produtos p ${where}`,values).rows[0];
@@ -72,12 +72,12 @@ function consultarCatalogo(input: Record<string, unknown>, now: Date, modo: 'cat
       FROM pi2_produtos p LEFT JOIN pi2_categorias c ON c.categoria_id = p.produto_categoria_id
       LEFT JOIN pi2_unidades u ON u.unidade_id = p.produto_unidade_id ${where}
       ORDER BY ${order} LIMIT ${bind(modo==='csv'?10000:tamanho)} OFFSET ${bind(modo==='csv'?0:(pagina - 1) * tamanho)}`, values).rows;
-    return { itens, total, pagina, tamanho, paginas, ...(modo==='catalogo'?{}:{resumo,gerado_em:now.toISOString(),filtros:{q,estado,estoque,vencimento,categoria,ordem,direcao}}), criterios: { data_referencia: hoje, vencimento_ate: ate, estoque_baixo_abaixo_de: 5 } };
+    return { itens, total, pagina, tamanho, paginas, ...(modo==='catalogo'?{}:{resumo,gerado_em:now.toISOString(),filtros:{q,estado,estoque,vencimento,categoria,ordem,direcao}}), criterios: { data_referencia: hoje, vencimento_ate: ate, estoque_baixo_criterio: "saldo_menor_que_minimo" } };
   });
 }
 
 // Only metadata is patchable here. Balance changes always belong to stock movements.
-const fields = new Set(["produto_precos", "produto_descricao", "produto_categoria_id", "produto_unidade_id", "produto_fornecedor_id", "produto_preco_id", "produto_data_validade", "produto_codigo_barras", "produto_estado"]);
+const fields = new Set(["produto_estoque_minimo", "produto_precos", "produto_descricao", "produto_categoria_id", "produto_unidade_id", "produto_fornecedor_id", "produto_preco_id", "produto_data_validade", "produto_codigo_barras", "produto_estado"]);
 export function patchProduto(id: number, body: unknown) {
   if (!Number.isSafeInteger(id) || id <= 0) throw new EstoqueError(400, "Produto inválido.");
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new EstoqueError(400, "Dados do produto inválidos.");
@@ -101,7 +101,8 @@ export function validarCamposProduto(execute: Execute, body: Record<string, unkn
   };
   for (const [key, value] of Object.entries(body)) {
     if (!fields.has(key)) continue;
-    if(key==='produto_precos') {result.produto_preco_id=gravarPrecosProduto(execute,value);}
+    if(key==='produto_estoque_minimo') { result[key] = quantidade(value); }
+    else if(key==='produto_precos') {result.produto_preco_id=gravarPrecosProduto(execute,value);}
     else if (key === "produto_descricao") {
       if (typeof value !== "string" || !value.trim() || value.trim().length > 200) throw new EstoqueError(400, "Informe uma descrição de até 200 caracteres.");
       result[key] = value.trim();

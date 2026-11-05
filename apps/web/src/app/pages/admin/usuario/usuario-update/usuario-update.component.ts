@@ -9,7 +9,7 @@ import { Perfil } from 'src/app/shared/models/perfil.model';
 import { PerfilService } from 'src/app/shared/services/perfil.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-usuario-update',
   templateUrl: './usuario-update.component.html',
   styleUrls: ['./usuario-update.component.scss'],

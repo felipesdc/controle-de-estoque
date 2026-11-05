@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Unidade } from 'src/app/shared/models/unidade.model';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-crud-unidade',
   templateUrl: './unidade.component.html',
   styleUrls: ['./unidade.component.scss'],

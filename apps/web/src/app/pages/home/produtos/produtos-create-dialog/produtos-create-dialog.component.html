@@ -19,6 +19,7 @@
     <mat-form-field appearance="outline"><mat-label>Fornecedor (opcional)</mat-label><mat-select formControlName="produto_fornecedor_id"><mat-option [value]="null">Não informado</mat-option><mat-option *ngFor="let f of fornecedores" [value]="f.fornecedor_id">{{ f.fornecedor_nome }}</mat-option></mat-select></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Código de barras (opcional)</mat-label><input matInput formControlName="produto_codigo_barras" maxlength="80" autocomplete="off"><mat-error>Use até 80 caracteres.</mat-error></mat-form-field>
     <div class="columns">
+      <mat-form-field appearance="outline"><mat-label>Estoque mínimo</mat-label><input matInput type="number" min="0" max="1000000000" step="0.001" formControlName="produto_estoque_minimo"><mat-hint>Na unidade do produto. Zero desativa o alerta de estoque baixo.</mat-hint><mat-error>Informe de 0 a 1 bilhão, com até três casas decimais.</mat-error></mat-form-field>
       <mat-form-field appearance="outline" *ngIf="!data"><mat-label>Saldo inicial</mat-label><input matInput type="number" min="0" max="1000000000" step="0.001" formControlName="produto_quantidade_estoque"><mat-error>Use um valor de 0 a 1 bilhão, com até três casas decimais.</mat-error></mat-form-field>
       <mat-form-field appearance="outline"><mat-label>Validade (opcional)</mat-label><input matInput type="date" formControlName="produto_data_validade"><mat-error>Informe uma data válida.</mat-error></mat-form-field>
     </div>

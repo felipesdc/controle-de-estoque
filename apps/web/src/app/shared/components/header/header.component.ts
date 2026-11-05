@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { SidenavService } from '../../services/sidenav.service';
 import { AuthService } from '../../services/auth.service';
-@Component({ selector: 'app-header', templateUrl: './header.component.html', styleUrls: ['./header.component.scss'] })
+@Component({ standalone: false, selector: 'app-header', templateUrl: './header.component.html', styleUrls: ['./header.component.scss'] })
 export class HeaderComponent {
   constructor(public nav: SidenavService, public auth: AuthService, private router: Router) {}
   get titulo(): string {

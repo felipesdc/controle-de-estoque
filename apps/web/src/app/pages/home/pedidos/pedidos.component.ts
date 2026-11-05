@@ -8,7 +8,7 @@ import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 import { Fornecedor } from 'src/app/shared/models/fornecedor.model';
 import { Produto } from 'src/app/shared/models/produto.model';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({selector:'app-pedidos',templateUrl:'./pedidos.component.html',styleUrl:'./pedidos.component.scss'})
+@Component({ standalone: false,selector:'app-pedidos',templateUrl:'./pedidos.component.html',styleUrl:'./pedidos.component.scss'})
 export class PedidosComponent implements OnInit, OnDestroy {
  pedidos:Compra[]=[]; produtos:Produto[]=[]; fornecedores:Fornecedor[]=[];
  detalhe:Compra|null=null; editando=false; novo=false; acao=''; motivo=''; error=''; success=''; loading=false; saving=false;
@@ -21,7 +21,15 @@ export class PedidosComponent implements OnInit, OnDestroy {
  get podeAlterar(){return this.auth.isAdmin()||this.auth.isGerente();}
  get itens(){return this.form.controls.itens as FormArray;}
  item(){return this.fb.group({produto:[null as number|null,Validators.required],quantidade:[1,[Validators.required,Validators.min(.001),Validators.max(1e9)]],preco:['0.00',[Validators.required,Validators.pattern(/^\d+([.,]\d{1,2})?$/)]]});}
- ngOnInit(){this.form.valueChanges.subscribe(()=>this.chave=crypto.randomUUID());this.carregar();}
+ ngOnInit(){this.form.valueChanges.subscribe(()=>this.chave=crypto.randomUUID());this.carregar();
+ const sugestoes=history.state?.reposicao;
+ if(this.podeAlterar&&Array.isArray(sugestoes)&&sugestoes.length>0&&sugestoes.length<=100&&sugestoes.every(i=>Number.isSafeInteger(i.produto)&&i.produto>0&&typeof i.quantidade==='number'&&Number.isFinite(i.quantidade)&&i.quantidade>0&&i.quantidade<=1e9)){
+  this.criar();this.itens.clear();for(const i of sugestoes){const group=this.item();group.patchValue({produto:i.produto,quantidade:i.quantidade,preco:'0.00'});this.itens.push(group);}
+  this.form.patchValue({observacao:'Reposição sugerida pelo estoque mínimo. Revisar quantidades e preços.'});
+  this.success='Sugestões carregadas. Escolha o fornecedor e informe os preços (iniciados em zero). Confira as compras pendentes antes de salvar.';
+  const {reposicao,...state}=history.state;history.replaceState(state,'');
+ }
+}
  ngOnDestroy(){this.consulta?.unsubscribe();this.operacao?.unsubscribe();}
  rotulo(estado:string|null){return ({rascunho:'Rascunho',confirmado:'Confirmado',parcial:'Recebido parcialmente',encerrado:'Saldo encerrado',recebido:'Recebido',cancelado:'Cancelado'} as Record<string,string>)[estado||'']||'Legado · consulta';}
  carregar(){this.consulta?.unsubscribe();this.loading=true;this.error='';this.consulta=forkJoin({lista:this.service.listar({q:this.q,estado:this.estado,pagina:this.pagina,tamanho:this.tamanho}),produtos:this.produtoService.getProdutos(),fornecedores:this.fornecedorService.getFornecedores()}).pipe(timeout(15000),finalize(()=>this.loading=false)).subscribe({next:({lista,produtos,fornecedores})=>{this.pedidos=lista.itens;this.total=lista.total;this.pagina=lista.pagina;this.produtos=produtos;this.fornecedores=fornecedores;},error:e=>{this.pedidos=[];this.total=0;this.error=e.error?.message||'Não foi possível carregar os pedidos.';}});}

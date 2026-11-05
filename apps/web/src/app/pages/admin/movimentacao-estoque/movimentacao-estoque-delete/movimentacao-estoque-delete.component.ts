@@ -7,7 +7,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { MovimentacaoEstoqueService } from 'src/app/shared/services/movimentacao-estoque.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-movimentacao-estoque-delete',
   templateUrl: './movimentacao-estoque-delete.component.html',
   styleUrls: ['./movimentacao-estoque-delete.component.scss'],

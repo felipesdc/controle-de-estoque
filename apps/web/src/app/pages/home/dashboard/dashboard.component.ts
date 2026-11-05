@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { Dashboard, DashboardService } from 'src/app/shared/services/dashboard.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({
+@Component({ standalone: false,
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',

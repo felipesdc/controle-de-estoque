@@ -8,7 +8,7 @@ import { catchError, debounceTime, finalize, switchMap, takeUntil } from 'rxjs/o
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { CADASTROS, Cadastro, CadastrosService, PaginaCadastros, TipoCadastro } from 'src/app/shared/services/cadastros.service';
 import { CadastroDialogComponent } from './cadastro-dialog.component';
-@Component({ selector: 'app-cadastros', templateUrl: './cadastros.component.html', styleUrls: ['./cadastros.component.scss'] })
+@Component({ standalone: false, selector: 'app-cadastros', templateUrl: './cadastros.component.html', styleUrls: ['./cadastros.component.scss'] })
 export class CadastrosComponent implements OnInit, OnDestroy {
   tipos: TipoCadastro[] = ['categorias','unidades','fornecedores'];
   configs = CADASTROS;

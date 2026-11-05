@@ -7,7 +7,7 @@ import { MovimentacaoEstoqueService } from 'src/app/shared/services/movimentacao
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-crud-movimentacao-estoque',
   templateUrl: './movimentacao-estoque.component.html',
   styleUrls: ['./movimentacao-estoque.component.scss'],

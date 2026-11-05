@@ -117,7 +117,7 @@ docker compose exec -T api node < apps/api/tests/migration.cjs
 
 ## Visão geral
 
-Abra http://localhost:8080/home/dashboard. O painel mostra quantos produtos ativos estão cadastrados, estoque baixo (saldo abaixo de 5), vencimentos de hoje até 30 dias e produtos já vencidos com saldo. A referência de data usa `America/Sao_Paulo`. Produtos inativos não geram alertas; vencimentos exigem saldo positivo e uma data válida.
+Abra http://localhost:8080/home/dashboard. O painel mostra quantos produtos ativos estão cadastrados, estoque baixo (saldo abaixo do mínimo configurado no produto), vencimentos de hoje até 30 dias e produtos já vencidos com saldo. A referência de data usa `America/Sao_Paulo`. Produtos inativos não geram alertas; vencimentos exigem saldo positivo e uma data válida.
 
 O painel apresenta até 6 prioridades de reposição, 6 vencimentos e 10 movimentos recentes, incluindo estornos. Os cartões mostram os totais completos. O botão **Atualizar** busca os dados novamente; se houver falha, os últimos indicadores permanecem visíveis com aviso e horário da consulta. O catálogo simplificado agora permite informar a validade opcional.
 
@@ -321,7 +321,7 @@ Na base descartável de QA, após `seed-pedidos-qa.cjs`, execute `seed-entregas-
 
 ## Relatório de estoque e CSV
 
-Abra http://localhost:8080/home/relatorios ou use **Relatórios** no menu. Todos os usuários autenticados podem consultar e exportar. O relatório mostra a posição atual, com filtros de produto/código/ID, situação, categoria, estoque e validade. Os critérios são compartilhados com o catálogo: estoque baixo abaixo de 5 (inclui zerados), vencidos e vencimentos em até 30 dias somente com saldo, usando o calendário de São Paulo.
+Abra http://localhost:8080/home/relatorios ou use **Relatórios** no menu. Todos os usuários autenticados podem consultar e exportar. O relatório mostra a posição atual, com filtros de produto/código/ID, situação, categoria, estoque e validade. Os critérios são compartilhados com o catálogo: estoque baixo quando o saldo é menor que o mínimo do produto (mínimo zero desativa o alerta), vencidos e vencimentos em até 30 dias somente com saldo, usando o calendário de São Paulo.
 
 Os indicadores correspondem à seleção inteira, e a tabela tem páginas de 10, 25 ou 50 produtos. Não há soma de quantidades de unidades distintas, valoração monetária ou reconstrução de estoque histórico. Falhas são exibidas sem manter uma lista anterior associada aos filtros novos.
 
@@ -375,3 +375,21 @@ docker compose exec -T api node < apps/api/tests/tablet-produtos-http.cjs
 ```
 
 Na base de QA, execute `seed-dashboard-qa.cjs` e depois `seed-tablet-qa.cjs` para preparar produtos e o funcionário `funcionario` / `funcionario-tablet-2026`, exclusivo dessa instância temporária. Nenhuma conta real recebe autorização automaticamente.
+
+### Estoque mínimo
+
+Configure o estoque mínimo no cadastro ou edição de produto. O padrão é 5, inclusive nos produtos existentes após a migração 7. Aceita zero a 1 bilhão com até três casas decimais, na unidade cadastrada. Saldo igual ao mínimo não gera alerta; zero desativa o alerta de estoque baixo. Alterar esse limite preserva saldo e histórico.
+
+### Planejar reposição
+
+Em **Reposição** (`/home/reposicao`), consulte os produtos abaixo do mínimo e a quantidade que ainda precisa comprar após descontar pedidos confirmados/parciais pendentes, na mesma unidade. Selecione itens para preparar um pedido; escolha o fornecedor e revise quantidades e preços (iniciados em zero) antes de salvar o rascunho. Rascunhos não são descontados da sugestão e os valores não reservam compras. A atualização limpa a seleção da página. Consulte pedidos existentes antes de salvar para evitar duplicidade.
+
+### Dependências e documentação da API
+
+Consulte http://localhost:8080/api-docs/ e o JSON em http://localhost:8080/api-docs/openapi.json. Use **Authorize** com o JWT obtido em `POST /v1/usuario/login`. A documentação aponta para a API da mesma instalação. A autorização não persiste ao recarregar.
+
+O frontend usa Angular/Material 21 e TypeScript 5.9. Para desenvolvimento, prefira o Docker ou Node 22 compatível. O histórico da auditoria e as pendências estão em [docs/dependencias.md](docs/dependencias.md). Na API, `npm run check:openapi` valida o documento; o build Docker exige essa verificação.
+
+### Backup diário e cópia externa
+
+A rotina `python3 scripts/backup-agendado.py` gera backup local e cópia externa, ambos verificados. Configure o destino e prepare o agendamento macOS com `python3 scripts/agendar-backup.py --destino "/caminho/externo/existente" --hora 20:00`; execute a rotina uma vez e adicione `--instalar` para ativar. Logs em `.local/backup/rotina.log`. Docker e API devem estar em execução. Veja [docs/backup.md](docs/backup.md) para instalação, falhas, remoção e limites.

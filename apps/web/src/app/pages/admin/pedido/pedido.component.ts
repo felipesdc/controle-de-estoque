@@ -9,7 +9,7 @@ import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 import { PedidoService } from 'src/app/shared/services/pedido.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-crud-pedido',
   templateUrl: './pedido.component.html',
   styleUrls: ['./pedido.component.scss'],

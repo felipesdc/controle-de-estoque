@@ -17,7 +17,7 @@ import { PrecoService } from 'src/app/shared/services/preco.service';
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-produto-create',
   templateUrl: './produto-create.component.html',
   styleUrls: ['./produto-create.component.scss'],

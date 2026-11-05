@@ -1,3 +1,4 @@
+import { ReposicaoComponent } from './reposicao/reposicao.component';
 import { OperarEstoqueComponent } from './movimentacoes/operar-estoque.component';
 import { PedidosComponent } from './pedidos/pedidos.component';
 import { CommonModule } from '@angular/common';
@@ -20,6 +21,7 @@ const routes: Routes = [
       { path: 'dashboard', component: DashboardComponent },
       { path: 'produtos', component: ProdutosComponent },
       { path: 'pedidos', component: PedidosComponent },
+      { path: 'reposicao', component: ReposicaoComponent },
       { path: 'operar', component: OperarEstoqueComponent },
       { path: 'movimentacoes', component: MovimentacoesComponent },
       { path: 'cadastros', redirectTo: 'cadastros/categorias', pathMatch: 'full' },

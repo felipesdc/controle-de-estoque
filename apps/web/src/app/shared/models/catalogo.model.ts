@@ -9,5 +9,5 @@ export interface Catalogo {
   pagina: number;
   tamanho: number;
   paginas: number;
-  criterios: { data_referencia: string; vencimento_ate: string; estoque_baixo_abaixo_de: number };
+  criterios: { data_referencia: string; vencimento_ate: string; estoque_baixo_criterio: string };
 }

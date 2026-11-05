@@ -13,7 +13,7 @@ import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 import { PedidoService } from 'src/app/shared/services/pedido.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-pedido-delete',
   templateUrl: './pedido-delete.component.html',
   styleUrls: ['./pedido-delete.component.scss'],

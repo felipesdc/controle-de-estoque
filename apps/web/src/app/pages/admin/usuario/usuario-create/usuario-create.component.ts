@@ -11,7 +11,7 @@ import { Usuario } from 'src/app/shared/models/usuario.model';
 import { PerfilService } from 'src/app/shared/services/perfil.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-usuario-create',
   templateUrl: './usuario-create.component.html',
   styleUrls: ['./usuario-create.component.scss'],

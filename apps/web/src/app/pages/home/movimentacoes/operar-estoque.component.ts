@@ -7,7 +7,7 @@ import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { MovimentacaoEstoqueService } from 'src/app/shared/services/movimentacao-estoque.service';
 import { MovimentacaoEstoque } from 'src/app/shared/models/movimentacao-estoque.model';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({selector:'app-operar-estoque',templateUrl:'./operar-estoque.component.html',styleUrl:'./operar-estoque.component.scss'})
+@Component({ standalone: false,selector:'app-operar-estoque',templateUrl:'./operar-estoque.component.html',styleUrl:'./operar-estoque.component.scss'})
 export class OperarEstoqueComponent implements OnInit,OnDestroy {
  produtos:ProdutoCatalogo[]=[];selecionado:ProdutoCatalogo|null=null;loading=false;saving=false;revisando=false;error='';success='';total=0;
  busca=this.fb.nonNullable.control('');

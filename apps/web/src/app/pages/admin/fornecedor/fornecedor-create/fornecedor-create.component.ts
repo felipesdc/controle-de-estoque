@@ -8,7 +8,7 @@ import { Router } from '@angular/router';
 import { Fornecedor } from 'src/app/shared/models/fornecedor.model';
 import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-fornecedor-create',
   templateUrl: './fornecedor-create.component.html',
   styleUrls: ['./fornecedor-create.component.scss'],

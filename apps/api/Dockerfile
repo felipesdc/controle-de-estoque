@@ -4,7 +4,8 @@ COPY package*.json ./
 RUN npm ci
 COPY tsconfig.json ./
 COPY src ./src
-RUN npm run build && npm prune --omit=dev
+COPY scripts ./scripts
+RUN npm run check:openapi && npm run build && npm prune --omit=dev
 
 FROM node:22-bookworm-slim
 ENV NODE_ENV=production SQLITE_PATH=/data/estoque.sqlite

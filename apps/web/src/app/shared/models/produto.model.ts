@@ -10,6 +10,7 @@ export type Produto = {
   produto_categoria_id: number;
   produto_categoria?: string;
   produto_quantidade_estoque: number;
+  produto_estoque_minimo: number;
   produto_data_validade: Date;
   produto_codigo_barras: string;
   produto_estado: boolean;

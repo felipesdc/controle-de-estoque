@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HistoricoEstadoPedido } from 'src/app/shared/models/historico-estado-pedido.model';
 import { HistoricoEstadoPedidoService } from 'src/app/shared/services/historico-estado-pedido.service';
 
-@Component({
+@Component({ standalone: false,
   selector: 'app-crud-historico-estado-pedido',
   templateUrl: './historico-estado-pedido.component.html',
   styleUrls: ['./historico-estado-pedido.component.scss'],
