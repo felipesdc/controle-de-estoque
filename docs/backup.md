@@ -136,3 +136,13 @@ python3 scripts/testar-backup-agendado.py
 ```
 
 No Linux, a rotina de cópia pode ser chamada por cron/systemd com Python 3 e Docker. O instalador disponibilizado é específico do macOS. Criptografia, retenção/expurgo e confirmação de envio pelo provedor de nuvem não fazem parte desta etapa.
+
+### Verificar com outra imagem local
+
+Se a imagem antiga da API em execução não estiver mais disponível para criar o container verificador (por exemplo, após recompilar a tag), selecione explicitamente uma imagem atual e compatível:
+
+```sh
+BACKUP_VERIFY_IMAGE=controle-de-estoque-api:latest ./scripts/backup.sh
+```
+
+A escolha muda somente a imagem usada na verificação isolada. O backup continua vindo da API em execução e o manifesto mantém a identificação de origem. A imagem escolhida pode migrar a cópia temporária; a base principal não é modificada. Não use uma imagem mais antiga que o esquema do backup. A opção também se aplica ao verificador e à restauração, sem alterar a imagem que executará a aplicação após restaurar.

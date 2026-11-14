@@ -142,6 +142,52 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 7) {
   catch(error) { db.exec("ROLLBACK"); throw error; }
 }
 
+// Physical inventory: immutable approved counts and atomic linked adjustments.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 8) {
+  db.exec("BEGIN IMMEDIATE");
+  try { db.exec(`
+    CREATE TABLE pi2_inventarios (
+      inventario_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      titulo TEXT NOT NULL,
+      estado TEXT NOT NULL DEFAULT 'aberto' CHECK(estado IN ('aberto','revisao','aprovado','cancelado')),
+      versao INTEGER NOT NULL DEFAULT 1,
+      criado_em TEXT NOT NULL,
+      criado_por INTEGER NOT NULL REFERENCES pi2_usuarios(usuario_id),
+      finalizado_em TEXT,
+      finalizado_por INTEGER REFERENCES pi2_usuarios(usuario_id),
+      motivo TEXT,
+      criacao_chave TEXT NOT NULL UNIQUE,
+      criacao_conteudo TEXT NOT NULL,
+      aprovacao_chave TEXT UNIQUE,
+      aprovacao_conteudo TEXT
+    );
+    CREATE TABLE pi2_inventario_itens (
+      inventario_id INTEGER NOT NULL REFERENCES pi2_inventarios(inventario_id),
+      produto_id INTEGER NOT NULL REFERENCES pi2_produtos(produto_id),
+      descricao TEXT NOT NULL,
+      unidade_id INTEGER REFERENCES pi2_unidades(unidade_id),
+      unidade TEXT,
+      saldo_milesimos INTEGER NOT NULL CHECK(saldo_milesimos BETWEEN 0 AND 1000000000000),
+      ultimo_movimento_id INTEGER NOT NULL,
+      contado_milesimos INTEGER CHECK(contado_milesimos BETWEEN 0 AND 1000000000000),
+      contado_em TEXT,
+      contado_por INTEGER REFERENCES pi2_usuarios(usuario_id),
+      movimento_id INTEGER UNIQUE REFERENCES pi2_movimentos_estoque(movimento_id),
+      PRIMARY KEY(inventario_id,produto_id)
+    );
+    CREATE TABLE pi2_inventario_eventos (
+      evento_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      inventario_id INTEGER NOT NULL REFERENCES pi2_inventarios(inventario_id),
+      acao TEXT NOT NULL,
+      data TEXT NOT NULL,
+      usuario_id INTEGER NOT NULL REFERENCES pi2_usuarios(usuario_id),
+      conteudo TEXT NOT NULL
+    );
+    CREATE INDEX idx_inventario_estado ON pi2_inventarios(estado,inventario_id);
+    PRAGMA user_version=8; COMMIT;
+  `); } catch(error) { db.exec("ROLLBACK"); throw error; }
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;

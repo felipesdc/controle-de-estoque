@@ -1,3 +1,4 @@
+import { InventariosComponent } from './inventarios/inventarios.component';
 import { ReposicaoComponent } from './reposicao/reposicao.component';
 import { OperarEstoqueComponent } from './movimentacoes/operar-estoque.component';
 import { PedidosComponent } from './pedidos/pedidos.component';
@@ -22,6 +23,7 @@ const routes: Routes = [
       { path: 'produtos', component: ProdutosComponent },
       { path: 'pedidos', component: PedidosComponent },
       { path: 'reposicao', component: ReposicaoComponent },
+      { path: 'inventarios', component: InventariosComponent },
       { path: 'operar', component: OperarEstoqueComponent },
       { path: 'movimentacoes', component: MovimentacoesComponent },
       { path: 'cadastros', redirectTo: 'cadastros/categorias', pathMatch: 'full' },

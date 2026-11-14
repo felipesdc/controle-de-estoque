@@ -1,6 +1,7 @@
 export type MovimentacaoEstoque = {
   movimento_id?: number;
   movimento_pedido_id?: number;
+  movimento_inventario_id?: number;
   movimento_estorno_de?: number;
   movimento_estornado_por?: number;
   movimento_saldo_anterior?: number;

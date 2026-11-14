@@ -393,3 +393,11 @@ O frontend usa Angular/Material 21 e TypeScript 5.9. Para desenvolvimento, prefi
 ### Backup diário e cópia externa
 
 A rotina `python3 scripts/backup-agendado.py` gera backup local e cópia externa, ambos verificados. Configure o destino e prepare o agendamento macOS com `python3 scripts/agendar-backup.py --destino "/caminho/externo/existente" --hora 20:00`; execute a rotina uma vez e adicione `--instalar` para ativar. Logs em `.local/backup/rotina.log`. Docker e API devem estar em execução. Veja [docs/backup.md](docs/backup.md) para instalação, falhas, remoção e limites.
+
+### Inventário físico
+
+Abra **Inventário físico** (`/home/inventarios`) com uma conta de administrador ou gerente. Selecione até 100 produtos ativos, registre as quantidades encontradas e salve a contagem. Campo vazio significa não contado; zero é ausência confirmada. Depois, envie à revisão e aprove com justificativa. Só a aprovação grava as diferenças como entradas/saídas, de forma atômica e auditada; itens sem diferença não geram movimentos.
+
+Evite movimentar os produtos durante a conferência. Se saldo, unidade, situação ou último movimento mudarem desde a referência, a revisão/aprovação será bloqueada. **Reiniciar contagem** atualiza a referência e limpa todas as quantidades, preservando a contagem anterior na auditoria. Inventários aprovados/cancelados são imutáveis; correções exigem um novo inventário. Funcionários continuam autorizados somente às operações anteriores, sem acesso ao inventário.
+
+A migração 8 adiciona inventários sem recalcular saldos existentes. A demonstração em `http://localhost:8081/home/inventarios` possui exemplos de aprovação e revisão; os dados demonstrativos são temporários. Contratos em `/api-docs/` e detalhes em [docs/evolucao.md](docs/evolucao.md).

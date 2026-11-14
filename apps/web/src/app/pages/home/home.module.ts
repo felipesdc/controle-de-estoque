@@ -1,3 +1,4 @@
+import { InventariosComponent } from './inventarios/inventarios.component';
 import { ReposicaoComponent } from './reposicao/reposicao.component';
 import { OperarEstoqueComponent } from './movimentacoes/operar-estoque.component';
 import { PedidosComponent } from './pedidos/pedidos.component';
@@ -30,6 +31,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     OperarEstoqueComponent,
     PedidosComponent,
     ReposicaoComponent,
+    InventariosComponent,
     CadastrosComponent,
     CadastroDialogComponent,
     DashboardComponent,

@@ -39,7 +39,7 @@ export function listarHistorico(params: Record<string, unknown>) {
   return pool.transaction(execute => {
     const total = execute(`SELECT COUNT(*) AS total ${from}${where}`,values).rows[0].total;
     const atual = Math.min(pagina,Math.max(1,Math.ceil(total/tamanho)));
-    const itens = execute(`SELECT m.*, COALESCE((SELECT e.pedido_id FROM pi2_entrega_itens ei JOIN pi2_entregas_pedido e ON e.entrega_id=ei.entrega_id WHERE ei.movimento_id=m.movimento_id), (SELECT ip.item_pedido_pedido_id FROM pi2_itens_pedido ip WHERE ip.item_pedido_id=m.movimento_item_pedido_id)) AS movimento_pedido_id, p.produto_descricao AS movimento_produto, u.usuario_nome AS movimento_usuario,
+    const itens = execute(`SELECT m.*, (SELECT t.inventario_id FROM pi2_inventario_itens t WHERE t.movimento_id=m.movimento_id) AS movimento_inventario_id, COALESCE((SELECT e.pedido_id FROM pi2_entrega_itens ei JOIN pi2_entregas_pedido e ON e.entrega_id=ei.entrega_id WHERE ei.movimento_id=m.movimento_id), (SELECT ip.item_pedido_pedido_id FROM pi2_itens_pedido ip WHERE ip.item_pedido_id=m.movimento_item_pedido_id)) AS movimento_pedido_id, p.produto_descricao AS movimento_produto, u.usuario_nome AS movimento_usuario,
       (SELECT e.movimento_id FROM pi2_movimentos_estoque e WHERE e.movimento_estorno_de=m.movimento_id) AS movimento_estornado_por
       ${from}${where} ORDER BY m.movimento_id DESC LIMIT $${values.length+1} OFFSET $${values.length+2}`, [...values,tamanho,(atual-1)*tamanho]).rows;
     return {itens,total,pagina:atual,tamanho};

@@ -42,6 +42,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   get produto(): Produto | undefined { return this.produtos.find(p => p.produto_id === this.form.value.movimento_produto_id); }
   ngOnInit(): void {
     this.form.valueChanges.subscribe(() => { this.chave = crypto.randomUUID(); this.success = ''; });
+    this.filtros.q = (this.route.snapshot.queryParamMap.get('q') || '').slice(0,200);
     const selected = Number(this.route.snapshot.queryParamMap.get('produto'));
     if (Number.isSafeInteger(selected) && selected > 0) this.form.patchValue({ movimento_produto_id: selected });
     this.carregar();

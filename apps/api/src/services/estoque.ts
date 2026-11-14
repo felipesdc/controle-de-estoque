@@ -51,6 +51,7 @@ export function estornar(id: number, motivo: string, usuarioId: number, chave: s
     const original = execute("SELECT * FROM pi2_movimentos_estoque WHERE movimento_id = $1", [id]).rows[0];
     if (original?.movimento_item_pedido_id || execute('SELECT 1 FROM pi2_entrega_itens WHERE movimento_id=$1',[id]).rows.length) throw new EstoqueError(409, "Movimento vinculado a entrega de pedido. Use a devolução no pedido para preservar as quantidades recebidas.");
     if (!original) throw new EstoqueError(404, "Movimentação não encontrada.");
+    if (execute('SELECT 1 FROM pi2_inventario_itens WHERE movimento_id=$1',[id]).rows.length) throw new EstoqueError(409, 'Ajuste vinculado a inventário aprovado. Abra uma nova contagem para corrigir.');
     if (original.movimento_estorno_de || original.movimento_saldo_anterior === null) throw new EstoqueError(409, "Esta movimentação não pode ser estornada.");
     const existente = execute("SELECT * FROM pi2_movimentos_estoque WHERE movimento_estorno_de = $1", [id]).rows[0];
     if (existente && existente.movimento_chave !== chave) throw new EstoqueError(409, "Esta movimentação já foi estornada.");

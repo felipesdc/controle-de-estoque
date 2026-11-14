@@ -1,3 +1,4 @@
+import inventariosRoutes from './routes/inventarios-routes';
 import express from "express";
 import cors from "cors";
 import pool from "./config/db";
@@ -45,6 +46,7 @@ app.get("/health", async (_req, res) => {
 });
 
 // Rotas
+app.use("/v1", inventariosRoutes);
 app.use("/v1", relatoriosRoutes);
 app.use("/v1", comprasRoutes);
 app.use("/v1", dashboardRoutes);

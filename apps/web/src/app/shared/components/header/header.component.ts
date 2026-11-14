@@ -10,6 +10,8 @@ export class HeaderComponent {
     if (url.startsWith('/admin')) return 'Administração';
     if (url.includes('/operar')) return 'Operar estoque';
     if (url.includes('/relatorios')) return 'Relatórios';
+    if (url.includes('/inventarios')) return 'Inventário físico';
+    if (url.includes('/reposicao')) return 'Reposição';
     if (url.includes('/pedidos')) return 'Pedidos';
     if (url.includes('/cadastros')) return 'Cadastros';
     if (url.includes('/produtos')) return 'Produtos';

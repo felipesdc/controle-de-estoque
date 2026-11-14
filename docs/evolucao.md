@@ -3,7 +3,7 @@
 ## Implementado
 
 - Monorepositório com `apps/web` e `apps/api`, Docker Compose, Nginx e SQLite persistente.
-- Migração incremental da base até a versão 7, preservando saldos, credenciais e registros anteriores.
+- Migração incremental da base até a versão 8, preservando saldos, credenciais e registros anteriores.
 - Entrada e saída com saldo e histórico gravados na mesma transação. Saída sem saldo é rejeitada sem gravar movimento.
 - Quantidades positivas com até três casas decimais e limite de 1 bilhão. Os cálculos de saldo usam milésimos para evitar resíduos de ponto flutuante.
 - Saldo inicial de novos produtos registrado como entrada, junto do cadastro. Alterações posteriores de saldo passam exclusivamente por movimentações.
@@ -166,3 +166,16 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Lock contra execuções simultâneas e log privado com rotação.
 - Instalador macOS gera configuração privada e LaunchAgent diário com horário local, caminhos absolutos e opção de remoção. Preparar configuração não instala serviço; a ativação usa `--instalar`.
 - Sete testes locais aprovados e fluxo completo conferido com a base fictícia de demonstração. Agendamento permanente ainda depende da escolha do diretório externo.
+
+## Inventário físico
+
+- Migração 8 adiciona inventários, itens e eventos, preservando todas as linhas anteriores, inclusive usuários, autorização individual, sessões, produtos e movimentações. Não há recálculo de saldo na migração.
+- Nova área `/home/inventarios` restrita a administrador e gerente, na interface e na API. A permissão de operação de estoque do funcionário não concede acesso à contagem nem à aprovação. O mesmo gerente pode contar e aprovar; não há exigência de dois responsáveis distintos nesta etapa.
+- Abertura com título e seleção de 1 a 100 produtos ativos, com busca remota. Copia descrição, unidade, saldo e último movimento como referência. A criação tem chave de idempotência. Lista de inventários paginada de 10, com filtro de situação.
+- Contagem incremental enquanto aberto, com até três casas decimais e limite de 1 bilhão, na unidade registrada. Null é não contado e zero é ausência confirmada. Alterações de contagem guardam valor anterior/novo, responsável e data; versão atual evita sobrescrever alterações de outra sessão.
+- Fluxo aberto → revisão → aprovado; cancelamento permitido antes da aprovação. Revisão exige todos os itens contados. A aprovação exige justificativa e transforma diferenças em entradas ou saídas, vinculadas ao inventário. Saldo, movimentos, aprovação e evento são gravados na mesma transação; erro em qualquer item desfaz tudo. Diferença zero não cria movimento. Repetição exata da aprovação não duplica ajustes.
+- Revisão/aprovação revalidam produto ativo, unidade, saldo e último movimento de cada item. Movimentos posteriores à referência bloqueiam a operação mesmo quando o saldo final é igual ao inicial. Isso também protege contagens sobrepostas: a aprovação de uma invalida a referência da outra quando cria ajustes.
+- Não bloqueia a operação normal do estoque durante a contagem. Para tratar referência alterada, reiniciar atualiza TODAS as referências e apaga as contagens correntes, preservando as anteriores em evento. Produtos inativos precisam ser reativados ou o inventário cancelado. Alterar e restaurar a mesma unidade sem movimentações não é rastreado como mudança independente de cadastro.
+- Inventários finalizados são imutáveis e ajustes não admitem estorno isolado. Histórico de estoque identifica o inventário e permite abrir seus detalhes. Para corrigir, crie um novo inventário. Quantidades não são somadas entre unidades distintas.
+- Tela com cartões de contagem, controles de toque, estados de erro/carregamento, revisão e confirmação explícita. Não possui fila offline, leitura de câmera, exportação de inventário ou contagem por lote/local. A conferência visual desta etapa ocorreu em Chrome desktop; tablet físico ainda não foi validado.
+- Endpoints autenticados em `/v1/inventarios`, detalhe/contagem em `/{id}` e ações `/revisar`, `/aprovar`, `/recontar`, `/cancelar`, documentados no OpenAPI. Chave obrigatória na criação e aprovação; controle de versão nas alterações.
