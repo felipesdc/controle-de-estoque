@@ -188,6 +188,13 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 8) {
   `); } catch(error) { db.exec("ROLLBACK"); throw error; }
 }
 
+// Preserve the scanned code in the immutable movement and its idempotency payload.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 9) {
+  db.exec("BEGIN IMMEDIATE");
+  try { db.exec("ALTER TABLE pi2_movimentos_estoque ADD COLUMN movimento_codigo_lido TEXT; PRAGMA user_version=9; COMMIT;"); }
+  catch(error) { db.exec("ROLLBACK"); throw error; }
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;

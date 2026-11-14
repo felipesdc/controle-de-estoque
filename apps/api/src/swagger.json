@@ -2567,7 +2567,7 @@
         "tags": [
           "Estoque"
         ],
-        "description": "Administrador/gerente ou funcionário com usuario_operar_estoque. Atômico; saldo insuficiente rejeitado. Mesma chave/conteúdo retorna original; conteúdo diferente retorna 409.",
+        "description": "Administrador/gerente ou funcionário com usuario_operar_estoque. Atômico; saldo insuficiente rejeitado. Mesma chave/conteúdo retorna original; conteúdo diferente retorna 409. Quando movimento_codigo_lido estiver presente, a associação única ao produto é revalidada na mesma transação do saldo; cadastro alterado ou duplicado rejeita a operação. O código é registrado no histórico e comparado na idempotência. Retry exato já concluído retorna o movimento original mesmo se o código mudar depois.",
         "parameters": [
           {
             "name": "Idempotency-Key",
@@ -7732,6 +7732,98 @@
           }
         }
       }
+    },
+    "/catalogo/produtos/codigo": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Localizar produto por código completo",
+        "description": "Todos os autenticados podem consultar. Correspondência textual exata, sensível a maiúsculas, sem busca por nome/ID/trecho. Remove espaços externos sem converter em número. Inativos são desconsiderados; dois ou mais ativos com o mesmo código retornam 409. A leitura não movimenta estoque. Sem cache. Não valida dígito verificador EAN/GTIN.",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "example": "00012345"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produto ativo único",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoAtual"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Código inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nenhum produto ativo com esse código",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Código compartilhado por produtos ativos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha na consulta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8636,6 +8728,12 @@
           "movimento_observacao": {
             "type": "string",
             "maxLength": 500
+          },
+          "movimento_codigo_lido": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "description": "Opcional, somente para operação identificada por leitura. Preserva zeros; precisa identificar exatamente um produto ativo e corresponder a movimento_produto_id. Faz parte da idempotência. Omitir na operação manual."
           }
         },
         "required": [

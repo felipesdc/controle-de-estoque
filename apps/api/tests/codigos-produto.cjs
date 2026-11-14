@@ -1,0 +1,34 @@
+const assert=require('node:assert/strict');const {randomUUID}=require('node:crypto');
+const pool=require('/app/dist/config/db').default;
+const {buscarProdutoPorCodigo,movimentar}=require('/app/dist/services/estoque');
+const bad=(status,fn)=>assert.throws(fn,e=>e.status===status);
+(async()=>{
+ await pool.query("INSERT INTO pi2_unidades(unidade_id,unidade_descricao) VALUES(1,'Unidade')");
+ const fixtures=[[1,'Principal','001234',5.125,1],[2,'Código mais longo','0012345',3,1],[3,'001234','OUTRO',2,1],[4,'Inativo','000off',7,0],[5,'Alfanumérico','AbC-01',3,1],[6,'Literal','%_',4,1]];
+ for(const [id,nome,codigo,saldo,ativo] of fixtures)await pool.query('INSERT INTO pi2_produtos(produto_id,produto_descricao,produto_codigo_barras,produto_quantidade_estoque,produto_estado,produto_unidade_id) VALUES($1,$2,$3,$4,$5,1)',[id,nome,codigo,saldo,ativo]);
+ assert.equal(buscarProdutoPorCodigo('001234').produto_id,1);assert.equal(buscarProdutoPorCodigo(' 001234 ').produto_codigo_barras,'001234');assert.equal(buscarProdutoPorCodigo('%_').produto_id,6);assert.equal(buscarProdutoPorCodigo('AbC-01').produto_id,5);
+ for(const value of ['1234','00123','1','abc-01','000off',"' OR 1=1 --"])bad(404,()=>buscarProdutoPorCodigo(value));
+ for(const value of [undefined,null,1,[],{},'', '  ','x'.repeat(81),'001234\n','001\t234'])bad(400,()=>buscarProdutoPorCodigo(value));
+ const qty=async p=>(await pool.query('SELECT produto_quantidade_estoque AS n FROM pi2_produtos WHERE produto_id=$1',[p])).rows[0].n;
+ const total=async()=>(await pool.query('SELECT COUNT(*) AS n FROM pi2_movimentos_estoque')).rows[0].n;
+ assert.equal(await total(),0,'lookups never move stock');
+ await pool.query("INSERT INTO pi2_produtos(produto_id,produto_descricao,produto_codigo_barras,produto_estado) VALUES(7,'Duplicado','001234',1)");
+ bad(409,()=>buscarProdutoPorCodigo('001234'));
+ const body={movimento_produto_id:1,movimento_tipo:'saida',movimento_quantidade:.125,movimento_codigo_lido:'001234'};
+ bad(409,()=>movimentar(body,1,randomUUID()));assert.equal(await total(),0);assert.equal(await qty(1),5.125);
+ await pool.query('UPDATE pi2_produtos SET produto_estado=0 WHERE produto_id=7');
+ assert.equal(buscarProdutoPorCodigo('001234').produto_id,1,'inactive duplicate does not block active unique result');
+ bad(409,()=>movimentar({...body,movimento_produto_id:2},1,randomUUID()));
+ const key=randomUUID();const m=movimentar(body,1,key);assert.equal(m.movimento_codigo_lido,'001234');assert.equal(m.movimento_saldo_posterior,5);assert.equal(await total(),1);
+ assert.equal(movimentar(body,1,key).movimento_id,m.movimento_id);assert.equal(await qty(1),5);
+ bad(409,()=>movimentar({...body,movimento_codigo_lido:undefined},1,key));bad(409,()=>movimentar({...body,movimento_codigo_lido:'0012345'},1,key));
+ // A new operation must revalidate changes since the scan; an exact retry keeps its result.
+ await pool.query("UPDATE pi2_produtos SET produto_codigo_barras='NOVO' WHERE produto_id=1");
+ assert.equal(movimentar(body,1,key).movimento_id,m.movimento_id,'retry succeeds after code changes without another withdrawal');
+ bad(404,()=>movimentar(body,1,randomUUID()));
+ await pool.query("UPDATE pi2_produtos SET produto_codigo_barras='001234' WHERE produto_id=2");
+ bad(409,()=>movimentar(body,1,randomUUID()));assert.equal(await qty(1),5);assert.equal(await qty(2),3);assert.equal(await total(),1);
+ const manual=movimentar({movimento_produto_id:1,movimento_tipo:'entrada',movimento_quantidade:1},1,randomUUID());assert.equal(manual.movimento_codigo_lido,null,'manual operation does not claim a scan');
+ for(const value of [null,'',[],1,'\tNOVO'])bad(400,()=>movimentar({...body,movimento_codigo_lido:value},1,randomUUID()));
+ console.log('PASS: exact codes, leading zeros, no name/ID/substring fallback, case/literals, inactive/duplicate handling, stock revalidation, audit, manual compatibility and code-bound idempotency.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

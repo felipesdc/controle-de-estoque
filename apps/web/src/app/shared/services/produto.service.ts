@@ -28,6 +28,10 @@ export class ProdutoService {
     return this.http.get<Catalogo>(`${environment.apiurl}/catalogo/produtos`, { params }).pipe(timeout(15000));
   }
 
+  getProdutoPorCodigo(codigo: string): Observable<Produto> {
+    return this.http.get<Produto>(`${environment.apiurl}/catalogo/produtos/codigo`, { params: new HttpParams().set('codigo', codigo) }).pipe(timeout(15000));
+  }
+
   patchProduto(id: number, dados: Partial<Produto>): Observable<Produto> {
     return this.http.patch<Produto>(`${environment.apiurl}/produto/${id}`, dados).pipe(timeout(15000));
   }

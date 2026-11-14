@@ -401,3 +401,7 @@ Abra **Inventário físico** (`/home/inventarios`) com uma conta de administrado
 Evite movimentar os produtos durante a conferência. Se saldo, unidade, situação ou último movimento mudarem desde a referência, a revisão/aprovação será bloqueada. **Reiniciar contagem** atualiza a referência e limpa todas as quantidades, preservando a contagem anterior na auditoria. Inventários aprovados/cancelados são imutáveis; correções exigem um novo inventário. Funcionários continuam autorizados somente às operações anteriores, sem acesso ao inventário.
 
 A migração 8 adiciona inventários sem recalcular saldos existentes. A demonstração em `http://localhost:8081/home/inventarios` possui exemplos de aprovação e revisão; os dados demonstrativos são temporários. Contratos em `/api-docs/` e detalhes em [docs/evolucao.md](docs/evolucao.md).
+
+### Operar por código de barras
+
+Em **Operar estoque**, selecione **Usar leitor de código**. Aceita leitor USB/Bluetooth em modo teclado com Enter, ou digitação manual. Localiza o código completo, preserva zeros e bloqueia ambiguidades; depois exige quantidade, revisão e confirmação. O código é revalidado na gravação e aparece no histórico. Após sucesso, o campo volta a receber foco. Veja [docs/leitura-codigos.md](docs/leitura-codigos.md) para configuração, demonstração e limites. Esta etapa não usa câmera.

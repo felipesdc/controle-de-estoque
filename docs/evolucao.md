@@ -3,7 +3,7 @@
 ## Implementado
 
 - Monorepositório com `apps/web` e `apps/api`, Docker Compose, Nginx e SQLite persistente.
-- Migração incremental da base até a versão 8, preservando saldos, credenciais e registros anteriores.
+- Migração incremental da base até a versão 9, preservando saldos, credenciais e registros anteriores.
 - Entrada e saída com saldo e histórico gravados na mesma transação. Saída sem saldo é rejeitada sem gravar movimento.
 - Quantidades positivas com até três casas decimais e limite de 1 bilhão. Os cálculos de saldo usam milésimos para evitar resíduos de ponto flutuante.
 - Saldo inicial de novos produtos registrado como entrada, junto do cadastro. Alterações posteriores de saldo passam exclusivamente por movimentações.
@@ -179,3 +179,12 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Inventários finalizados são imutáveis e ajustes não admitem estorno isolado. Histórico de estoque identifica o inventário e permite abrir seus detalhes. Para corrigir, crie um novo inventário. Quantidades não são somadas entre unidades distintas.
 - Tela com cartões de contagem, controles de toque, estados de erro/carregamento, revisão e confirmação explícita. Não possui fila offline, leitura de câmera, exportação de inventário ou contagem por lote/local. A conferência visual desta etapa ocorreu em Chrome desktop; tablet físico ainda não foi validado.
 - Endpoints autenticados em `/v1/inventarios`, detalhe/contagem em `/{id}` e ações `/revisar`, `/aprovar`, `/recontar`, `/cancelar`, documentados no OpenAPI. Chave obrigatória na criação e aprovação; controle de versão nas alterações.
+
+## Leitura por código na operação rápida
+
+- Modo de leitura para dispositivos USB/Bluetooth configurados como teclado com Enter; também aceita digitação. Campo textual preserva zeros à esquerda, dá foco ao entrar/retornar e não trunca códigos longos para um prefixo válido. Não intercepta teclas globalmente nem usa câmera.
+- Endpoint autenticado sem cache `/v1/catalogo/produtos/codigo?codigo=...`, com correspondência textual exata, sensível a maiúsculas, sem fallback por nome/ID/trecho. Até 80 caracteres sem controle. Inativos não são escolhidos; duplicidade entre ativos retorna 409, sem escolher arbitrariamente.
+- Leitura seleciona o produto; quantidade, revisão e confirmação permanecem obrigatórias. Enter repetido após seleção não confirma uma movimentação. Ao trocar produto, quantidade volta a 1 e observação é limpa. Consultas podem ser canceladas e têm timeout; trocar modo ou sair cancela requisições pendentes.
+- Confirmação de leitura envia `movimento_codigo_lido`. A associação única ao produto é revalidada na mesma transação do saldo. Código removido, reassociado ou duplicado depois da consulta bloqueia nova operação. Repetição exata já concluída preserva resultado, mesmo após mudança cadastral, e o código faz parte da idempotência.
+- Migração 9 adiciona código lido opcional ao movimento, sem alterar saldos, sessões, credenciais ou vínculos de inventário. Registros anteriores permanecem sem código lido. Histórico mostra o código da operação; operações manuais, compras e ajustes de inventário continuam compatíveis.
+- Permissões existentes preservadas: funcionário autorizado só movimenta; consulta somente lê; cadastros e estornos continuam restritos à gestão. Não impõe unicidade global retroativa nem valida dígitos EAN/GTIN. Dispositivos físicos e câmera não foram validados/integrados nesta etapa. Detalhes em `docs/leitura-codigos.md`.

@@ -1,5 +1,5 @@
 import { lerPrecosProduto } from '../services/precos-produto';
-import { EstoqueError } from "../services/estoque";
+import { EstoqueError, buscarProdutoPorCodigo } from "../services/estoque";
 import { getCatalogo, patchProduto } from "../services/catalogo";
 import { Router } from "express";
 import {
@@ -12,6 +12,10 @@ import {
 import { authenticateToken, requireManager } from "../middlewares/auth";
 
 const router = Router();
+router.get('/catalogo/produtos/codigo', authenticateToken, (req,res) => {
+  try { res.set('Cache-Control','no-store').json(buscarProdutoPorCodigo(req.query.codigo)); }
+  catch(error) { if(error instanceof EstoqueError)res.status(error.status).json({message:error.message});else{console.error(error);res.status(500).json({message:'Não foi possível consultar o código. Tente novamente.'});} }
+});
 router.get("/catalogo/produtos", authenticateToken, (req, res) => {
   try { res.json(getCatalogo(req.query)); }
   catch (error) {

@@ -10,7 +10,29 @@ export function quantidade(value: unknown): number {
   return value;
 }
 type Execute = Parameters<Parameters<typeof pool.transaction>[0]>[0];
-export function registrar(execute: Execute, produtoId: number, valor: number, tipo: string, observacao: string, usuarioId: number, chave: string, estornoDe?: number, permitirInativo = false) {
+export function codigoDeBarras(value: unknown): string {
+  if (typeof value !== "string" || !value.trim() || value.trim().length > 80 || /[\u0000-\u001f\u007f]/.test(value)) {
+    throw new EstoqueError(400, "Informe um código de barras de até 80 caracteres, sem caracteres de controle.");
+  }
+  return value.trim();
+}
+// A scan must match the full code, never a product ID, name or substring.
+export function produtoPorCodigo(execute: Execute, value: unknown) {
+  const codigo = codigoDeBarras(value);
+  const matches = execute(`SELECT p.*, u.unidade_descricao AS produto_unidade, c.categoria_descricao AS produto_categoria
+    FROM pi2_produtos p LEFT JOIN pi2_unidades u ON u.unidade_id=p.produto_unidade_id
+    LEFT JOIN pi2_categorias c ON c.categoria_id=p.produto_categoria_id
+    WHERE p.produto_estado=1 AND p.produto_codigo_barras=$1 COLLATE BINARY
+    ORDER BY p.produto_id LIMIT 2`, [codigo]).rows;
+  if (!matches.length) throw new EstoqueError(404, "Nenhum produto ativo com esse código. Confira a leitura ou use a busca por nome.");
+  if (matches.length > 1) throw new EstoqueError(409, "Código associado a mais de um produto ativo. Solicite a correção do cadastro ou selecione o produto pela busca por nome.");
+  return matches[0];
+}
+export function buscarProdutoPorCodigo(value: unknown) {
+  return pool.transaction(execute => produtoPorCodigo(execute, value));
+}
+export function registrar(execute: Execute, produtoId: number, valor: number, tipo: string, observacao: string, usuarioId: number, chave: string, estornoDe?: number, permitirInativo = false, codigoLido?: string) {
+  const codigo = codigoLido === undefined ? null : codigoDeBarras(codigoLido);
   quantidade(valor);
   if (valor <= 0 || !["entrada", "saida"].includes(tipo)) throw new EstoqueError(400, "Informe entrada ou saída e quantidade maior que zero.");
   if (!Number.isSafeInteger(produtoId) || produtoId <= 0) throw new EstoqueError(400, "Produto inválido.");
@@ -18,10 +40,13 @@ export function registrar(execute: Execute, produtoId: number, valor: number, ti
   if (typeof chave !== "string" || !/^[\w-]{16,80}$/.test(chave)) throw new EstoqueError(400, "Envie uma chave Idempotency-Key válida.");
   const anterior = execute("SELECT * FROM pi2_movimentos_estoque WHERE movimento_chave = $1", [chave]).rows[0];
   if (anterior) {
-    if (anterior.movimento_produto_id !== produtoId || anterior.movimento_quantidade !== valor || anterior.movimento_tipo !== tipo || anterior.movimento_usuario_id !== usuarioId || anterior.movimento_observacao !== observacao || (anterior.movimento_estorno_de ?? null) !== (estornoDe ?? null)) {
+    if (anterior.movimento_produto_id !== produtoId || anterior.movimento_quantidade !== valor || anterior.movimento_tipo !== tipo || anterior.movimento_usuario_id !== usuarioId || anterior.movimento_observacao !== observacao || (anterior.movimento_estorno_de ?? null) !== (estornoDe ?? null) || (anterior.movimento_codigo_lido ?? null) !== codigo) {
       throw new EstoqueError(409, "Esta chave já foi usada em outra operação.");
     }
     return anterior;
+  }
+  if (codigo !== null && produtoPorCodigo(execute, codigo).produto_id !== produtoId) {
+    throw new EstoqueError(409, "O código agora identifica outro produto. Troque o produto e faça uma nova leitura.");
   }
   const produto = execute("SELECT * FROM pi2_produtos WHERE produto_id = $1", [produtoId]).rows[0];
   if (!produto) throw new EstoqueError(404, "Produto não encontrado.");
@@ -33,15 +58,15 @@ export function registrar(execute: Execute, produtoId: number, valor: number, ti
   execute("UPDATE pi2_produtos SET produto_quantidade_estoque = $2 WHERE produto_id = $1", [produtoId, novo]);
   return execute(`INSERT INTO pi2_movimentos_estoque
     (movimento_produto_id, movimento_quantidade, movimento_tipo, movimento_data, movimento_observacao,
-     movimento_usuario_id, movimento_chave, movimento_estorno_de, movimento_saldo_anterior, movimento_saldo_posterior)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-    [produtoId, valor, tipo, new Date().toISOString(), observacao, usuarioId, chave, estornoDe, saldo, novo]).rows[0];
+     movimento_usuario_id, movimento_chave, movimento_estorno_de, movimento_saldo_anterior, movimento_saldo_posterior, movimento_codigo_lido)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+    [produtoId, valor, tipo, new Date().toISOString(), observacao, usuarioId, chave, estornoDe, saldo, novo, codigo]).rows[0];
 }
 export function movimentar(body: any, usuarioId: number, chave: string) {
   return pool.transaction(execute => {
     const user=execute('SELECT usuario_perfil_id,usuario_status,usuario_operar_estoque FROM pi2_usuarios WHERE usuario_id=$1',[usuarioId]).rows[0];
     if(!user?.usuario_status||(![1,2].includes(user.usuario_perfil_id)&&!user.usuario_operar_estoque))throw new EstoqueError(403,'Esta conta não está autorizada a operar o estoque.');
-    return registrar(execute,body.movimento_produto_id,body.movimento_quantidade,body.movimento_tipo,body.movimento_observacao??'',usuarioId,chave);
+    return registrar(execute,body.movimento_produto_id,body.movimento_quantidade,body.movimento_tipo,body.movimento_observacao??'',usuarioId,chave,undefined,false,body.movimento_codigo_lido);
   });
 }
 export function estornar(id: number, motivo: string, usuarioId: number, chave: string) {
