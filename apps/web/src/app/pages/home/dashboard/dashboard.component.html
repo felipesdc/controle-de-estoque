@@ -20,7 +20,7 @@
         <div class="empty" *ngIf="!d.vencimentos.length"><mat-icon>event_available</mat-icon><h3>Nenhum alerta de validade</h3><p>Produtos com saldo e validade informada aparecem aqui quando vencem ou faltam até 30 dias.</p></div>
         <ul class="alert-list"><li *ngFor="let p of d.vencimentos"><div class="item-name"><strong>{{ p.produto_descricao }}</strong><small>{{ p.validade | date:'dd/MM/yyyy' }} · Saldo {{ p.quantidade | number:'1.0-3' }}</small></div><span class="badge" [class.expired]="p.situacao === 'vencido'">{{ p.situacao === 'vencido' ? 'Vencido' : p.situacao === 'hoje' ? 'Vence hoje' : 'Em breve' }}</span></li></ul>
         <a class="panel-link" routerLink="/home/produtos" [queryParams]="{ vencimento: 'vencido' }" *ngIf="d.totais.vencidos">Consultar vencidos <mat-icon>arrow_forward</mat-icon></a>
-        <p class="panel-note" *ngIf="d.vencimentos.length">Validade acompanha o produto; o controle por lote ainda não está disponível.</p>
+        <p class="panel-note" *ngIf="d.vencimentos.length">Estes alertas usam a validade do cadastro do produto. Consulte as validades e os saldos na tela de lotes.</p>
       </section>
     </div>
     <section class="panel recent"><div class="panel-heading"><div><h2>Últimas movimentações</h2><p>As 10 operações mais recentes, incluindo estornos.</p></div><a mat-button routerLink="/home/movimentacoes">Ver histórico <mat-icon>arrow_forward</mat-icon></a></div>

@@ -205,6 +205,26 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 10) 
   catch(error) { db.exec("ROLLBACK"); throw error; }
 }
 
+// Lot balances start empty: existing quantities remain explicitly unidentified.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 11) {
+  db.exec("BEGIN IMMEDIATE");
+  try { db.exec(`CREATE TABLE pi2_lotes (
+    lote_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produto_id INTEGER NOT NULL REFERENCES pi2_produtos(produto_id),
+    codigo TEXT NOT NULL,
+    validade TEXT,
+    unidade_id INTEGER REFERENCES pi2_unidades(unidade_id),
+    unidade TEXT,
+    saldo_milesimos INTEGER NOT NULL DEFAULT 0 CHECK(saldo_milesimos BETWEEN 0 AND 1000000000000),
+    criado_em TEXT NOT NULL,
+    usuario_id INTEGER NOT NULL REFERENCES pi2_usuarios(usuario_id),
+    UNIQUE(produto_id,codigo));
+    ALTER TABLE pi2_movimentos_estoque ADD COLUMN movimento_lote_id INTEGER REFERENCES pi2_lotes(lote_id);
+    CREATE INDEX pi2_lotes_produto_validade ON pi2_lotes(produto_id,validade,lote_id);
+    PRAGMA user_version=11; COMMIT;`); }
+  catch(error) { db.exec("ROLLBACK"); throw error; }
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;

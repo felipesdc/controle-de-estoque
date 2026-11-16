@@ -1,6 +1,6 @@
 # Controle de estoque
 
-Aplicação unificada em um monorepositório: Angular 18 em `apps/web` e Express/TypeScript em `apps/api`. SQLite substitui PostgreSQL; não é necessário contratar ou iniciar um servidor de banco.
+Aplicação unificada em um monorepositório: Angular 21 em `apps/web` e Express/TypeScript em `apps/api`. SQLite substitui PostgreSQL; não é necessário contratar ou iniciar um servidor de banco.
 
 ## Executar com Docker
 
@@ -409,3 +409,7 @@ Em **Operar estoque**, selecione **Usar leitor de código**. Aceita leitor USB/B
 ### Relatórios por período
 
 Em **Relatórios**, use **Consumo** para consultar saídas operacionais por produto/unidade e **Compras e pendências** para acompanhar entregas parciais, devoluções e saldo a receber. Ambos oferecem filtros por período, paginação e CSV de toda a seleção. As novas movimentações passam a guardar sua unidade; registros anteriores são sinalizados sem atribuir uma unidade histórica presumida. Veja [docs/relatorios-periodo.md](docs/relatorios-periodo.md) para os critérios e limites.
+
+## Lotes e validades
+
+Recebimentos podem identificar lote e validade; operações de estoque selecionam explicitamente o lote usado. O saldo anterior fica sem lote identificado. Consulte os saldos em **Lotes e validades** ou no catálogo. Regras e limitações do inventário estão em [docs/lotes-validade.md](docs/lotes-validade.md).

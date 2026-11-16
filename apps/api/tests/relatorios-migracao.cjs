@@ -11,15 +11,15 @@ try{
  UPDATE pi2_produtos SET produto_unidade_id=1 WHERE produto_id=1;
  UPDATE pi2_movimentos_estoque SET movimento_codigo_lido='000123' WHERE movimento_id=1;
  INSERT INTO pi2_sessoes(sessao_id,usuario_id,expira_em) VALUES('sessao-preservada',1,9999999999);
- ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_id; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_descricao; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_registrada;
+ ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_lote_id; DROP TABLE pi2_lotes; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_id; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_descricao; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_registrada;
  PRAGMA user_version=9;`);
  const names=db.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all().map(r=>r.name);
- function snapshot(db){return names.map(name=>({name,rows:db.prepare(`SELECT * FROM ${name} ORDER BY rowid`).all().map(row=>{if(name==='pi2_movimentos_estoque'){for(const column of ['movimento_unidade_id', 'movimento_unidade_descricao', 'movimento_unidade_registrada'])delete row[column];}return row;})}));}
+ function snapshot(db){return names.map(name=>({name,rows:db.prepare(`SELECT * FROM ${name} ORDER BY rowid`).all().map(row=>{if(name==='pi2_movimentos_estoque'){for(const column of ['movimento_lote_id', 'movimento_unidade_id', 'movimento_unidade_descricao', 'movimento_unidade_registrada'])delete row[column];}return row;})}));}
  const before=snapshot(db);db.close();boot();db=new DatabaseSync(file);
- assert.equal(db.prepare('PRAGMA user_version').get().user_version,10);assert.deepEqual(snapshot(db),before);
+ assert.equal(db.prepare('PRAGMA user_version').get().user_version,11);assert.deepEqual(snapshot(db),before);
  assert.equal(db.prepare('SELECT movimento_codigo_lido FROM pi2_movimentos_estoque').get().movimento_codigo_lido,'000123');
  assert.equal(db.prepare('SELECT movimento_unidade_registrada FROM pi2_movimentos_estoque').get().movimento_unidade_registrada,0);
  assert.equal(db.prepare('SELECT movimento_unidade_descricao FROM pi2_movimentos_estoque').get().movimento_unidade_descricao,null);
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);db.close();
- console.log('PASS: schema 9 to 10 preserves existing rows, scanned code, approved inventory links, balances, sessions and credentials without inventing historical units.');
+ console.log('PASS: schema 9 to 11 preserves existing rows, scanned code, approved inventory links, balances, sessions and credentials without inventing historical units.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

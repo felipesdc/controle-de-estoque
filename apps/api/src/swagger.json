@@ -8266,6 +8266,156 @@
           }
         }
       }
+    },
+    "/produto/{produto_id}/lotes": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Consulta saldos por lote e saldo sem lote identificado",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "produto_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                10,
+                25,
+                50
+              ],
+              "default": 10
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "todos",
+                "disponiveis"
+              ],
+              "default": "todos"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saldo total, identificado e sem lote; itens ordenados pela validade (datas desconhecidas ao final), paginação e data de referência em São Paulo. Validade do produto não é atribuída aos lotes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "produto_id": {
+                      "type": "integer"
+                    },
+                    "produto": {
+                      "type": "string"
+                    },
+                    "unidade": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "saldo": {
+                      "type": "number"
+                    },
+                    "identificado": {
+                      "type": "number"
+                    },
+                    "sem_lote": {
+                      "type": "number"
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "pagina": {
+                      "type": "integer"
+                    },
+                    "tamanho": {
+                      "type": "integer"
+                    },
+                    "data_referencia": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "itens": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "lote_id": {
+                            "type": "integer"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "validade": {
+                            "type": "string",
+                            "format": "date",
+                            "nullable": true
+                          },
+                          "saldo_milesimos": {
+                            "type": "integer"
+                          },
+                          "unidade": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtros inválidos"
+          },
+          "401": {
+            "description": "Autenticação necessária"
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "409": {
+            "description": "Saldos inconsistentes"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8840,6 +8990,21 @@
           "movimento_observacao": {
             "type": "string",
             "description": "Observações sobre a movimentação"
+          },
+          "movimento_lote_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true,
+            "description": "Lote existente do produto; omitido ou nulo utiliza o saldo sem lote identificado. Uma movimentação utiliza um único lote."
+          },
+          "movimento_lote_codigo": {
+            "type": "string",
+            "nullable": true
+          },
+          "movimento_lote_validade": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
           }
         },
         "example": {
@@ -8874,6 +9039,12 @@
           "movimento_observacao": {
             "type": "string",
             "description": "Observações sobre a movimentação"
+          },
+          "movimento_lote_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true,
+            "description": "Lote existente do produto; omitido ou nulo utiliza o saldo sem lote identificado. Uma movimentação utiliza um único lote."
           }
         },
         "example": {
@@ -9176,6 +9347,12 @@
             "minLength": 1,
             "maxLength": 80,
             "description": "Opcional, somente para operação identificada por leitura. Preserva zeros; precisa identificar exatamente um produto ativo e corresponder a movimento_produto_id. Faz parte da idempotência. Omitir na operação manual."
+          },
+          "movimento_lote_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true,
+            "description": "Lote existente do produto; omitido ou nulo utiliza o saldo sem lote identificado. Uma movimentação utiliza um único lote."
           }
         },
         "required": [
@@ -9398,6 +9575,32 @@
                   "minimum": 0.001,
                   "maximum": 1000000000,
                   "multipleOf": 0.001
+                },
+                "lote": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "codigo"
+                  ],
+                  "description": "Somente no recebimento. Mesmo produto e código exigem validade e unidade idênticas.",
+                  "properties": {
+                    "codigo": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "validade": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true
+                    }
+                  }
+                },
+                "lote_id": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "nullable": true,
+                  "description": "Somente na devolução. Deve corresponder a um lote recebido neste item; nulo usa recebimentos sem lote."
                 }
               },
               "required": [

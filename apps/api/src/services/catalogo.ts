@@ -1,3 +1,4 @@
+import { protegerUnidade } from './lotes';
 import { gravarPrecosProduto } from './precos-produto';
 import pool from "../config/db";
 import { EstoqueError, quantidade } from "./estoque";
@@ -86,6 +87,7 @@ export function patchProduto(id: number, body: unknown) {
   return pool.transaction(execute => {
     if (!execute("SELECT produto_id FROM pi2_produtos WHERE produto_id = $1", [id]).rows[0]) throw new EstoqueError(404, "Produto não encontrado.");
     const normalized = validarCamposProduto(execute, Object.fromEntries(entries));
+    if('produto_unidade_id' in normalized){const atual=execute('SELECT produto_unidade_id FROM pi2_produtos WHERE produto_id=$1',[id]).rows[0];protegerUnidade(execute,id,atual.produto_unidade_id,normalized.produto_unidade_id);}
     const names = Object.keys(normalized);
     return execute(`UPDATE pi2_produtos SET ${names.map((name, index) => `${name} = $${index + 2}`).join(", ")} WHERE produto_id = $1 RETURNING *`, [id, ...Object.values(normalized)]).rows[0];
   });

@@ -1,3 +1,4 @@
+import { identidadeLote, loteId, receberLote } from './lotes';
 import pool from '../config/db';
 import { EstoqueError, quantidade, registrar } from './estoque';
 type Execute=Parameters<Parameters<typeof pool.transaction>[0]>[0];
@@ -8,6 +9,18 @@ export function saldoItem(execute:Execute,item:any) {
   const anterior=old?Math.round(old.movimento_quantidade*1000):0;
   const recebido=totals.recebido+anterior, devolvido=totals.devolvido;
   return {recebido,devolvido,pendente:Math.max(0,Math.round(item.item_pedido_quantidade*1000)-recebido),devolvivel:Math.max(0,recebido-devolvido-(old?.estorno?anterior:0)),old};
+}
+// Only quantities actually received on this order/item may be returned from a bucket.
+export function lotesDevolviveis(execute:Execute,item:any) {
+  const rows=execute(`SELECT m.movimento_lote_id AS lote_id,l.codigo,l.validade,
+    SUM(CASE WHEN e.tipo='receber' THEN i.quantidade_milesimos ELSE -i.quantidade_milesimos END) AS saldo
+    FROM pi2_entrega_itens i JOIN pi2_entregas_pedido e ON e.entrega_id=i.entrega_id
+    JOIN pi2_movimentos_estoque m ON m.movimento_id=i.movimento_id
+    LEFT JOIN pi2_lotes l ON l.lote_id=m.movimento_lote_id
+    WHERE i.item_pedido_id=$1 GROUP BY m.movimento_lote_id`,[item.item_pedido_id]).rows;
+  const old=saldoItem(execute,item).old;
+  if(old&&!old.estorno){let bucket=rows.find(r=>r.lote_id===null);if(!bucket){bucket={lote_id:null,codigo:null,validade:null,saldo:0};rows.push(bucket);}bucket.saldo+=Math.round(old.movimento_quantidade*1000);}
+  return rows.filter(r=>r.saldo>0).map(r=>({lote_id:r.lote_id,codigo:r.codigo,validade:r.validade,quantidade:r.saldo/1000}));
 }
 export function registrarEntrega(value:number,tipo:string,body:any,user:number,key:string) {
   if(!Number.isSafeInteger(value)||value<=0) bad('Pedido inválido.');
@@ -22,9 +35,9 @@ export function registrarEntrega(value:number,tipo:string,body:any,user:number,k
   if(!integral&&(!Array.isArray(body.itens)||body.itens.length<1||body.itens.length>100)) bad('Selecione de 1 a 100 itens.');
   const seen=new Set<number>();
   const itens=integral?null:body.itens.map((i:any)=>{
-    if(!i||typeof i!=='object'||Array.isArray(i)||Object.keys(i).some(k=>!['item','quantidade'].includes(k))||!Number.isSafeInteger(i.item)||i.item<=0) bad('Item inválido.');
+    if(!i||typeof i!=='object'||Array.isArray(i)||Object.keys(i).some(k=>!['item','quantidade',...(tipo==='receber'?['lote']:['lote_id'])].includes(k))||!Number.isSafeInteger(i.item)||i.item<=0) bad('Item inválido.');
     const q=quantidade(i.quantidade);if(q<=0||seen.has(i.item)) bad('Quantidades devem ser positivas e itens não podem repetir.');seen.add(i.item);
-    return {item:i.item,quantidade:Math.round(q*1000)};
+    return {item:i.item,quantidade:Math.round(q*1000),...(tipo==='receber'&&i.lote!==undefined?{lote:identidadeLote(i.lote)}:{}),...(tipo==='devolver'&&loteId(i.lote_id)!==null?{lote_id:loteId(i.lote_id)}:{})};
   }).sort((a:any,b:any)=>a.item-b.item);
   const conteudo=JSON.stringify({pedido:value,tipo,usuario:user,versao:body.versao,itens,documento:documento.trim(),motivo:motivo.trim()});
   return pool.transaction(execute=>{
@@ -51,7 +64,13 @@ export function registrarEntrega(value:number,tipo:string,body:any,user:number,k
       if(selected.quantidade>(tipo==='receber'?saldo!.pendente:saldo!.devolvivel)) throw new EstoqueError(409,tipo==='receber'?'Quantidade excede o saldo pendente.':'Quantidade excede o recebido disponível para devolução.');
       const product=execute('SELECT * FROM pi2_produtos WHERE produto_id=$1',[item.item_pedido_produto_id]).rows[0];
       if(!product||product.produto_unidade_id!==item.item_pedido_unidade_id||(tipo==='receber'&&!product.produto_estado)) throw new EstoqueError(409,'Produto inativo ou unidade alterada. Revise o cadastro.');
-      const movimento=registrar(execute,item.item_pedido_produto_id,selected.quantidade/1000,tipo==='receber'?'entrada':'saida',`${tipo==='receber'?'Recebimento':'Devolução'} do pedido #${value} · entrega #${entrega} · item #${item.item_pedido_id}`,user,`entrega-${entrega}-item-${item.item_pedido_id}-estoque`,undefined,tipo==='devolver');
+      let loteSelecionado:number|null=selected.lote_id??null;
+      if(tipo==='receber'&&selected.lote)loteSelecionado=receberLote(execute,product,selected.lote,user);
+      if(tipo==='devolver'){
+        const bucket=lotesDevolviveis(execute,item).find(l=>l.lote_id===loteSelecionado);
+        if(!bucket||Math.round(bucket.quantidade*1000)<selected.quantidade)throw new EstoqueError(409,'Quantidade excede o recebido disponível neste lote do pedido.');
+      }
+      const movimento=registrar(execute,item.item_pedido_produto_id,selected.quantidade/1000,tipo==='receber'?'entrada':'saida',`${tipo==='receber'?'Recebimento':'Devolução'} do pedido #${value} · entrega #${entrega} · item #${item.item_pedido_id}`,user,`entrega-${entrega}-item-${item.item_pedido_id}-estoque`,undefined,tipo==='devolver',undefined,loteSelecionado);
       execute('INSERT INTO pi2_entrega_itens (entrega_id,item_pedido_id,quantidade_milesimos,movimento_id) VALUES ($1,$2,$3,$4)',[entrega,item.item_pedido_id,selected.quantidade,movimento.movimento_id]);
     }
     const completo=rows.every(i=>saldoItem(execute,i).pendente===0);

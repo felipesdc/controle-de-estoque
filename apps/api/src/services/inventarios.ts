@@ -1,3 +1,4 @@
+import { saldoIdentificado } from './lotes';
 import pool from '../config/db';
 import { EstoqueError, quantidade, registrar } from './estoque';
 type Execute = Parameters<Parameters<typeof pool.transaction>[0]>[0];
@@ -30,7 +31,7 @@ function detail(execute:Execute,value:number) {
   const {criacao_chave,criacao_conteudo,aprovacao_chave,aprovacao_conteudo,...publicRow}=row;
   const itens=lines(execute,value).map(item=>{
     const p=current(execute,item.produto_id);
-    return {...item,saldo:item.saldo_milesimos/1000,contado:item.contado_milesimos===null?null:item.contado_milesimos/1000,diferenca:item.contado_milesimos===null?null:(item.contado_milesimos-item.saldo_milesimos)/1000,saldo_atual:p.produto_quantidade_estoque??0,referencia_alterada:stale(item,p)};
+    return {...item,saldo_lotes:saldoIdentificado(execute,item.produto_id)/1000,saldo:item.saldo_milesimos/1000,contado:item.contado_milesimos===null?null:item.contado_milesimos/1000,diferenca:item.contado_milesimos===null?null:(item.contado_milesimos-item.saldo_milesimos)/1000,saldo_atual:p.produto_quantidade_estoque??0,referencia_alterada:stale(item,p)};
   });
   const eventos=execute('SELECT e.*,u.usuario_nome AS usuario FROM pi2_inventario_eventos e JOIN pi2_usuarios u ON u.usuario_id=e.usuario_id WHERE inventario_id=$1 ORDER BY evento_id',[value]).rows.map(e=>({...e,conteudo:JSON.parse(e.conteudo)}));
   return {...publicRow,itens,eventos};
@@ -105,7 +106,7 @@ export function acaoInventario(value:number,action:string,body:any,user:number,r
       for(const item of itens){const p=current(execute,item.produto_id);if(!p.produto_estado)fail(409,'Reative os produtos antes de reiniciar ou cancele o inventário.');execute('UPDATE pi2_inventario_itens SET descricao=$3,unidade_id=$4,unidade=$5,saldo_milesimos=$6,ultimo_movimento_id=$7,contado_milesimos=NULL,contado_em=NULL,contado_por=NULL WHERE inventario_id=$1 AND produto_id=$2',[value,item.produto_id,p.produto_descricao,p.produto_unidade_id,p.unidade,Math.round(quantidade(p.produto_quantidade_estoque??0)*1000),p.ultimo]);}
       execute("UPDATE pi2_inventarios SET estado='aberto',versao=versao+1 WHERE inventario_id=$1",[value]);
     } else if(action==='aprovar'){
-      for(const item of itens){const delta=item.contado_milesimos-item.saldo_milesimos;if(delta!==0){const movement=registrar(execute,item.produto_id,Math.abs(delta)/1000,delta>0?'entrada':'saida',`Inventário #${value}: ${motivo}`,user,`inventario-${value}-produto-${item.produto_id}`);execute('UPDATE pi2_inventario_itens SET movimento_id=$3 WHERE inventario_id=$1 AND produto_id=$2',[value,item.produto_id,movement.movimento_id]);}}
+      for(const item of itens){const delta=item.contado_milesimos-item.saldo_milesimos;if(delta<0&&saldoIdentificado(execute,item.produto_id)>0)throw new EstoqueError(409,'Contagem com redução de saldo identificado por lote exige conferência por lote, ainda não disponível.');if(delta!==0){const movement=registrar(execute,item.produto_id,Math.abs(delta)/1000,delta>0?'entrada':'saida',`Inventário #${value}: ${motivo}`,user,`inventario-${value}-produto-${item.produto_id}`);execute('UPDATE pi2_inventario_itens SET movimento_id=$3 WHERE inventario_id=$1 AND produto_id=$2',[value,item.produto_id,movement.movimento_id]);}}
       execute("UPDATE pi2_inventarios SET estado='aprovado',versao=versao+1,finalizado_em=$2,finalizado_por=$3,motivo=$4,aprovacao_chave=$5,aprovacao_conteudo=$6 WHERE inventario_id=$1",[value,new Date().toISOString(),user,motivo,requestKey,content]);
     } else if(action==='cancelar')execute("UPDATE pi2_inventarios SET estado='cancelado',versao=versao+1,finalizado_em=$2,finalizado_por=$3,motivo=$4 WHERE inventario_id=$1",[value,new Date().toISOString(),user,motivo]);
     else execute("UPDATE pi2_inventarios SET estado='revisao',versao=versao+1 WHERE inventario_id=$1",[value]);

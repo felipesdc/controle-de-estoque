@@ -1,3 +1,4 @@
+import { LotesComponent } from './lotes/lotes.component';
 import { RelatoriosPeriodoComponent } from './relatorios/relatorios-periodo.component';
 import { InventariosComponent } from './inventarios/inventarios.component';
 import { ReposicaoComponent } from './reposicao/reposicao.component';
@@ -6,6 +7,7 @@ import { PedidosComponent } from './pedidos/pedidos.component';
 import { ProdutoStatusDialogComponent } from './produtos/produto-status-dialog.component';
 import { CadastrosComponent } from './cadastros/cadastros.component';
 import { CadastroDialogComponent } from './cadastros/cadastro-dialog.component';
+import { SeletorLoteComponent } from './lotes/seletor-lote.component';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HomeComponent } from './home.component';
@@ -29,6 +31,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   ],
   declarations: [
     HomeComponent,
+    LotesComponent,
+    SeletorLoteComponent,
     OperarEstoqueComponent,
     PedidosComponent,
     ReposicaoComponent,

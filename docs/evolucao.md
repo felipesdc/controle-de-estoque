@@ -78,7 +78,7 @@
 - Cada recebimento, parcial ou integral, registra uma entrada por item selecionado, vincula os movimentos à entrega e atualiza os saldos e as quantidades na mesma transação. Falha em qualquer item desfaz a operação inteira. Chaves de idempotência e validação de situação/versão impedem duplicar recebimentos.
 - Responsável e data são definidos no servidor. Histórico dos pedidos é imutável e inclui criação, edições e transições. Devoluções registram saídas vinculadas ao pedido, com motivo e limite do recebido ainda não devolvido; não reabrem a quantidade a receber. Movimentos de pedidos não podem ser estornados isoladamente. Estornos antigos são preservados.
 - Migração 4 preserva pedidos, itens, estados e histórico antigos como legado somente para consulta, sem recalcular valores ou gerar saldo retroativo. Escrita direta nos antigos endpoints de pedido, item, estado e histórico retorna 405; URLs antigas redirecionam para a nova área.
-- Custos médios, lotes, tributos, reembolsos e conversões de unidade ficam para etapas posteriores. A confirmação não envia o pedido ao fornecedor.
+- Custos médios, tributos, reembolsos e conversões de unidade ficam para etapas posteriores. A primeira etapa de lotes está descrita adiante. A confirmação não envia o pedido ao fornecedor.
 
 ## Entregas parciais e devoluções
 
@@ -196,3 +196,12 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Migração 10 registra unidade e rótulo nas novas movimentações; antigas permanecem desconhecidas. Essas operações contam, mas não recebem quantidade agregada presumida. Identificador/rótulo capturados são cópias históricas, preservadas mesmo se o cadastro da unidade for removido ou renomeado.
 - Compras considera a criação do pedido e quantidades recebidas/devolvidas acumuladas até a consulta. Somente confirmados/parciais geram pendência; devolução não reabre saldo, encerrados mostram quantidade encerrada. Pedidos legados ficam fora. Quantidades não são somadas entre unidades.
 - Relatórios não reconstroem a posição histórica nem calculam avaliação financeira. Links de pedidos abrem os detalhes. Adapter SQLite passou a retornar linhas de consultas com CTE, usadas para agregações consistentes. Critérios completos em `docs/relatorios-periodo.md`.
+
+## Lotes e validades — primeira etapa
+
+- Migração 11 aditiva: saldo anterior sem lote identificado, sem atribuir datas históricas. Lotes têm identidade por produto/código, validade opcional, unidade capturada e saldo em milésimos.
+- Recebimentos parciais permitem um lote por item/entrega, com agregação somente quando identidade, validade e unidade são compatíveis. Devoluções usam os limites recebidos daquele item/lote e o saldo físico disponível.
+- Consulta paginada com busca, filtro com saldo e rótulos de validade no calendário de São Paulo. Acesso pelo menu e catálogo. Painel antigo continua explicitamente baseado na validade do produto.
+- Movimentações administrativas e operação no tablet exigem escolha do lote existente ou saldo sem lote, com revisão explícita no tablet. Nenhuma baixa automática pelo vencimento. Funcionários não criam lotes, cadastros nem estornos.
+- Saldo do produto, lote, movimento e entrega na mesma transação; idempotência vinculada ao lote; estorno usa lote original. Troca de unidade bloqueada com saldo identificado e unidade histórica vinculada protegida contra exclusão.
+- Inventário geral mantém contagens sem diferença e acréscimos sem lote, mas bloqueia reduções quando há saldo identificado. Contagem física por lote e atribuição auditável de saldo antigo permanecem como próxima etapa. Detalhes em [lotes-validade.md](lotes-validade.md).

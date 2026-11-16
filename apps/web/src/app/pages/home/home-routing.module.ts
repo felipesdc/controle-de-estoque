@@ -1,3 +1,4 @@
+import { LotesComponent } from './lotes/lotes.component';
 import { RelatoriosPeriodoComponent } from './relatorios/relatorios-periodo.component';
 import { InventariosComponent } from './inventarios/inventarios.component';
 import { ReposicaoComponent } from './reposicao/reposicao.component';
@@ -21,6 +22,7 @@ const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
+      { path: 'lotes', component: LotesComponent },
       { path: 'produtos', component: ProdutosComponent },
       { path: 'pedidos', component: PedidosComponent },
       { path: 'reposicao', component: ReposicaoComponent },

@@ -1,3 +1,4 @@
+import { protegerUnidade } from '../services/lotes';
 import pool from "../config/db";
 import { EstoqueError, quantidade, registrar } from "../services/estoque";
 import { validarCamposProduto } from "../services/catalogo";
@@ -88,6 +89,7 @@ export const updateProduto = async (
   return pool.transaction(execute => {
   const current = execute("SELECT * FROM pi2_produtos WHERE produto_id = $1", [produto_id]).rows[0];
   if (!current) return null;
+  protegerUnidade(execute,produto_id,current.produto_unidade_id,produto_unidade_id);
   if (produto_quantidade_estoque !== current.produto_quantidade_estoque) throw new EstoqueError(409, "Altere o saldo por uma movimentação de estoque.");
   const res = execute(
     "UPDATE pi2_produtos SET produto_descricao = $2, produto_fornecedor_id = $3, produto_preco_id = $4, produto_unidade_id = $5, produto_categoria_id = $6, produto_quantidade_estoque = $7, produto_data_validade = $8, produto_codigo_barras = $9, produto_estado = $10 WHERE produto_id = $1 RETURNING *",

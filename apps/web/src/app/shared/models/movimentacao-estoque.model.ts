@@ -1,5 +1,8 @@
 export type MovimentacaoEstoque = {
   movimento_id?: number;
+  movimento_lote_id?: number|null;
+  movimento_lote_codigo?: string;
+  movimento_lote_validade?: string;
   movimento_codigo_lido?: string;
   movimento_pedido_id?: number;
   movimento_inventario_id?: number;

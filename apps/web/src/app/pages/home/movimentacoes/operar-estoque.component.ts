@@ -1,3 +1,4 @@
+import { EscolhaLote } from 'src/app/shared/services/lotes.service';
 import { Component,OnInit,OnDestroy,ViewChild,ElementRef } from '@angular/core';
 import { FormBuilder,Validators,AbstractControl } from '@angular/forms';
 import { Subject,Subscription } from 'rxjs';
@@ -10,6 +11,8 @@ import { MovimentacaoEstoque } from 'src/app/shared/models/movimentacao-estoque.
 import { AuthService } from 'src/app/shared/services/auth.service';
 @Component({ standalone: false,selector:'app-operar-estoque',templateUrl:'./operar-estoque.component.html',styleUrl:'./operar-estoque.component.scss'})
 export class OperarEstoqueComponent implements OnInit,OnDestroy {
+ lote:EscolhaLote={id:null,codigo:null,validade:null,saldo:0,pronto:false};
+ escolherLote(l:EscolhaLote){this.lote=l;this.chave=crypto.randomUUID();this.revisando=false;}
  produtos:ProdutoCatalogo[]=[];selecionado:Produto|null=null;loading=false;saving=false;revisando=false;error='';success='';total=0;
  modo:'busca'|'codigo'='busca';loadingCodigo=false;erroCodigo='';codigoSelecionado:string|null=null;
  busca=this.fb.nonNullable.control('');
@@ -55,11 +58,11 @@ export class OperarEstoqueComponent implements OnInit,OnDestroy {
  }
  trocarProduto(){if(this.saving)return;this.selecionado=null;this.codigoSelecionado=null;this.revisando=false;this.error='';this.codigo.setValue('',{emitEvent:false});if(this.modo==='busca')this.atualizar();}
  ajustar(delta:number){const value=Math.max(.001,Math.min(1e9,Math.round((this.form.controls.quantidade.value+delta)*1000)/1000));this.form.controls.quantidade.setValue(value);}
- revisar(){if(this.form.invalid||!this.selecionado||this.saving)return;if(this.saldoApos<0){this.error='A quantidade supera o saldo disponível. Confira a quantidade.';return;}this.error='';this.revisando=true;setTimeout(()=>{if(!this.encerrado&&this.revisando){this.revisao?.nativeElement.focus();this.revisao?.nativeElement.scrollIntoView({block:'start',behavior:'smooth'});}},0);}
+ revisar(){if(this.form.invalid||!this.selecionado||this.saving||!this.lote.pronto)return;if(this.form.value.tipo==='saida'&&this.form.controls.quantidade.value>this.lote.saldo){this.error='Saldo insuficiente no lote selecionado.';return;}if(this.saldoApos<0){this.error='A quantidade supera o saldo disponível. Confira a quantidade.';return;}this.error='';this.revisando=true;setTimeout(()=>{if(!this.encerrado&&this.revisando){this.revisao?.nativeElement.focus();this.revisao?.nativeElement.scrollIntoView({block:'start',behavior:'smooth'});}},0);}
  confirmar(){
   if(!this.revisando||this.saving||this.form.invalid||!this.selecionado)return;
   const values=this.form.getRawValue();const nome=this.selecionado.produto_descricao;this.saving=true;this.error='';this.form.disable({emitEvent:false});this.busca.disable({emitEvent:false});
-  const body={movimento_produto_id:this.selecionado.produto_id!,movimento_tipo:values.tipo,movimento_quantidade:values.quantidade,movimento_observacao:values.observacao,...(this.codigoSelecionado!==null?{movimento_codigo_lido:this.codigoSelecionado}:{})} as MovimentacaoEstoque;
+  const body={movimento_lote_id:this.lote.id,movimento_produto_id:this.selecionado.produto_id!,movimento_tipo:values.tipo,movimento_quantidade:values.quantidade,movimento_observacao:values.observacao,...(this.codigoSelecionado!==null?{movimento_codigo_lido:this.codigoSelecionado}:{})} as MovimentacaoEstoque;
   this.request=this.service.createNewMovimentacaoEstoque(body,this.chave).pipe(timeout(15000),finalize(()=>{this.saving=false;this.form.enable({emitEvent:false});this.busca.enable({emitEvent:false});if(this.modo==='codigo'&&!this.selecionado)this.focarLeitor();})).subscribe({next:m=>{
    this.success=`${values.tipo==='saida'?'Saída':'Entrada'} registrada para ${nome}. Movimento #${m.movimento_id}. Saldo: ${new Intl.NumberFormat('pt-BR',{maximumFractionDigits:3}).format(m.movimento_saldo_posterior??0)}.`;
    this.selecionado=null;this.codigoSelecionado=null;this.revisando=false;this.codigo.setValue('',{emitEvent:false});this.form.reset({tipo:'saida',quantidade:1,observacao:''},{emitEvent:false});this.chave=crypto.randomUUID();

@@ -1,3 +1,4 @@
+import { consultarLotes } from '../services/lotes';
 import { lerPrecosProduto } from '../services/precos-produto';
 import { EstoqueError, buscarProdutoPorCodigo } from "../services/estoque";
 import { getCatalogo, patchProduto } from "../services/catalogo";
@@ -22,6 +23,10 @@ router.get("/catalogo/produtos", authenticateToken, (req, res) => {
     if (error instanceof EstoqueError) res.status(error.status).json({ message: error.message });
     else { console.error(error); res.status(500).json({ message: "Não foi possível consultar o catálogo." }); }
   }
+});
+router.get('/produto/:produto_id/lotes',authenticateToken,(req,res)=>{
+  try{res.set('Cache-Control','no-store').json(consultarLotes(Number(req.params.produto_id),req.query));}
+  catch(e){if(e instanceof EstoqueError)res.status(e.status).json({message:e.message});else{console.error(e);res.status(500).json({message:'Não foi possível consultar os lotes.'});}}
 });
 router.get('/produto/:produto_id/precos',authenticateToken,requireManager,(req,res)=>{
   try{res.set('Cache-Control','no-store').json(lerPrecosProduto(Number(req.params.produto_id)));}

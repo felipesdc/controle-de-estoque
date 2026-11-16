@@ -1,3 +1,4 @@
+import { EscolhaLote } from 'src/app/shared/services/lotes.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -15,6 +16,8 @@ import { AuthService } from 'src/app/shared/services/auth.service';
   styleUrl: './movimentacoes.component.scss',
 })
 export class MovimentacoesComponent implements OnInit, OnDestroy {
+ lote:EscolhaLote={id:null,codigo:null,validade:null,saldo:0,pronto:false};
+ escolherLote(l:EscolhaLote){this.lote=l;this.chave=crypto.randomUUID();}
   produtos: Produto[] = [];
   movimentos: MovimentacaoEstoque[] = [];
   loading = true;
@@ -67,10 +70,10 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       });
   }
   salvar(): void {
-    if (this.form.invalid || this.saving) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid || this.saving || !this.lote.pronto) { this.form.markAllAsTouched(); return; }
     this.error = ''; this.success = ''; this.saving = true;
     this.form.disable({ emitEvent: false });
-    this.service.createNewMovimentacaoEstoque(this.form.getRawValue() as unknown as MovimentacaoEstoque, this.chave)
+    this.service.createNewMovimentacaoEstoque({...this.form.getRawValue(),movimento_lote_id:this.lote.id} as unknown as MovimentacaoEstoque, this.chave)
       .pipe(finalize(() => { this.saving = false; this.form.enable({ emitEvent: false }); })).subscribe({
         next: () => {
           this.form.reset({ movimento_tipo: 'entrada', movimento_observacao: '' });

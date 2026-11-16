@@ -5,7 +5,7 @@ const configs = {
   categorias: { table: "pi2_categorias", id: "categoria_id", name: "categoria_descricao", max: 120,
     refs: [["pi2_produtos", "produto_categoria_id", "produtos"]] },
   unidades: { table: "pi2_unidades", id: "unidade_id", name: "unidade_descricao", max: 120,
-    refs: [["pi2_produtos", "produto_unidade_id", "produtos"], ["pi2_itens_pedido", "item_pedido_unidade_id", "itens_pedido"]] },
+    refs: [["pi2_produtos", "produto_unidade_id", "produtos"], ["pi2_itens_pedido", "item_pedido_unidade_id", "itens_pedido"], ["pi2_lotes", "unidade_id", "lotes"]] },
   fornecedores: { table: "pi2_fornecedores", id: "fornecedor_id", name: "fornecedor_nome", max: 200,
     refs: [["pi2_produtos", "produto_fornecedor_id", "produtos"], ["pi2_pedidos", "pedido_fornecedor_id", "pedidos"]] },
 } as const;
