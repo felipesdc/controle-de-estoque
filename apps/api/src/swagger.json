@@ -7824,6 +7824,448 @@
           }
         }
       }
+    },
+    "/relatorios/consumo": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Consultar saídas operacionais",
+        "description": "Todos os autenticados; sem cache. Saídas operacionais positivas, sem estorno até a consulta (mesmo que estornado depois do período), excluindo devoluções de compras, ajustes de inventário e legado sem saldo auditável. Agrupa por produto e unidade capturada; ordena por número de saídas, sem comparação de quantidades entre unidades. Registros anteriores ao esquema 10 contam como operações, com quantidade agregada nula. Nomes/códigos de produto são atuais; snapshot de unidade não muda após renomear/excluir a unidade.",
+        "parameters": [
+          {
+            "name": "inicio",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Data inclusiva em São Paulo. Padrão: últimos 30 dias até hoje."
+          },
+          {
+            "name": "fim",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Data inclusiva em São Paulo. Padrão: últimos 30 dias até hoje."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                10,
+                25,
+                50
+              ],
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta consistente com resumo de toda a seleção",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelatorioConsumo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtros inválidos, limite de exportação ou precisão excedida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/consumo.csv": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Exportar saídas operacionais",
+        "description": "Todos os autenticados; sem cache. Saídas operacionais positivas, sem estorno até a consulta (mesmo que estornado depois do período), excluindo devoluções de compras, ajustes de inventário e legado sem saldo auditável. Agrupa por produto e unidade capturada; ordena por número de saídas, sem comparação de quantidades entre unidades. Registros anteriores ao esquema 10 contam como operações, com quantidade agregada nula. Nomes/códigos de produto são atuais; snapshot de unidade não muda após renomear/excluir a unidade.",
+        "parameters": [
+          {
+            "name": "inicio",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Data inclusiva em São Paulo. Padrão: últimos 30 dias até hoje."
+          },
+          {
+            "name": "fim",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Data inclusiva em São Paulo. Padrão: últimos 30 dias até hoje."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                10,
+                25,
+                50
+              ],
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV UTF-8 com BOM, ponto e vírgula, decimal vírgula e proteção de fórmulas. Todas as páginas até 10.000 linhas; nova consulta ao baixar.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtros inválidos, limite de exportação ou precisão excedida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/compras": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Consultar compras e pendências",
+        "description": "Todos os autenticados; sem cache. Período pela criação do pedido. Recebimentos/devoluções acumulados até a consulta, inclusive os posteriores ao período. Só confirmados/parciais têm pendência; devolução não reabre pendência; encerrados mostram saldo encerrado. Padrão: somente itens a receber. Todos exclui pedidos legados. Indicadores contam pedidos distintos na seleção; não soma quantidades nem avalia valores monetários. Nome do produto e rótulo da unidade do item são atuais.",
+        "parameters": [
+          {
+            "name": "inicio",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Data inclusiva em São Paulo. Padrão: últimos 30 dias até hoje."
+          },
+          {
+            "name": "fim",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Data inclusiva em São Paulo. Padrão: últimos 30 dias até hoje."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                10,
+                25,
+                50
+              ],
+              "default": 10
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "pendentes",
+              "enum": [
+                "pendentes",
+                "todos",
+                "rascunho",
+                "confirmado",
+                "parcial",
+                "recebido",
+                "encerrado",
+                "cancelado"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta consistente com resumo de toda a seleção",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelatorioCompras"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtros inválidos, limite de exportação ou precisão excedida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/compras.csv": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Exportar compras e pendências",
+        "description": "Todos os autenticados; sem cache. Período pela criação do pedido. Recebimentos/devoluções acumulados até a consulta, inclusive os posteriores ao período. Só confirmados/parciais têm pendência; devolução não reabre pendência; encerrados mostram saldo encerrado. Padrão: somente itens a receber. Todos exclui pedidos legados. Indicadores contam pedidos distintos na seleção; não soma quantidades nem avalia valores monetários. Nome do produto e rótulo da unidade do item são atuais.",
+        "parameters": [
+          {
+            "name": "inicio",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Data inclusiva em São Paulo. Padrão: últimos 30 dias até hoje."
+          },
+          {
+            "name": "fim",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Data inclusiva em São Paulo. Padrão: últimos 30 dias até hoje."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                10,
+                25,
+                50
+              ],
+              "default": 10
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "pendentes",
+              "enum": [
+                "pendentes",
+                "todos",
+                "rascunho",
+                "confirmado",
+                "parcial",
+                "recebido",
+                "encerrado",
+                "cancelado"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV UTF-8 com BOM, ponto e vírgula, decimal vírgula e proteção de fórmulas. Todas as páginas até 10.000 linhas; nova consulta ao baixar.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtros inválidos, limite de exportação ou precisão excedida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -9455,6 +9897,265 @@
                 }
               }
             }
+          }
+        }
+      },
+      "SaidaConsumo": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "produto": {
+            "type": "string"
+          },
+          "codigo_atual": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidade_id": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "unidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "unidade_registrada": {
+            "type": "boolean"
+          },
+          "operacoes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "quantidade": {
+            "type": "number",
+            "minimum": 0,
+            "nullable": true,
+            "description": "Nula quando a unidade histórica não foi registrada. Sem soma entre grupos de unidades."
+          },
+          "ultimo_dia": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "CompraRelatorioItem": {
+        "type": "object",
+        "properties": {
+          "pedido_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "pedido_data": {
+            "type": "string"
+          },
+          "pedido_fluxo": {
+            "type": "string"
+          },
+          "fornecedor": {
+            "type": "string",
+            "nullable": true
+          },
+          "item_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "produto_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "produto": {
+            "type": "string"
+          },
+          "unidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "pedida": {
+            "type": "number",
+            "minimum": 0
+          },
+          "recebida": {
+            "type": "number",
+            "minimum": 0
+          },
+          "devolvida": {
+            "type": "number",
+            "minimum": 0
+          },
+          "pendente": {
+            "type": "number",
+            "minimum": 0
+          },
+          "encerrada": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "RelatorioConsumo": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "consumo"
+            ]
+          },
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaidaConsumo"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "pagina": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "tamanho": {
+            "type": "integer",
+            "enum": [
+              10,
+              25,
+              50
+            ]
+          },
+          "paginas": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "resumo": {
+            "type": "object",
+            "properties": {
+              "linhas": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "operacoes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "produtos": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sem_unidade_historica": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "gerado_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "filtros": {
+            "type": "object",
+            "properties": {
+              "inicio": {
+                "type": "string",
+                "format": "date"
+              },
+              "fim": {
+                "type": "string",
+                "format": "date"
+              },
+              "q": {
+                "type": "string"
+              }
+            }
+          },
+          "criterios": {
+            "type": "object"
+          }
+        }
+      },
+      "RelatorioCompras": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "compras"
+            ]
+          },
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CompraRelatorioItem"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "pagina": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "tamanho": {
+            "type": "integer",
+            "enum": [
+              10,
+              25,
+              50
+            ]
+          },
+          "paginas": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "resumo": {
+            "type": "object",
+            "properties": {
+              "linhas": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pedidos": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "itens_pendentes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pedidos_pendentes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "gerado_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "filtros": {
+            "type": "object",
+            "properties": {
+              "inicio": {
+                "type": "string",
+                "format": "date"
+              },
+              "fim": {
+                "type": "string",
+                "format": "date"
+              },
+              "q": {
+                "type": "string"
+              },
+              "estado": {
+                "type": "string"
+              }
+            }
+          },
+          "criterios": {
+            "type": "object"
           }
         }
       }

@@ -195,6 +195,16 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 9) {
   catch(error) { db.exec("ROLLBACK"); throw error; }
 }
 
+// Unit snapshots for reliable quantities in operational reports. Legacy units stay unknown.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 10) {
+  db.exec("BEGIN IMMEDIATE");
+  try { db.exec(`ALTER TABLE pi2_movimentos_estoque ADD COLUMN movimento_unidade_id INTEGER;
+    ALTER TABLE pi2_movimentos_estoque ADD COLUMN movimento_unidade_descricao TEXT;
+    ALTER TABLE pi2_movimentos_estoque ADD COLUMN movimento_unidade_registrada INTEGER NOT NULL DEFAULT 0 CHECK(movimento_unidade_registrada IN (0,1));
+    PRAGMA user_version=10; COMMIT;`); }
+  catch(error) { db.exec("ROLLBACK"); throw error; }
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;
@@ -228,7 +238,7 @@ const query = (sql: string, values: unknown[] = []): { rows: any[] } => {
       else throw new TypeError("Parâmetro SQL inválido");
       return "?";
     }));
-    if (/^\s*SELECT\b/i.test(sql) || /\bRETURNING\b/i.test(sql)) {
+    if (/^\s*(?:SELECT|WITH)\b/i.test(sql) || /\bRETURNING\b/i.test(sql)) {
       const rows = statement.all(...bindings).map(row => Object.fromEntries(
         Object.entries(row).map(([key, value]) => [key, booleanColumns.has(key) && value !== null ? Boolean(value) : value])
       ));

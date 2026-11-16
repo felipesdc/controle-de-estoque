@@ -405,3 +405,7 @@ A migração 8 adiciona inventários sem recalcular saldos existentes. A demonst
 ### Operar por código de barras
 
 Em **Operar estoque**, selecione **Usar leitor de código**. Aceita leitor USB/Bluetooth em modo teclado com Enter, ou digitação manual. Localiza o código completo, preserva zeros e bloqueia ambiguidades; depois exige quantidade, revisão e confirmação. O código é revalidado na gravação e aparece no histórico. Após sucesso, o campo volta a receber foco. Veja [docs/leitura-codigos.md](docs/leitura-codigos.md) para configuração, demonstração e limites. Esta etapa não usa câmera.
+
+### Relatórios por período
+
+Em **Relatórios**, use **Consumo** para consultar saídas operacionais por produto/unidade e **Compras e pendências** para acompanhar entregas parciais, devoluções e saldo a receber. Ambos oferecem filtros por período, paginação e CSV de toda a seleção. As novas movimentações passam a guardar sua unidade; registros anteriores são sinalizados sem atribuir uma unidade histórica presumida. Veja [docs/relatorios-periodo.md](docs/relatorios-periodo.md) para os critérios e limites.

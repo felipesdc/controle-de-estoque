@@ -1,3 +1,4 @@
+import { RelatoriosPeriodoComponent } from './relatorios/relatorios-periodo.component';
 import { InventariosComponent } from './inventarios/inventarios.component';
 import { ReposicaoComponent } from './reposicao/reposicao.component';
 import { OperarEstoqueComponent } from './movimentacoes/operar-estoque.component';
@@ -41,6 +42,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     ProdutoStatusDialogComponent,
     ProdutosCreateDialogComponent,
     RelatoriosComponent,
+    RelatoriosPeriodoComponent,
   ],
 })
 export class HomeModule {}

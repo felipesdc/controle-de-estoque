@@ -56,11 +56,12 @@ export function registrar(execute: Execute, produtoId: number, valor: number, ti
   if (novo < 0) throw new EstoqueError(409, "Saldo insuficiente para esta operação.");
   quantidade(novo);
   execute("UPDATE pi2_produtos SET produto_quantidade_estoque = $2 WHERE produto_id = $1", [produtoId, novo]);
+  const unidade = produto.produto_unidade_id == null ? null : execute('SELECT unidade_descricao FROM pi2_unidades WHERE unidade_id=$1',[produto.produto_unidade_id]).rows[0]?.unidade_descricao ?? null;
   return execute(`INSERT INTO pi2_movimentos_estoque
     (movimento_produto_id, movimento_quantidade, movimento_tipo, movimento_data, movimento_observacao,
-     movimento_usuario_id, movimento_chave, movimento_estorno_de, movimento_saldo_anterior, movimento_saldo_posterior, movimento_codigo_lido)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-    [produtoId, valor, tipo, new Date().toISOString(), observacao, usuarioId, chave, estornoDe, saldo, novo, codigo]).rows[0];
+     movimento_usuario_id, movimento_chave, movimento_estorno_de, movimento_saldo_anterior, movimento_saldo_posterior, movimento_codigo_lido, movimento_unidade_id, movimento_unidade_descricao, movimento_unidade_registrada)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,1) RETURNING *`,
+    [produtoId, valor, tipo, new Date().toISOString(), observacao, usuarioId, chave, estornoDe, saldo, novo, codigo, produto.produto_unidade_id, unidade]).rows[0];
 }
 export function movimentar(body: any, usuarioId: number, chave: string) {
   return pool.transaction(execute => {

@@ -1,3 +1,4 @@
+import { RelatoriosPeriodoComponent } from './relatorios/relatorios-periodo.component';
 import { InventariosComponent } from './inventarios/inventarios.component';
 import { ReposicaoComponent } from './reposicao/reposicao.component';
 import { OperarEstoqueComponent } from './movimentacoes/operar-estoque.component';
@@ -29,7 +30,9 @@ const routes: Routes = [
       { path: 'cadastros', redirectTo: 'cadastros/categorias', pathMatch: 'full' },
       { path: 'cadastros/:tipo', component: CadastrosComponent },
       { path: 'fornecedores', redirectTo: 'cadastros/fornecedores', pathMatch: 'full' },
-      { path: 'relatorios', component: RelatoriosComponent },
+      { path: 'relatorios', component: RelatoriosComponent, pathMatch:'full' },
+      { path: 'relatorios/consumo', component: RelatoriosPeriodoComponent, data:{tipo:'consumo'} },
+      { path: 'relatorios/compras', component: RelatoriosPeriodoComponent, data:{tipo:'compras'} },
     ],
   },
 ];

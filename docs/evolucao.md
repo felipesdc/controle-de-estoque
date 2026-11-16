@@ -3,7 +3,7 @@
 ## Implementado
 
 - Monorepositório com `apps/web` e `apps/api`, Docker Compose, Nginx e SQLite persistente.
-- Migração incremental da base até a versão 9, preservando saldos, credenciais e registros anteriores.
+- Migração incremental da base até a versão 10, preservando saldos, credenciais e registros anteriores.
 - Entrada e saída com saldo e histórico gravados na mesma transação. Saída sem saldo é rejeitada sem gravar movimento.
 - Quantidades positivas com até três casas decimais e limite de 1 bilhão. Os cálculos de saldo usam milésimos para evitar resíduos de ponto flutuante.
 - Saldo inicial de novos produtos registrado como entrada, junto do cadastro. Alterações posteriores de saldo passam exclusivamente por movimentações.
@@ -98,7 +98,7 @@
 - CSV UTF-8 com BOM, separador ponto e vírgula, saldo com três casas e vírgula decimal. Exporta todos os produtos filtrados (até 10.000), independentemente da página, com data de geração e filtros em cada linha.
 - Campos textuais têm escape e proteção contra interpretação como fórmula. Códigos de barras recebem apóstrofo para preservar zeros ao abrir em planilhas; o arquivo não é destinado a reimportação automática sem tratamento.
 - Exportação usa a posição atual no momento do download, podendo diferir de uma consulta anterior se houver movimentações. Filtros alterados precisam ser aplicados antes de exportar. Todos os perfis autenticados podem consultar e exportar.
-- Não há migração de banco nesta etapa. Relatórios de compras, pendências, devoluções e evolução histórica continuam pendentes.
+- Não há migração de banco nesta etapa. Os relatórios de consumo e compras/pendências estão descritos adiante; reconstrução de posição histórica continua pendente.
 
 ## Operação em tablet e cadastro contextual
 
@@ -127,12 +127,12 @@ Os perfis 1 e 2 seguem a convenção já usada pelo frontend: administrador e ge
 
 ## Próximas etapas
 
-1. Ampliar relatórios de compras, pendências e devoluções.
+1. Ampliar análises de custo e evolução histórica, respeitando os contratos monetários e de unidade.
 2. Completar validações, paginação e mensagens padronizadas dos demais cadastros.
 3. Concluir a atualização principal das ferramentas do frontend para resolver os avisos moderados remanescentes; ver `docs/dependencias.md`.
 4. Definir unidades e valores monetários em centavos; as quantidades agora têm precisão explícita, mas os contratos de preço continuam legados.
 5. Melhorar seleções de produtos e responsáveis com busca remota conforme o volume de dados.
-6. Ampliar relatórios e exportação para compras, pendências e devoluções; ativar o agendamento e a cópia externa após configurar o destino.
+6. Ativar o agendamento e a cópia externa após configurar o destino.
 
 As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A aproximação visual deve ser feita quando seus códigos ou referências estiverem disponíveis.
 
@@ -188,3 +188,11 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Confirmação de leitura envia `movimento_codigo_lido`. A associação única ao produto é revalidada na mesma transação do saldo. Código removido, reassociado ou duplicado depois da consulta bloqueia nova operação. Repetição exata já concluída preserva resultado, mesmo após mudança cadastral, e o código faz parte da idempotência.
 - Migração 9 adiciona código lido opcional ao movimento, sem alterar saldos, sessões, credenciais ou vínculos de inventário. Registros anteriores permanecem sem código lido. Histórico mostra o código da operação; operações manuais, compras e ajustes de inventário continuam compatíveis.
 - Permissões existentes preservadas: funcionário autorizado só movimenta; consulta somente lê; cadastros e estornos continuam restritos à gestão. Não impõe unicidade global retroativa nem valida dígitos EAN/GTIN. Dispositivos físicos e câmera não foram validados/integrados nesta etapa. Detalhes em `docs/leitura-codigos.md`.
+
+## Relatórios de consumo e compras
+
+- Novas áreas de consumo e compras/pendências, com período inclusivo no calendário de São Paulo, busca, paginação, indicadores globais da seleção e CSV de todas as páginas até 10.000 linhas. Consulta/exportação para todos os autenticados; escrita não foi ampliada.
+- Consumo conta saídas operacionais válidas, excluindo operações estornadas até a consulta, devoluções de compra, ajustes de inventário e legado sem saldo auditável. Ranking por quantidade de operações, sem soma de unidades diferentes.
+- Migração 10 registra unidade e rótulo nas novas movimentações; antigas permanecem desconhecidas. Essas operações contam, mas não recebem quantidade agregada presumida. Identificador/rótulo capturados são cópias históricas, preservadas mesmo se o cadastro da unidade for removido ou renomeado.
+- Compras considera a criação do pedido e quantidades recebidas/devolvidas acumuladas até a consulta. Somente confirmados/parciais geram pendência; devolução não reabre saldo, encerrados mostram quantidade encerrada. Pedidos legados ficam fora. Quantidades não são somadas entre unidades.
+- Relatórios não reconstroem a posição histórica nem calculam avaliação financeira. Links de pedidos abrem os detalhes. Adapter SQLite passou a retornar linhas de consultas com CTE, usadas para agregações consistentes. Critérios completos em `docs/relatorios-periodo.md`.

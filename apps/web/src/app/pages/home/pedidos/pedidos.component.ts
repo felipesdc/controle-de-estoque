@@ -1,3 +1,4 @@
+import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormArray, FormBuilder, Validators } from '@angular/forms';
 import { forkJoin, Subscription } from 'rxjs';
@@ -17,11 +18,13 @@ export class PedidosComponent implements OnInit, OnDestroy {
  private consulta?:Subscription; private operacao?:Subscription;
  private chave=crypto.randomUUID(); private chaveReceber=crypto.randomUUID();
  form=this.fb.group({fornecedor:[null as number|null,Validators.required],observacao:['',Validators.maxLength(500)],itens:this.fb.array([this.item()])});
- constructor(private fb:FormBuilder,private service:ComprasService,private produtoService:ProdutoService,private fornecedorService:FornecedorService,public auth:AuthService){}
+ constructor(private fb:FormBuilder,private service:ComprasService,private produtoService:ProdutoService,private fornecedorService:FornecedorService,public auth:AuthService,private route:ActivatedRoute){}
  get podeAlterar(){return this.auth.isAdmin()||this.auth.isGerente();}
  get itens(){return this.form.controls.itens as FormArray;}
  item(){return this.fb.group({produto:[null as number|null,Validators.required],quantidade:[1,[Validators.required,Validators.min(.001),Validators.max(1e9)]],preco:['0.00',[Validators.required,Validators.pattern(/^\d+([.,]\d{1,2})?$/)]]});}
  ngOnInit(){this.form.valueChanges.subscribe(()=>this.chave=crypto.randomUUID());this.carregar();
+ const pedidoId=Number(this.route.snapshot.queryParamMap.get('id'));
+ if(Number.isSafeInteger(pedidoId)&&pedidoId>0){this.abrir({pedido_id:pedidoId} as Compra);return;}
  const sugestoes=history.state?.reposicao;
  if(this.podeAlterar&&Array.isArray(sugestoes)&&sugestoes.length>0&&sugestoes.length<=100&&sugestoes.every(i=>Number.isSafeInteger(i.produto)&&i.produto>0&&typeof i.quantidade==='number'&&Number.isFinite(i.quantidade)&&i.quantidade>0&&i.quantidade<=1e9)){
   this.criar();this.itens.clear();for(const i of sugestoes){const group=this.item();group.patchValue({produto:i.produto,quantidade:i.quantidade,preco:'0.00'});this.itens.push(group);}
