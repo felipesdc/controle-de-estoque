@@ -396,11 +396,11 @@ A rotina `python3 scripts/backup-agendado.py` gera backup local e cópia externa
 
 ### Inventário físico
 
-Abra **Inventário físico** (`/home/inventarios`) com uma conta de administrador ou gerente. Selecione até 100 produtos ativos, registre as quantidades encontradas e salve a contagem. Campo vazio significa não contado; zero é ausência confirmada. Depois, envie à revisão e aprove com justificativa. Só a aprovação grava as diferenças como entradas/saídas, de forma atômica e auditada; itens sem diferença não geram movimentos.
+Abra **Inventário físico** (`/home/inventarios`) com uma conta de administrador ou gerente. Selecione até 100 produtos ativos e conte cada lote e o saldo sem lote, inclusive os lotes zerados na unidade atual (até 2.000 contagens). Salve, revise as divergências e aprove com justificativa. Campo vazio significa não contado; zero é ausência confirmada. Depois, envie à revisão e aprove com justificativa. Só a aprovação grava as diferenças como entradas/saídas, de forma atômica e auditada; itens sem diferença não geram movimentos.
 
 Evite movimentar os produtos durante a conferência. Se saldo, unidade, situação ou último movimento mudarem desde a referência, a revisão/aprovação será bloqueada. **Reiniciar contagem** atualiza a referência e limpa todas as quantidades, preservando a contagem anterior na auditoria. Inventários aprovados/cancelados são imutáveis; correções exigem um novo inventário. Funcionários continuam autorizados somente às operações anteriores, sem acesso ao inventário.
 
-A migração 8 adiciona inventários sem recalcular saldos existentes. A demonstração em `http://localhost:8081/home/inventarios` possui exemplos de aprovação e revisão; os dados demonstrativos são temporários. Contratos em `/api-docs/` e detalhes em [docs/evolucao.md](docs/evolucao.md).
+A migração 8 adicionou os inventários gerais; a migração 12 preserva esses registros e permite novas contagens por lote. É possível identificar lotes encontrados na conferência, sem alterar estoque até a aprovação. Detalhes em [docs/inventario-lotes.md](docs/inventario-lotes.md). A demonstração em `http://localhost:8081/home/inventarios` possui exemplos de aprovação e revisão; os dados demonstrativos são temporários. Contratos em `/api-docs/` e detalhes em [docs/evolucao.md](docs/evolucao.md).
 
 ### Operar por código de barras
 
@@ -413,3 +413,7 @@ Em **Relatórios**, use **Consumo** para consultar saídas operacionais por prod
 ## Lotes e validades
 
 Recebimentos podem identificar lote e validade; operações de estoque selecionam explicitamente o lote usado. O saldo anterior fica sem lote identificado. Consulte os saldos em **Lotes e validades** ou no catálogo. Regras e limitações do inventário estão em [docs/lotes-validade.md](docs/lotes-validade.md).
+
+### Custos e análises históricas
+
+A gestão encontra **Custos e histórico** em Relatórios ou no menu. Consulte custo médio móvel por produto, valor conhecido do estoque, posição por data e evolução diária; registre avaliações justificadas do saldo antigo e acompanhe sua trilha. Compras usam o preço confirmado no recebimento; entradas manuais permitem informar custo. Valores antigos não são presumidos e o total é sinalizado como parcial quando há custo desconhecido. A cobertura histórica começa na migração 13. Procedimento, precisão e limites em [docs/custos-historico.md](docs/custos-historico.md).

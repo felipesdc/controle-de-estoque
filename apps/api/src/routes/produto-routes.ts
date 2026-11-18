@@ -1,3 +1,6 @@
+import { historicoCustos } from '../services/relatorios-custos';
+import { avaliarCusto } from '../services/custos';
+import { AuthenticatedRequest } from '../middlewares/auth';
 import { consultarLotes } from '../services/lotes';
 import { lerPrecosProduto } from '../services/precos-produto';
 import { EstoqueError, buscarProdutoPorCodigo } from "../services/estoque";
@@ -13,6 +16,14 @@ import {
 import { authenticateToken, requireManager } from "../middlewares/auth";
 
 const router = Router();
+router.get('/produto/:produto_id/custos/historico',authenticateToken,requireManager,(req,res)=>{
+ try{res.set('Cache-Control','no-store').json(historicoCustos(Number(req.params.produto_id),req.query));}
+ catch(e){if(e instanceof EstoqueError)res.status(e.status).json({message:e.message});else{console.error(e);res.status(500).json({message:'Não foi possível consultar o histórico de custos.'});}}
+});
+router.post('/produto/:produto_id/custo-base',authenticateToken,requireManager,(req:AuthenticatedRequest,res)=>{
+ try{res.set('Cache-Control','no-store').status(201).json(avaliarCusto(Number(req.params.produto_id),req.body,req.userId!,req.get('Idempotency-Key')||''));}
+ catch(e){if(e instanceof EstoqueError)res.status(e.status).json({message:e.message});else{console.error(e);res.status(500).json({message:'Não foi possível avaliar o custo.'});}}
+});
 router.get('/catalogo/produtos/codigo', authenticateToken, (req,res) => {
   try { res.set('Cache-Control','no-store').json(buscarProdutoPorCodigo(req.query.codigo)); }
   catch(error) { if(error instanceof EstoqueError)res.status(error.status).json({message:error.message});else{console.error(error);res.status(500).json({message:'Não foi possível consultar o código. Tente novamente.'});} }

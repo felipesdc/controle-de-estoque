@@ -1,3 +1,4 @@
+import { AuthService } from 'src/app/shared/services/auth.service';
 import { Component,OnDestroy,OnInit } from '@angular/core';
 import { FormBuilder,Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -17,7 +18,7 @@ export class RelatoriosPeriodoComponent implements OnInit,OnDestroy {
  private inicial={...periodo(),q:'',estado:'pendentes'};private aplicados={...this.inicial};
  filtros=this.fb.nonNullable.group({inicio:[this.inicial.inicio,Validators.required],fim:[this.inicial.fim,Validators.required],q:['',Validators.maxLength(100)],estado:['pendentes']});
  private consulta?:Subscription;private download?:Subscription;private encerrado=false;
- constructor(private fb:FormBuilder,private service:RelatoriosService,private route:ActivatedRoute){this.tipo=this.route.snapshot.data['tipo'];}
+ constructor(public auth:AuthService,private fb:FormBuilder,private service:RelatoriosService,private route:ActivatedRoute){this.tipo=this.route.snapshot.data['tipo'];}
  get alterados(){return JSON.stringify(this.filtros.getRawValue())!==JSON.stringify(this.aplicados);}
  get relatorio(){return this.consumo||this.compras;}
  get periodoValido(){return this.filtros.valid&&this.filtros.controls.inicio.value<=this.filtros.controls.fim.value;}

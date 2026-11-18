@@ -39,11 +39,13 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     movimento_tipo: ['entrada', Validators.required],
     movimento_quantidade: [null as number | null, [Validators.required, Validators.min(0.001), Validators.max(1e9)]],
     movimento_observacao: ['', Validators.maxLength(500)],
+    custo_unitario: ['',Validators.pattern(/^\d+([.,]\d{1,2})?$/)],
   });
   constructor(private fb: FormBuilder, private service: MovimentacaoEstoqueService, private produtoService: ProdutoService, public auth: AuthService, private route: ActivatedRoute) {}
   get podeAlterar(): boolean { return this.auth.isAdmin() || this.auth.isGerente(); }
   get produto(): Produto | undefined { return this.produtos.find(p => p.produto_id === this.form.value.movimento_produto_id); }
   ngOnInit(): void {
+    this.form.controls.movimento_tipo.valueChanges.subscribe(tipo=>{if(tipo==='saida')this.form.controls.custo_unitario.setValue('',{emitEvent:false});});
     this.form.valueChanges.subscribe(() => { this.chave = crypto.randomUUID(); this.success = ''; });
     this.filtros.q = (this.route.snapshot.queryParamMap.get('q') || '').slice(0,200);
     const selected = Number(this.route.snapshot.queryParamMap.get('produto'));
@@ -73,10 +75,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (this.form.invalid || this.saving || !this.lote.pronto) { this.form.markAllAsTouched(); return; }
     this.error = ''; this.success = ''; this.saving = true;
     this.form.disable({ emitEvent: false });
-    this.service.createNewMovimentacaoEstoque({...this.form.getRawValue(),movimento_lote_id:this.lote.id} as unknown as MovimentacaoEstoque, this.chave)
+    const {custo_unitario,...raw}=this.form.getRawValue();
+    this.service.createNewMovimentacaoEstoque({...raw,movimento_lote_id:this.lote.id,...(raw.movimento_tipo==='entrada'&&custo_unitario?.trim()?{movimento_custo_unitario_centavos:Math.round(Number(custo_unitario.replace(',','.'))*100)}:{})} as unknown as MovimentacaoEstoque, this.chave)
       .pipe(finalize(() => { this.saving = false; this.form.enable({ emitEvent: false }); })).subscribe({
         next: () => {
-          this.form.reset({ movimento_tipo: 'entrada', movimento_observacao: '' });
+          this.form.reset({ movimento_tipo: 'entrada', movimento_observacao: '', custo_unitario:'' });
           this.chave = crypto.randomUUID();
           this.success = 'Movimentação registrada. O saldo foi atualizado.';
           this.pagina = 1; this.carregar();

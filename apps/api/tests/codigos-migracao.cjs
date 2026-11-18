@@ -9,13 +9,13 @@ try{
  INSERT INTO pi2_inventario_itens(inventario_id,produto_id,descricao,saldo_milesimos,ultimo_movimento_id,contado_milesimos,movimento_id) VALUES(1,1,'Preservado',5000,0,4000,1);
  INSERT INTO pi2_inventario_eventos(inventario_id,acao,data,usuario_id,conteudo) VALUES(1,'aprovar','2026-11-13T12:00:00Z',1,'{}');
  INSERT INTO pi2_sessoes(sessao_id,usuario_id,expira_em) VALUES('sessao-preservada',1,9999999999);
- ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_lote_id; DROP TABLE pi2_lotes; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_id; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_descricao; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_registrada; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_codigo_lido;
+ DROP TABLE pi2_custos_eventos; DROP TABLE pi2_custos_config; DROP TABLE pi2_inventario_lote_registros; DROP TABLE pi2_inventario_lotes; ALTER TABLE pi2_inventarios DROP COLUMN modo; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_lote_id; DROP TABLE pi2_lotes; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_id; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_descricao; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_unidade_registrada; ALTER TABLE pi2_movimentos_estoque DROP COLUMN movimento_codigo_lido;
  PRAGMA user_version=8;`);
  const names=db.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all().map(r=>r.name);
- function snapshot(db){return names.map(name=>({name,rows:db.prepare(`SELECT * FROM ${name} ORDER BY rowid`).all().map(row=>{if(name==='pi2_movimentos_estoque'){for(const column of ['movimento_lote_id', 'movimento_codigo_lido', 'movimento_unidade_id', 'movimento_unidade_descricao', 'movimento_unidade_registrada'])delete row[column];}return row;})}));}
+ function snapshot(db){return names.map(name=>({name,rows:db.prepare(`SELECT * FROM ${name} ORDER BY rowid`).all().map(row=>{if(name==='pi2_inventarios')delete row.modo;if(name==='pi2_movimentos_estoque'){for(const column of ['movimento_lote_id', 'movimento_codigo_lido', 'movimento_unidade_id', 'movimento_unidade_descricao', 'movimento_unidade_registrada'])delete row[column];}return row;})}));}
  const before=snapshot(db);db.close();boot();db=new DatabaseSync(file);
- assert.equal(db.prepare('PRAGMA user_version').get().user_version,11);assert.deepEqual(snapshot(db),before);
+ assert.equal(db.prepare('PRAGMA user_version').get().user_version,13);assert.deepEqual(snapshot(db),before);
  assert.equal(db.prepare('SELECT movimento_codigo_lido FROM pi2_movimentos_estoque').get().movimento_codigo_lido,null);
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);db.close();
- console.log('PASS: schema 8 to 11 preserves every existing row, leading zeros, approved inventory links, balances, sessions and credentials; old movements have no claimed scan.');
+ console.log('PASS: schema 8 to 13 preserves every existing row, leading zeros, approved inventory links, balances, sessions and credentials; old movements have no claimed scan.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

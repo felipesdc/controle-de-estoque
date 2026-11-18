@@ -1,3 +1,4 @@
+import { AuthService } from 'src/app/shared/services/auth.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
@@ -13,7 +14,7 @@ export class RelatoriosComponent implements OnInit, OnDestroy {
  private inicial={q:'',estado:'ativos',estoque:'todos',vencimento:'todos',categoria:'',ordem:'nome'};
  filtros=this.fb.nonNullable.group({...this.inicial});
  private aplicados={...this.inicial};
- constructor(private fb:FormBuilder,private service:RelatoriosService,private categoriaService:CategoriaService){}
+ constructor(public auth:AuthService,private fb:FormBuilder,private service:RelatoriosService,private categoriaService:CategoriaService){}
  get filtrosAlterados(){return JSON.stringify(this.filtros.getRawValue())!==JSON.stringify(this.aplicados);}
  ngOnInit(){this.categoriaService.getCategorias().pipe(timeout(15000),takeUntil(this.destroy)).subscribe({next:c=>this.categorias=c,error:()=>this.opcoesError=true});this.carregar();}
  aplicar(){this.aplicados={...this.filtros.getRawValue()};this.pagina=1;this.carregar();}

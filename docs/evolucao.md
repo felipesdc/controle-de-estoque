@@ -3,7 +3,7 @@
 ## Implementado
 
 - Monorepositório com `apps/web` e `apps/api`, Docker Compose, Nginx e SQLite persistente.
-- Migração incremental da base até a versão 10, preservando saldos, credenciais e registros anteriores.
+- Migração incremental da base até a versão 13, preservando saldos, credenciais e registros anteriores.
 - Entrada e saída com saldo e histórico gravados na mesma transação. Saída sem saldo é rejeitada sem gravar movimento.
 - Quantidades positivas com até três casas decimais e limite de 1 bilhão. Os cálculos de saldo usam milésimos para evitar resíduos de ponto flutuante.
 - Saldo inicial de novos produtos registrado como entrada, junto do cadastro. Alterações posteriores de saldo passam exclusivamente por movimentações.
@@ -24,7 +24,7 @@
 - Datas inválidas de registros antigos não geram alertas nem quebram a exibição do histórico.
 - Estados de carregamento, base vazia e erro; falha na atualização preserva os últimos dados e informa quando foram obtidos. A requisição tem limite de 15 segundos.
 - Navegação com menu móvel, links funcionais, saída da sessão, foco visível e atalho para o conteúdo. Cabeçalho e rodapé simplificados.
-- Campo de validade opcional no cadastro simplificado de produtos. A validade ainda pertence ao produto, sem controle por lote.
+- Campo de validade opcional no cadastro simplificado de produtos. Os alertas do painel usam a validade do cadastro do produto; as validades por lote têm consulta própria descrita adiante.
 - Módulos de administração e operação carregados sob demanda; pacote inicial reduzido de cerca de 1,38 MB para 1,21 MB.
 
 ## Catálogo de produtos
@@ -78,7 +78,7 @@
 - Cada recebimento, parcial ou integral, registra uma entrada por item selecionado, vincula os movimentos à entrega e atualiza os saldos e as quantidades na mesma transação. Falha em qualquer item desfaz a operação inteira. Chaves de idempotência e validação de situação/versão impedem duplicar recebimentos.
 - Responsável e data são definidos no servidor. Histórico dos pedidos é imutável e inclui criação, edições e transições. Devoluções registram saídas vinculadas ao pedido, com motivo e limite do recebido ainda não devolvido; não reabrem a quantidade a receber. Movimentos de pedidos não podem ser estornados isoladamente. Estornos antigos são preservados.
 - Migração 4 preserva pedidos, itens, estados e histórico antigos como legado somente para consulta, sem recalcular valores ou gerar saldo retroativo. Escrita direta nos antigos endpoints de pedido, item, estado e histórico retorna 405; URLs antigas redirecionam para a nova área.
-- Custos médios, tributos, reembolsos e conversões de unidade ficam para etapas posteriores. A primeira etapa de lotes está descrita adiante. A confirmação não envia o pedido ao fornecedor.
+- Tributos, reembolsos e conversões de unidade ficam para etapas posteriores; custo médio gerencial está descrito na seção de custos e histórico. A primeira etapa de lotes está descrita adiante. A confirmação não envia o pedido ao fornecedor.
 
 ## Entregas parciais e devoluções
 
@@ -98,7 +98,7 @@
 - CSV UTF-8 com BOM, separador ponto e vírgula, saldo com três casas e vírgula decimal. Exporta todos os produtos filtrados (até 10.000), independentemente da página, com data de geração e filtros em cada linha.
 - Campos textuais têm escape e proteção contra interpretação como fórmula. Códigos de barras recebem apóstrofo para preservar zeros ao abrir em planilhas; o arquivo não é destinado a reimportação automática sem tratamento.
 - Exportação usa a posição atual no momento do download, podendo diferir de uma consulta anterior se houver movimentações. Filtros alterados precisam ser aplicados antes de exportar. Todos os perfis autenticados podem consultar e exportar.
-- Não há migração de banco nesta etapa. Os relatórios de consumo e compras/pendências estão descritos adiante; reconstrução de posição histórica continua pendente.
+- Não há migração de banco nesta etapa. Os relatórios de consumo e compras/pendências estão descritos adiante; a posição histórica com cobertura a partir da migração 13 está descrita na seção de custos e histórico.
 
 ## Operação em tablet e cadastro contextual
 
@@ -127,12 +127,17 @@ Os perfis 1 e 2 seguem a convenção já usada pelo frontend: administrador e ge
 
 ## Próximas etapas
 
-1. Ampliar análises de custo e evolução histórica, respeitando os contratos monetários e de unidade.
-2. Completar validações, paginação e mensagens padronizadas dos demais cadastros.
-3. Concluir a atualização principal das ferramentas do frontend para resolver os avisos moderados remanescentes; ver `docs/dependencias.md`.
-4. Definir unidades e valores monetários em centavos; as quantidades agora têm precisão explícita, mas os contratos de preço continuam legados.
-5. Melhorar seleções de produtos e responsáveis com busca remota conforme o volume de dados.
-6. Ativar o agendamento e a cópia externa após configurar o destino.
+Pendências após inventário por lote, custos e histórico:
+
+1. Consolidar alertas do painel com as validades e quantidades de cada lote; hoje o painel usa a validade do cadastro do produto. Avaliar sugestão de retirada por vencimento, mantendo confirmação do lote físico pelo usuário.
+2. Definir o destino externo e ativar o backup agendado. Retenção, criptografia e confirmação do envio remoto permanecem evoluções adicionais.
+3. Implementar limitação de tentativas de login, recuperação de senha por e-mail e autenticação em dois fatores.
+4. Concluir a modernização dos cadastros e contratos monetários legados, com validações, paginação e mensagens consistentes. Os novos custos e compras já usam regras explícitas de precisão.
+5. Atualizar as ferramentas do frontend para tratar os avisos remanescentes da última auditoria registrada, reduzir o bundle e usar busca remota nas seleções que ainda carregam listas completas.
+6. Concluir inspeção visual das novas telas e testes em tablet e leitor físicos. Comparação com BibliotecaPI e agenda regulatória depende das referências desses projetos.
+7. Evoluir os custos gerenciais com frete, tributos, margem de venda e eventual crédito/reembolso de devolução, que não fazem parte do custo médio entregue.
+
+O histórico financeiro anterior à migração 13 não é presumido; isso é um limite de cobertura, não uma reconstrução retroativa prometida.
 
 As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A aproximação visual deve ser feita quando seus códigos ou referências estiverem disponíveis.
 
@@ -204,4 +209,24 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Consulta paginada com busca, filtro com saldo e rótulos de validade no calendário de São Paulo. Acesso pelo menu e catálogo. Painel antigo continua explicitamente baseado na validade do produto.
 - Movimentações administrativas e operação no tablet exigem escolha do lote existente ou saldo sem lote, com revisão explícita no tablet. Nenhuma baixa automática pelo vencimento. Funcionários não criam lotes, cadastros nem estornos.
 - Saldo do produto, lote, movimento e entrega na mesma transação; idempotência vinculada ao lote; estorno usa lote original. Troca de unidade bloqueada com saldo identificado e unidade histórica vinculada protegida contra exclusão.
-- Inventário geral mantém contagens sem diferença e acréscimos sem lote, mas bloqueia reduções quando há saldo identificado. Contagem física por lote e atribuição auditável de saldo antigo permanecem como próxima etapa. Detalhes em [lotes-validade.md](lotes-validade.md).
+- Inventário geral mantém contagens sem diferença e acréscimos sem lote, mas bloqueia reduções quando há saldo identificado. Contagem física por lote e atribuição auditável de saldo antigo foram entregues na etapa seguinte, descrita adiante. Detalhes em [lotes-validade.md](lotes-validade.md).
+
+## Inventário físico por lote — 17/11/2026
+
+- Novas contagens da interface detalham lotes na unidade atual (inclusive zerados) e saldo sem lote. Busca e páginas de dez linhas por produto preservam valores; progresso considera todas as páginas. Até 100 produtos e 2.000 contagens, sem truncar referências.
+- Gestão pode identificar lote encontrado durante a conferência com motivo e validade opcional. A identificação cria saldo zero e referência zero, sem simular compra ou gerar movimento. Quantidade precisa ser contada, revisada e aprovada. A identificação permanece auditada se cancelar.
+- Ajustes por lote e sem lote, inclusive redistribuições de total líquido zero, gravados atomicamente; baixas precedem acréscimos. Limite agregado por produto, precisão em milésimos e idempotência preservados.
+- Referência inclui composição por lote e último movimento. Novo lote, movimentação, unidade alterada ou inativação bloqueiam revisão/aprovação. Recontagem limpa todos os campos, captura lotes atuais e preserva os detalhes anteriores na auditoria.
+- Movimentos vinculados a cada contagem apontam ao inventário, não admitem estorno isolado e não entram no relatório de consumo. Funcionários não passam a operar inventários.
+- Migração 12 mantém inventários gerais anteriores e chaves existentes, sem inventar referências históricas por lote. Clientes anteriores continuam podendo omitir modo; interface nova solicita lotes explicitamente.
+- Contagem detalhada e atribuição auditável do saldo fisicamente identificado entregues. Alertas consolidados de validade por lote no painel e eventual sugestão de retirada por vencimento continuam pendentes. Procedimento em [inventario-lotes.md](inventario-lotes.md).
+
+## Custos e análises históricas — 17/11/2026
+
+- Custo médio móvel por produto, com entradas de compra ao preço confirmado do pedido e custo opcional em entradas manuais da gestão. Valores antigos e entradas sem custo são desconhecidos; zero informado é custo gratuito confirmado. Preços atuais de cadastro não reavaliam saldo antigo.
+- Avaliação justificada do saldo atual, versionada e idempotente, sem mudar quantidade nem posições anteriores. Histórico financeiro paginado com referência, data, responsável, motivo e movimento; acesso restrito à gestão.
+- Saídas/devoluções baixam o custo médio; estornos invertem o valor original quando compatível e sinalizam desconhecimento quando não há base segura. Ajustes de inventário preservam a base conhecida durante redistribuições entre lotes.
+- Migração 13 captura a posição de abertura sem reaplicar movimentos ou inferir custos antigos. Cobertura histórica a partir da atualização, incluindo eventos de unidade/saldo incompatíveis com a referência; datas anteriores não são presumidas.
+- Posição por data e evolução diária no calendário de São Paulo. Totais conhecidos sinalizados como parciais quando existe produto sem custo. Quantidades/unidades preservadas por evento; nomes e códigos atuais identificados. Estornos futuros não apagam fechamentos anteriores.
+- Cálculo inteiro com BigInt em milionésimos de centavo; JSON monetário em strings exatas, interface sem conversão imprecisa para Number e CSV de toda seleção. Valores longos são exportados como texto para preservar precisão em planilhas.
+- Limites explícitos: 10.000 produtos, evolução de até 366 dias/200.000 eventos. Custos não incluem preço de venda, margem, frete, tributos ou reembolso. Detalhes em [custos-historico.md](custos-historico.md).

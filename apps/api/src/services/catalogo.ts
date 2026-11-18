@@ -1,3 +1,4 @@
+import { reconciliarCusto } from './custos';
 import { protegerUnidade } from './lotes';
 import { gravarPrecosProduto } from './precos-produto';
 import pool from "../config/db";
@@ -89,7 +90,9 @@ export function patchProduto(id: number, body: unknown) {
     const normalized = validarCamposProduto(execute, Object.fromEntries(entries));
     if('produto_unidade_id' in normalized){const atual=execute('SELECT produto_unidade_id FROM pi2_produtos WHERE produto_id=$1',[id]).rows[0];protegerUnidade(execute,id,atual.produto_unidade_id,normalized.produto_unidade_id);}
     const names = Object.keys(normalized);
-    return execute(`UPDATE pi2_produtos SET ${names.map((name, index) => `${name} = $${index + 2}`).join(", ")} WHERE produto_id = $1 RETURNING *`, [id, ...Object.values(normalized)]).rows[0];
+    const result=execute(`UPDATE pi2_produtos SET ${names.map((name, index) => `${name} = $${index + 2}`).join(", ")} WHERE produto_id = $1 RETURNING *`, [id, ...Object.values(normalized)]).rows[0];
+    reconciliarCusto(execute,id);
+    return result;
   });
 }
 

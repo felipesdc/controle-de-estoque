@@ -1,3 +1,4 @@
+import { CustosComponent } from './relatorios/custos.component';
 import { LotesComponent } from './lotes/lotes.component';
 import { RelatoriosPeriodoComponent } from './relatorios/relatorios-periodo.component';
 import { InventariosComponent } from './inventarios/inventarios.component';
@@ -33,6 +34,7 @@ const routes: Routes = [
       { path: 'cadastros/:tipo', component: CadastrosComponent },
       { path: 'fornecedores', redirectTo: 'cadastros/fornecedores', pathMatch: 'full' },
       { path: 'relatorios', component: RelatoriosComponent, pathMatch:'full' },
+      { path: 'relatorios/custos', component: CustosComponent },
       { path: 'relatorios/consumo', component: RelatoriosPeriodoComponent, data:{tipo:'consumo'} },
       { path: 'relatorios/compras', component: RelatoriosPeriodoComponent, data:{tipo:'compras'} },
     ],

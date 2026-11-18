@@ -70,7 +70,7 @@ export function registrarEntrega(value:number,tipo:string,body:any,user:number,k
         const bucket=lotesDevolviveis(execute,item).find(l=>l.lote_id===loteSelecionado);
         if(!bucket||Math.round(bucket.quantidade*1000)<selected.quantidade)throw new EstoqueError(409,'Quantidade excede o recebido disponível neste lote do pedido.');
       }
-      const movimento=registrar(execute,item.item_pedido_produto_id,selected.quantidade/1000,tipo==='receber'?'entrada':'saida',`${tipo==='receber'?'Recebimento':'Devolução'} do pedido #${value} · entrega #${entrega} · item #${item.item_pedido_id}`,user,`entrega-${entrega}-item-${item.item_pedido_id}-estoque`,undefined,tipo==='devolver',undefined,loteSelecionado);
+      const movimento=registrar(execute,item.item_pedido_produto_id,selected.quantidade/1000,tipo==='receber'?'entrada':'saida',`${tipo==='receber'?'Recebimento':'Devolução'} do pedido #${value} · entrega #${entrega} · item #${item.item_pedido_id}`,user,`entrega-${entrega}-item-${item.item_pedido_id}-estoque`,undefined,tipo==='devolver',undefined,loteSelecionado,{origem:'compra',...(tipo==='receber'?{unitario_centavos:item.item_preco_centavos}:{})});
       execute('INSERT INTO pi2_entrega_itens (entrega_id,item_pedido_id,quantidade_milesimos,movimento_id) VALUES ($1,$2,$3,$4)',[entrega,item.item_pedido_id,selected.quantidade,movimento.movimento_id]);
     }
     const completo=rows.every(i=>saldoItem(execute,i).pendente===0);

@@ -1,3 +1,4 @@
+import { reconciliarCusto, iniciarCusto } from '../services/custos';
 import { protegerUnidade } from '../services/lotes';
 import pool from "../config/db";
 import { EstoqueError, quantidade, registrar } from "../services/estoque";
@@ -67,7 +68,8 @@ export const createProduto = async (
     ]
   );
   const row = res.rows[0];
-  if (produto_quantidade_estoque > 0) registrar(execute, row.produto_id, produto_quantidade_estoque, "entrada", "Saldo inicial", usuarioId, randomUUID());
+  iniciarCusto(execute,row);
+  if (produto_quantidade_estoque > 0) registrar(execute, row.produto_id, produto_quantidade_estoque, "entrada", "Saldo inicial", usuarioId, randomUUID(),undefined,false,undefined,undefined,{origem:"inicial",unitario_centavos:precos&&typeof precos==="object"?(precos as any).compra_centavos:null});
   return execute("SELECT * FROM pi2_produtos WHERE produto_id = $1", [row.produto_id]).rows[0];
   });
 };
@@ -106,6 +108,7 @@ export const updateProduto = async (
       produto_estado,
     ]
   );
+  reconciliarCusto(execute,produto_id);
   return res.rows.length ? res.rows[0] : null;
   });
 };

@@ -5,7 +5,7 @@ const SwaggerParser = require('@apidevtools/swagger-parser');
  const api = await SwaggerParser.validate(path.join(__dirname,'../src/swagger.json'));
  assert.deepEqual(api.servers,[{url:'/v1',description:'API da mesma instalação'}]);
  assert.ok(api.components.securitySchemes.bearerAuth);
- for (const route of ['/inventarios','/inventarios/{id}/aprovar','/usuario/login','/sessao','/dashboard','/catalogo/produtos','/catalogo/produtos/codigo','/compras/reposicao','/compras/pedidos','/relatorios/estoque','/relatorios/estoque.csv','/relatorios/consumo','/relatorios/compras','/acessos/usuarios','/cadastros/{tipo}']) assert.ok(api.paths[route],route);
+ for (const route of ['/relatorios/custos','/relatorios/custos/evolucao','/produto/{produto_id}/custo-base','/produto/{produto_id}/custos/historico','/inventarios','/inventarios/{id}/aprovar','/usuario/login','/sessao','/dashboard','/catalogo/produtos','/catalogo/produtos/codigo','/compras/reposicao','/compras/pedidos','/relatorios/estoque','/relatorios/estoque.csv','/relatorios/consumo','/relatorios/compras','/acessos/usuarios','/cadastros/{tipo}']) assert.ok(api.paths[route],route);
  assert.deepEqual(api.paths['/usuario/login'].post.security,[]);
  assert.ok(api.paths['/pedido'].post.responses['405']);
  assert.ok(!api.paths['/pedido'].post.responses['201']);

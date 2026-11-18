@@ -225,6 +225,64 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 11) 
   catch(error) { db.exec("ROLLBACK"); throw error; }
 }
 
+// Existing inventories keep their original product-level references and audit trail.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 12) {
+  db.exec("BEGIN IMMEDIATE");
+  try { db.exec(`ALTER TABLE pi2_inventarios ADD COLUMN modo TEXT NOT NULL DEFAULT 'produto' CHECK(modo IN ('produto','lotes'));
+    CREATE TABLE pi2_inventario_lotes (
+      contagem_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      inventario_id INTEGER NOT NULL,
+      produto_id INTEGER NOT NULL,
+      lote_id INTEGER REFERENCES pi2_lotes(lote_id),
+      codigo TEXT,
+      validade TEXT,
+      saldo_milesimos INTEGER NOT NULL CHECK(saldo_milesimos BETWEEN 0 AND 1000000000000),
+      contado_milesimos INTEGER CHECK(contado_milesimos BETWEEN 0 AND 1000000000000),
+      contado_em TEXT,
+      contado_por INTEGER REFERENCES pi2_usuarios(usuario_id),
+      movimento_id INTEGER UNIQUE REFERENCES pi2_movimentos_estoque(movimento_id),
+      FOREIGN KEY(inventario_id,produto_id) REFERENCES pi2_inventario_itens(inventario_id,produto_id));
+    CREATE TABLE pi2_inventario_lote_registros (
+      chave TEXT PRIMARY KEY,
+      inventario_id INTEGER NOT NULL REFERENCES pi2_inventarios(inventario_id),
+      lote_id INTEGER NOT NULL REFERENCES pi2_lotes(lote_id),
+      conteudo TEXT NOT NULL);
+    CREATE UNIQUE INDEX idx_inventario_lote_bucket ON pi2_inventario_lotes(inventario_id,produto_id,COALESCE(lote_id,0));
+    PRAGMA user_version=12; COMMIT;`); }
+  catch(error) { db.exec("ROLLBACK"); throw error; }
+}
+
+// Financial coverage starts now. Never infer historical cost from today's product prices.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 13) {
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.exec(`CREATE TABLE pi2_custos_config(id INTEGER PRIMARY KEY CHECK(id=1),inicio TEXT NOT NULL);
+      CREATE TABLE pi2_custos_eventos(
+        evento_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        produto_id INTEGER NOT NULL REFERENCES pi2_produtos(produto_id),
+        data TEXT NOT NULL,
+        natureza TEXT NOT NULL,
+        movimento_id INTEGER UNIQUE REFERENCES pi2_movimentos_estoque(movimento_id),
+        saldo_milesimos INTEGER NOT NULL CHECK(saldo_milesimos BETWEEN 0 AND 1000000000000),
+        valor_microcentavos TEXT,
+        valor_movimento_microcentavos TEXT,
+        unidade_id INTEGER,
+        unidade TEXT,
+        usuario_id INTEGER REFERENCES pi2_usuarios(usuario_id),
+        motivo TEXT NOT NULL,
+        chave TEXT UNIQUE,
+        solicitacao TEXT NOT NULL);
+      CREATE INDEX idx_custos_produto_evento ON pi2_custos_eventos(produto_id,evento_id DESC);`);
+    const inicio=new Date().toISOString();
+    db.prepare('INSERT INTO pi2_custos_config(id,inicio) VALUES(1,?)').run(inicio);
+    db.prepare(`INSERT INTO pi2_custos_eventos(produto_id,data,natureza,saldo_milesimos,valor_microcentavos,unidade_id,unidade,motivo,solicitacao)
+      SELECT p.produto_id,?,'abertura',CAST(ROUND(COALESCE(p.produto_quantidade_estoque,0)*1000) AS INTEGER),
+        CASE WHEN COALESCE(p.produto_quantidade_estoque,0)=0 THEN '0' ELSE NULL END,p.produto_unidade_id,u.unidade_descricao,
+        'Referência inicial; custos anteriores não presumidos','{}' FROM pi2_produtos p LEFT JOIN pi2_unidades u ON u.unidade_id=p.produto_unidade_id`).run(inicio);
+    db.exec('PRAGMA user_version=13; COMMIT;');
+  } catch(error) { db.exec("ROLLBACK"); throw error; }
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;

@@ -1,3 +1,4 @@
+import { ContextoCusto, iniciarCusto, registrarCusto, solicitacaoCusto } from './custos';
 import pool from "../config/db";
 
 import { EstoqueError, quantidade } from './estoque-validacao';
@@ -25,7 +26,8 @@ export function produtoPorCodigo(execute: Execute, value: unknown) {
 export function buscarProdutoPorCodigo(value: unknown) {
   return pool.transaction(execute => produtoPorCodigo(execute, value));
 }
-export function registrar(execute: Execute, produtoId: number, valor: number, tipo: string, observacao: string, usuarioId: number, chave: string, estornoDe?: number, permitirInativo = false, codigoLido?: string, lote?: number|null) {
+export function registrar(execute: Execute, produtoId: number, valor: number, tipo: string, observacao: string, usuarioId: number, chave: string, estornoDe?: number, permitirInativo = false, codigoLido?: string, lote?: number|null, custo:ContextoCusto={origem:'manual'}) {
+  const pedidoCusto=solicitacaoCusto(custo);
   const loteSelecionado=loteId(lote);
   const codigo = codigoLido === undefined ? null : codigoDeBarras(codigoLido);
   quantidade(valor);
@@ -38,6 +40,8 @@ export function registrar(execute: Execute, produtoId: number, valor: number, ti
     if (anterior.movimento_produto_id !== produtoId || anterior.movimento_quantidade !== valor || anterior.movimento_tipo !== tipo || anterior.movimento_usuario_id !== usuarioId || anterior.movimento_observacao !== observacao || (anterior.movimento_estorno_de ?? null) !== (estornoDe ?? null) || (anterior.movimento_codigo_lido ?? null) !== codigo || (anterior.movimento_lote_id ?? null) !== loteSelecionado) {
       throw new EstoqueError(409, "Esta chave já foi usada em outra operação.");
     }
+    const registro=execute('SELECT solicitacao FROM pi2_custos_eventos WHERE movimento_id=$1',[anterior.movimento_id]).rows[0];
+    if(registro?registro.solicitacao!==pedidoCusto:custo.unitario_centavos!=null)throw new EstoqueError(409,'Esta chave já foi usada com outro custo.');
     return anterior;
   }
   if (codigo !== null && produtoPorCodigo(execute, codigo).produto_id !== produtoId) {
@@ -50,20 +54,24 @@ export function registrar(execute: Execute, produtoId: number, valor: number, ti
   const novo = (Math.round(saldo * 1000) + (tipo === "entrada" ? 1 : -1) * Math.round(valor * 1000)) / 1000;
   if (novo < 0) throw new EstoqueError(409, "Saldo insuficiente para esta operação.");
   quantidade(novo);
+  const baseCusto=iniciarCusto(execute,produto);
   aplicarLote(execute,produto,loteSelecionado,valor,tipo);
   execute("UPDATE pi2_produtos SET produto_quantidade_estoque = $2 WHERE produto_id = $1", [produtoId, novo]);
   const unidade = produto.produto_unidade_id == null ? null : execute('SELECT unidade_descricao FROM pi2_unidades WHERE unidade_id=$1',[produto.produto_unidade_id]).rows[0]?.unidade_descricao ?? null;
-  return execute(`INSERT INTO pi2_movimentos_estoque
+  const movimento=execute(`INSERT INTO pi2_movimentos_estoque
     (movimento_produto_id, movimento_quantidade, movimento_tipo, movimento_data, movimento_observacao,
      movimento_usuario_id, movimento_chave, movimento_estorno_de, movimento_saldo_anterior, movimento_saldo_posterior, movimento_codigo_lido, movimento_unidade_id, movimento_unidade_descricao, movimento_unidade_registrada, movimento_lote_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,1,$14) RETURNING *`,
     [produtoId, valor, tipo, new Date().toISOString(), observacao, usuarioId, chave, estornoDe, saldo, novo, codigo, produto.produto_unidade_id, unidade, loteSelecionado]).rows[0];
+  registrarCusto(execute,produto,movimento,custo,baseCusto);
+  return movimento;
 }
 export function movimentar(body: any, usuarioId: number, chave: string) {
   return pool.transaction(execute => {
     const user=execute('SELECT usuario_perfil_id,usuario_status,usuario_operar_estoque FROM pi2_usuarios WHERE usuario_id=$1',[usuarioId]).rows[0];
     if(!user?.usuario_status||(![1,2].includes(user.usuario_perfil_id)&&!user.usuario_operar_estoque))throw new EstoqueError(403,'Esta conta não está autorizada a operar o estoque.');
-    return registrar(execute,body.movimento_produto_id,body.movimento_quantidade,body.movimento_tipo,body.movimento_observacao??'',usuarioId,chave,undefined,false,body.movimento_codigo_lido,body.movimento_lote_id);
+    if(body.movimento_custo_unitario_centavos!==undefined&&(![1,2].includes(user.usuario_perfil_id)||body.movimento_tipo!=='entrada'))throw new EstoqueError(403,'Somente a gestão informa custo em entradas.');
+    return registrar(execute,body.movimento_produto_id,body.movimento_quantidade,body.movimento_tipo,body.movimento_observacao??'',usuarioId,chave,undefined,false,body.movimento_codigo_lido,body.movimento_lote_id,{origem:'manual',unitario_centavos:body.movimento_custo_unitario_centavos});
   });
 }
 export function estornar(id: number, motivo: string, usuarioId: number, chave: string) {
@@ -73,10 +81,10 @@ export function estornar(id: number, motivo: string, usuarioId: number, chave: s
     const original = execute("SELECT * FROM pi2_movimentos_estoque WHERE movimento_id = $1", [id]).rows[0];
     if (original?.movimento_item_pedido_id || execute('SELECT 1 FROM pi2_entrega_itens WHERE movimento_id=$1',[id]).rows.length) throw new EstoqueError(409, "Movimento vinculado a entrega de pedido. Use a devolução no pedido para preservar as quantidades recebidas.");
     if (!original) throw new EstoqueError(404, "Movimentação não encontrada.");
-    if (execute('SELECT 1 FROM pi2_inventario_itens WHERE movimento_id=$1',[id]).rows.length) throw new EstoqueError(409, 'Ajuste vinculado a inventário aprovado. Abra uma nova contagem para corrigir.');
+    if (execute('SELECT 1 FROM pi2_inventario_itens WHERE movimento_id=$1 UNION ALL SELECT 1 FROM pi2_inventario_lotes WHERE movimento_id=$1',[id]).rows.length) throw new EstoqueError(409, 'Ajuste vinculado a inventário aprovado. Abra uma nova contagem para corrigir.');
     if (original.movimento_estorno_de || original.movimento_saldo_anterior === null) throw new EstoqueError(409, "Esta movimentação não pode ser estornada.");
     const existente = execute("SELECT * FROM pi2_movimentos_estoque WHERE movimento_estorno_de = $1", [id]).rows[0];
     if (existente && existente.movimento_chave !== chave) throw new EstoqueError(409, "Esta movimentação já foi estornada.");
-    return registrar(execute, original.movimento_produto_id, original.movimento_quantidade, original.movimento_tipo === "entrada" ? "saida" : "entrada", `Estorno #${id}: ${motivo.trim()}`, usuarioId, chave, id, false, undefined, original.movimento_lote_id);
+    return registrar(execute, original.movimento_produto_id, original.movimento_quantidade, original.movimento_tipo === "entrada" ? "saida" : "entrada", `Estorno #${id}: ${motivo.trim()}`, usuarioId, chave, id, false, undefined, original.movimento_lote_id,{origem:'estorno'});
   });
 }

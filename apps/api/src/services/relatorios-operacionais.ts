@@ -37,6 +37,7 @@ export function relatorioConsumo(input:Record<string,unknown>,now=new Date(),exp
       AND NOT EXISTS(SELECT 1 FROM pi2_movimentos_estoque e WHERE e.movimento_estorno_de=m.movimento_id)
       AND NOT EXISTS(SELECT 1 FROM pi2_entrega_itens e WHERE e.movimento_id=m.movimento_id)
       AND NOT EXISTS(SELECT 1 FROM pi2_inventario_itens i WHERE i.movimento_id=m.movimento_id)
+      AND NOT EXISTS(SELECT 1 FROM pi2_inventario_lotes i WHERE i.movimento_id=m.movimento_id)
       AND dia_sao_paulo(m.movimento_data)>=$1 AND dia_sao_paulo(m.movimento_data)<=$2
       AND (p.produto_descricao LIKE $3 ESCAPE '\\' OR p.produto_codigo_barras LIKE $3 ESCAPE '\\' OR m.movimento_codigo_lido LIKE $3 ESCAPE '\\' OR CAST(p.produto_id AS TEXT)=$4)),
       grupos AS (SELECT movimento_produto_id AS produto_id,produto,codigo_atual,movimento_unidade_id AS unidade_id,movimento_unidade_descricao AS unidade,movimento_unidade_registrada AS unidade_registrada,
