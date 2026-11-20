@@ -112,3 +112,22 @@ export function excluirCadastro(tipo: TipoCadastro, value: unknown) {
     execute(`DELETE FROM ${c.table} WHERE ${c.id} = $1`, [id]);
   });
 }
+
+// Lightweight paginated options: never calculate links or expose contact/address data.
+export function opcoesCadastro(tipo: TipoCadastro, params: Record<string, unknown>) {
+  for (const key of Object.keys(params)) if (!['q', 'pagina', 'selecionado'].includes(key)) throw new EstoqueError(400, 'Filtro de opções inválido.');
+  const q = params.q ?? '';
+  if (typeof q !== 'string' || q.length > 100) throw new EstoqueError(400, 'Use uma busca de até 100 caracteres.');
+  const pagina = params.pagina === undefined ? 1 : idValido(params.pagina);
+  const selecionado = params.selecionado === undefined ? null : idValido(params.selecionado);
+  const c = configs[tipo], tamanho = 25;
+  const where = `WHERE ${c.name} LIKE $1 ESCAPE '\\'`;
+  const pattern = '%' + q.trim().replace(/[\\%_]/g, '\\$&') + '%';
+  return pool.transaction(execute => {
+    const total = execute(`SELECT COUNT(*) AS total FROM ${c.table} ${where}`, [pattern]).rows[0].total;
+    const atual = Math.min(pagina, Math.max(1, Math.ceil(total / tamanho)));
+    const itens = execute(`SELECT ${c.id} AS id, ${c.name} AS nome FROM ${c.table} ${where} ORDER BY ${c.name} COLLATE NOCASE, ${c.id} LIMIT $2 OFFSET $3`, [pattern, tamanho, (atual - 1) * tamanho]).rows;
+    const escolhido = selecionado === null ? null : execute(`SELECT ${c.id} AS id, ${c.name} AS nome FROM ${c.table} WHERE ${c.id}=$1`, [selecionado]).rows[0] ?? null;
+    return { itens, total, pagina: atual, tamanho, selecionado: escolhido };
+  });
+}

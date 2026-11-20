@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subscription } from 'rxjs';
@@ -6,7 +7,7 @@ import { InventariosService, Inventario, InventarioResumo, InventarioItem, Inven
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { ProdutoCatalogo } from 'src/app/shared/models/catalogo.model';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({standalone:false,selector:'app-inventarios',templateUrl:'./inventarios.component.html',styleUrls:['./inventarios.component.scss','./inventarios-lotes.scss']})
+@Component({ changeDetection: ChangeDetectionStrategy.Eager,standalone:false,selector:'app-inventarios',templateUrl:'./inventarios.component.html',styleUrls:['./inventarios.component.scss','./inventarios-lotes.scss']})
 export class InventariosComponent implements OnInit,OnDestroy {
  lista:InventarioResumo[]=[];total=0;pagina=1;estado='';loading=false;saving=false;buscando=false;error='';success='';sujo=false;novo=false;titulo='';q='';produtos:ProdutoCatalogo[]=[];totalBusca=0;
  selecionados=new Map<number,string>();detalhe:Inventario|null=null;acao='';motivo='';

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -8,7 +9,7 @@ import { Router } from '@angular/router';
 import { MovimentacaoEstoque } from 'src/app/shared/models/movimentacao-estoque.model';
 import { MovimentacaoEstoqueService } from 'src/app/shared/services/movimentacao-estoque.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-movimentacao-estoque-create',
   templateUrl: './movimentacao-estoque-create.component.html',
   styleUrls: ['./movimentacao-estoque-create.component.scss'],

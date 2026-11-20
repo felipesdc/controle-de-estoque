@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -8,7 +9,7 @@ import { Router } from '@angular/router';
 import { HistoricoEstadoPedido } from 'src/app/shared/models/historico-estado-pedido.model';
 import { HistoricoEstadoPedidoService } from 'src/app/shared/services/historico-estado-pedido.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-historico-estado-pedido-create',
   templateUrl: './historico-estado-pedido-create.component.html',
   styleUrls: ['./historico-estado-pedido-create.component.scss'],

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { Component,OnDestroy,OnInit } from '@angular/core';
 import { FormBuilder,Validators } from '@angular/forms';
@@ -11,7 +12,7 @@ function periodo(){
  const fim=`${get('year')}-${get('month')}-${get('day')}`,start=new Date(fim+'T12:00:00Z');start.setUTCDate(start.getUTCDate()-29);
  return {inicio:start.toISOString().slice(0,10),fim};
 }
-@Component({standalone:false,selector:'app-relatorios-periodo',templateUrl:'./relatorios-periodo.component.html',styleUrls:['./relatorios.component.scss']})
+@Component({ changeDetection: ChangeDetectionStrategy.Eager,standalone:false,selector:'app-relatorios-periodo',templateUrl:'./relatorios-periodo.component.html',styleUrls:['./relatorios.component.scss']})
 export class RelatoriosPeriodoComponent implements OnInit,OnDestroy {
  tipo:'consumo'|'compras';consumo:RelatorioConsumo|null=null;compras:RelatorioCompras|null=null;
  loading=false;exporting=false;error='';exportError='';pagina=1;tamanho=10;

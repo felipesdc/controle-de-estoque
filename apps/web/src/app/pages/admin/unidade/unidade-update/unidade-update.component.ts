@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -7,7 +8,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-unidade-update',
   templateUrl: './unidade-update.component.html',
   styleUrls: ['./unidade-update.component.scss'],

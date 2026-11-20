@@ -1,11 +1,12 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { Dashboard, DashboardService } from 'src/app/shared/services/dashboard.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss',
+  styleUrls: ['./dashboard.component.scss','./dashboard-lotes.scss'],
 })
 export class DashboardComponent implements OnInit {
   data: Dashboard | null = null;

@@ -8,7 +8,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './shared/components/header/header.component';
 import { FooterComponent } from './shared/components/footer/footer.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import { HomeLayoutComponent } from './shared/layouts/home-layout/home-layout.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -19,9 +19,8 @@ import {
 
 import localePt from '@angular/common/locales/pt';
 import { registerLocaleData } from '@angular/common';
-import { MaterialModule } from './shared/material/material.module';
+import { MaterialShellModule } from './shared/material/material-shell.module';
 import { SidenavComponent } from './shared/components/sidenav/sidenav.component';
-import { CurrencyMaskModule } from 'ng2-currency-mask';
 
 import { ProdutoService } from './shared/services/produto.service';
 import { PedidoService } from './shared/services/pedido.service';
@@ -59,16 +58,15 @@ registerLocaleData(localePt);
   imports: [
     BrowserModule,
     AppRoutingModule,
-    BrowserAnimationsModule,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    MaterialModule,
-    CurrencyMaskModule,
+    MaterialShellModule,
     LoginModule,
   ],
   providers: [
     provideZoneChangeDetection(),
+    provideAnimationsAsync(),
     { provide: MatPaginatorIntl, useClass: PaginacaoPt },
     CategoriaService,
     EstadoPedidoService,

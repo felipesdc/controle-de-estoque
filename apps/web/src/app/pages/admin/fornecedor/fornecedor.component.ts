@@ -1,8 +1,9 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { Fornecedor } from 'src/app/shared/models/fornecedor.model';
 import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-fornecedor',
   templateUrl: './fornecedor.component.html',
   styleUrls: ['./fornecedor.component.scss'],

@@ -1,0 +1,30 @@
+const assert=require('node:assert/strict');const pool=require('/app/dist/config/db').default;
+const {consultarLotes}=require('/app/dist/services/lotes');
+const {getDashboard}=require('/app/dist/services/dashboard');const {consultarAlertasLotes}=require('/app/dist/services/alertas-lotes');const {movimentar}=require('/app/dist/services/estoque');const {randomUUID}=require('node:crypto');
+const now=new Date('2026-11-19T02:59:59Z'); // November 18 in São Paulo.
+const bad=fn=>assert.throws(fn,e=>e.status===400);
+(async()=>{
+ const empty=consultarAlertasLotes({},now);assert.equal(empty.total,0);assert.equal(empty.pagina,1);assert.equal(empty.criterios.data_referencia,'2026-11-18');
+ await pool.query("INSERT INTO pi2_unidades(unidade_id,unidade_descricao) VALUES(1,'kg'),(2,'Pacote')");
+ await pool.query("INSERT INTO pi2_produtos(produto_id,produto_descricao,produto_quantidade_estoque,produto_estado,produto_unidade_id,produto_data_validade,produto_codigo_barras) VALUES(1,'Misturado',14.5,1,1,'1900-01-01','000PROD'),(2,'Sem lote',2,1,2,'1900-01-01','SEM'),(3,'Inativo',10,0,1,'1900-01-01','OFF'),(4,'Sem saldo',0,1,1,'1900-01-01','ZERO'),(5,'Prazo futuro',4,1,1,'1900-01-01','FUT')");
+ const lot=async(produto,codigo,validade,q)=>{return(await pool.query("INSERT INTO pi2_lotes(produto_id,codigo,validade,unidade_id,unidade,saldo_milesimos,criado_em,usuario_id) VALUES($1,$2,$3,1,'kg',$4,$5,1) RETURNING lote_id",[produto,codigo,validade,Math.round(q*1000),now.toISOString()])).rows[0].lote_id;};
+ const expired=await lot(1,'000A','2026-11-17',2.125);await lot(1,'000B','2026-11-18',1.375);await lot(1,'000C','2026-12-18',3);await lot(1,'000D','2026-12-19',4);await lot(1,'%_literal',null,1);await lot(1,'Inválido','2026-02-30',1);await lot(1,'Zerado','2026-11-17',0);await lot(3,'OFF','2026-11-17',10);await lot(4,'ZERO','2026-11-17',0);await lot(5,'FUT','2027-01-01',4);
+ const d=getDashboard(now);assert.equal(d.criterios.origem_validade,'lote');assert.equal(d.criterios.vencimento_ate,'2026-12-18');
+ assert.deepEqual(d.totais,{produtos_ativos:4,estoque_baixo:3,vencidos:1,vencem_em_breve:1,lotes_vencidos:1,lotes_vencem_em_breve:2,lotes_vencem_hoje:1,produtos_sem_validade:2,lotes_sem_validade:2,produtos_sem_lote:2});
+ assert.equal(d.vencimentos.length,3);assert.deepEqual(d.vencimentos.map(l=>l.lote_codigo),['000A','000B','000C']);assert.deepEqual(d.vencimentos.map(l=>l.quantidade),[2.125,1.375,3]);assert.ok(d.vencimentos.every(l=>l.unidade==='kg'));assert.equal(d.pendencias_validade.length,4);
+ assert.equal(consultarLotes(1).itens.find(l=>l.codigo==='Inválido').validade,null,'linked product consultation also normalizes invalid dates');
+ assert.equal(consultarAlertasLotes({vencimento:'vencidos'},now).total,1);assert.equal(consultarAlertasLotes({vencimento:'em_breve'},now).total,2);assert.equal(consultarAlertasLotes({vencimento:'hoje'},now).total,1);
+ const unknown=consultarAlertasLotes({vencimento:'sem_validade'},now);assert.deepEqual(unknown.resumo,{registros:4,produtos:2,lotes:2,sem_lote:2});assert.ok(unknown.itens.every(l=>l.validade===null));
+ assert.deepEqual(consultarAlertasLotes({vencimento:'sem_lote'},now).itens.map(l=>l.quantidade),[2,2]);assert.equal(consultarAlertasLotes({vencimento:'todos'},now).total,9);
+ const literal=consultarAlertasLotes({vencimento:'todos',q:'%_'},now);assert.equal(literal.total,1);assert.equal(literal.itens[0].lote_codigo,'%_literal');assert.equal(consultarAlertasLotes({vencimento:'todos',q:'000PROD'},now).total,7);assert.equal(consultarAlertasLotes({vencimento:'atencao',q:'000A'},now).itens[0].lote_id,expired);
+ assert.equal(getDashboard(new Date('2026-11-19T03:00:00Z')).totais.lotes_vencidos,2,'today moves to expired only at São Paulo midnight');
+ assert.equal(getDashboard(new Date('2018-11-04T02:30:00Z')).criterios.data_referencia,'2018-11-03','historical DST is handled by named timezone');
+ for(let i=0;i<12;i++)await lot(5,'L'+String(i).padStart(2,'0'),'2026-11-17',1);await pool.query('UPDATE pi2_produtos SET produto_quantidade_estoque=16 WHERE produto_id=5');
+ const many=getDashboard(now);assert.equal(many.totais.vencidos,2);assert.equal(many.totais.lotes_vencidos,13);assert.equal(many.vencimentos.length,6);assert.equal(consultarAlertasLotes({vencimento:'vencidos',pagina:'2'},now).itens.length,3);const last=consultarAlertasLotes({vencimento:'vencidos',pagina:'999'},now);assert.equal(last.pagina,2);assert.equal(last.resumo.lotes,13);assert.equal(last.resumo.produtos,2);
+ const page1=consultarAlertasLotes({vencimento:'vencidos'},now),page2=consultarAlertasLotes({vencimento:'vencidos',pagina:'2'},now);assert.equal(new Set([...page1.itens,...page2.itens].map(l=>l.lote_id)).size,13);
+ const qty=(await pool.query('SELECT produto_quantidade_estoque AS q FROM pi2_produtos WHERE produto_id=1')).rows[0].q;assert.equal(qty,14.5);assert.equal((await pool.query('SELECT COUNT(*) AS n FROM pi2_movimentos_estoque')).rows[0].n,0,'queries never select or move stock');
+ movimentar({movimento_produto_id:1,movimento_tipo:'saida',movimento_quantidade:2.125,movimento_lote_id:expired},1,randomUUID());assert.equal(getDashboard(now).totais.lotes_vencidos,12);assert.equal(getDashboard(now).totais.vencidos,1);assert.equal(consultarAlertasLotes({vencimento:'sem_lote',q:'Misturado'},now).itens[0].quantidade,2,'withdrawal from lot does not consume unidentified stock');
+ await pool.query('UPDATE pi2_produtos SET produto_estado=0 WHERE produto_id=5');assert.equal(getDashboard(now).totais.vencidos,0,'legacy product expiry is never used even with remaining product stock');
+ for(const input of [{vencimento:'__proto__'},{vencimento:'invalido'},{q:[]},{q:'a'.repeat(101)},{pagina:'0'},{pagina:'1e2'},{pagina:['1']},{tamanho:'100'}])bad(()=>consultarAlertasLotes(input,now));
+ console.log('PASS: lot-only expiry, overlapping distinct products, exact fractional balances, unidentified/invalid dates, zero/inactive exclusions, São Paulo/DST boundaries, inclusive 30-day window, full counts, stable pagination, literal search and no stock side effects.');
+})().catch(e=>{console.error(e);process.exitCode=1;});

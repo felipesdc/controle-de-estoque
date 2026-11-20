@@ -1,11 +1,12 @@
+import {RouterModule} from '@angular/router';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LoginComponent } from './login.component';
-import { MaterialModule } from 'src/app/shared/material/material.module';
+import { MaterialShellModule } from 'src/app/shared/material/material-shell.module';
 
 @NgModule({
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MaterialModule],
+  imports: [RouterModule, CommonModule, FormsModule, ReactiveFormsModule, MaterialShellModule],
   declarations: [LoginComponent],
   exports: [LoginComponent],
 })

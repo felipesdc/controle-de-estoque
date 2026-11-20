@@ -1,8 +1,9 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { Perfil } from 'src/app/shared/models/perfil.model';
 import { PerfilService } from 'src/app/shared/services/perfil.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-perfil',
   templateUrl: './perfil.component.html',
   styleUrls: ['./perfil.component.scss'],

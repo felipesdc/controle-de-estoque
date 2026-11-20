@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -9,7 +10,7 @@ import extractDate from 'src/app/shared/helpers/extract-date';
 import { Preco } from 'src/app/shared/models/preco.model';
 import { PrecoService } from 'src/app/shared/services/preco.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-preco-update',
   templateUrl: './preco-update.component.html',
   styleUrls: ['./preco-update.component.scss'],

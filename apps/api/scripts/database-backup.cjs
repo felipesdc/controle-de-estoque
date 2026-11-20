@@ -35,7 +35,7 @@ async function create(source,dir){
 }
 async function smoke(file,expected){
  const secret=crypto.randomBytes(32).toString('hex'),port='3199';
- const child=spawn(process.execPath,['/app/dist/app.js'],{env:{...process.env,SQLITE_PATH:file,JWT_SECRET:secret,ADMIN_PASSWORD:crypto.randomBytes(24).toString('hex'),PORT:port},stdio:['ignore','ignore','pipe']});let failure='';child.stderr.on('data',b=>{failure+=String(b).slice(0,1000);});
+ const child=spawn(process.execPath,['/app/dist/app.js'],{env:{...process.env,SQLITE_PATH:file,JWT_SECRET:secret,ADMIN_PASSWORD:crypto.randomBytes(24).toString('hex'),PORT:port,SMTP_HOST:'',AUTH_EMAIL_DISABLED:'1'},stdio:['ignore','ignore','pipe']});let failure='';child.stderr.on('data',b=>{failure+=String(b).slice(0,1000);});
  try{
   let ready=false;for(let i=0;i<100;i++){if(child.exitCode!==null)throw Error('API restaurada não iniciou.');try{const r=await fetch(`http://127.0.0.1:${port}/health`,{signal:AbortSignal.timeout(500)});if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}if(!ready)throw Error('API restaurada não ficou saudável no prazo.');
   const db=new DatabaseSync(file);let user;let sid=crypto.randomUUID();
@@ -43,7 +43,8 @@ async function smoke(file,expected){
    for(const [name,columns]of Object.entries(core))if(JSON.stringify(tableDigest(db,name,columns))!==JSON.stringify(expected.critical[name]))throw Error('Dados essenciais mudaram ao iniciar a cópia restaurada.');
    user=db.prepare('SELECT usuario_id FROM pi2_usuarios WHERE usuario_status=1 AND usuario_perfil_id=1 LIMIT 1').get();
    if(!user)throw Error('A cópia não contém administrador ativo para validar acesso.');
-   db.prepare('INSERT INTO pi2_sessoes(sessao_id,usuario_id,expira_em) VALUES(?,?,?)').run(sid,user.usuario_id,Math.floor(Date.now()/1000)+60);
+   const mfaColumn=db.prepare('PRAGMA table_info(pi2_sessoes)').all().some(c=>c.name==='mfa_verificada');
+   db.prepare(mfaColumn?'INSERT INTO pi2_sessoes(sessao_id,usuario_id,expira_em,mfa_verificada) VALUES(?,?,?,1)':'INSERT INTO pi2_sessoes(sessao_id,usuario_id,expira_em) VALUES(?,?,?)').run(sid,user.usuario_id,Math.floor(Date.now()/1000)+60);
    const jwt=require('jsonwebtoken');const token=jwt.sign({usuario_id:user.usuario_id,usuario_perfil_id:1},secret,{expiresIn:60,jwtid:sid});
    for(const route of ['/v1/dashboard','/v1/compras/pedidos','/v1/acessos/usuarios','/v1/movimentacao-estoque/historico']){const r=await fetch(`http://127.0.0.1:${port}${route}`,{headers:{Authorization:`Bearer ${token}`},signal:AbortSignal.timeout(3000)});if(!r.ok)throw Error('Falha ao consultar os dados pela API restaurada.');await r.json();}
   }finally{db.prepare('DELETE FROM pi2_sessoes WHERE sessao_id=?').run(sid);db.close();}
@@ -53,7 +54,7 @@ async function verify(dir){const {meta,file}=load(dir);const tmp=fs.mkdtempSync(
 function install(dir,target){
  if(process.env.RESTORE_STOPPED_API!=='1'||!/^\/data\/[^/]+\.sqlite$/.test(target))throw Error('Restauração exige API parada e destino SQLite em /data.');
  const {file}=load(dir);const rollback=fs.mkdtempSync('/data/.restore-rollback-');fs.chmodSync(rollback,0o700);const staged=path.join(rollback,'novo.sqlite');fs.copyFileSync(file,staged,fs.constants.COPYFILE_EXCL);fs.chmodSync(staged,0o600);if(process.getuid()===0)fs.chownSync(staged,1000,1000);
- const db=new DatabaseSync(staged);try{const hasSessions=db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='pi2_sessoes'").get();if(hasSessions)db.exec('DELETE FROM pi2_sessoes; PRAGMA wal_checkpoint(TRUNCATE);');}finally{db.close();}syncFile(staged);
+ const db=new DatabaseSync(staged);try{const hasSessions=db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='pi2_sessoes'").get();if(hasSessions)db.exec('DELETE FROM pi2_sessoes;');for(const name of ['pi2_auth_desafios','pi2_auth_reset','pi2_auth_outbox'])if(db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name=?").get(name))db.exec(`DELETE FROM ${name}`);if(db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='pi2_auth_mfa'").get())db.prepare("UPDATE pi2_auth_mfa SET pendente=NULL,pendente_ate=NULL,codigos='[]',ultimo_contador=MAX(ultimo_contador,?)").run(Math.floor(Date.now()/30000)+1);db.exec('PRAGMA wal_checkpoint(TRUNCATE);');}finally{db.close();}syncFile(staged);
  fs.writeFileSync(path.join(rollback,'destino.txt'),target,{mode:0o600});
  // Consolidate the stopped database before replacing its main file atomically.
  // Until rename succeeds, the original main file remains in place and complete.

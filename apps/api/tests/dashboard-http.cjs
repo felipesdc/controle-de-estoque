@@ -14,6 +14,7 @@ const child = spawn(process.execPath, ['/app/dist/app.js'], { env: { ...process.
   const { token } = await login.json();
   const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'),'no-store');
   const data = await response.json();
   assert.equal(data.totais.produtos_ativos, 0);
   assert.equal(data.criterios.fuso, 'America/Sao_Paulo');

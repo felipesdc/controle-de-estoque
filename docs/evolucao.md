@@ -24,7 +24,7 @@
 - Datas inválidas de registros antigos não geram alertas nem quebram a exibição do histórico.
 - Estados de carregamento, base vazia e erro; falha na atualização preserva os últimos dados e informa quando foram obtidos. A requisição tem limite de 15 segundos.
 - Navegação com menu móvel, links funcionais, saída da sessão, foco visível e atalho para o conteúdo. Cabeçalho e rodapé simplificados.
-- Campo de validade opcional no cadastro simplificado de produtos. Os alertas do painel usam a validade do cadastro do produto; as validades por lote têm consulta própria descrita adiante.
+- Campo de validade opcional no cadastro simplificado de produtos. O painel usa as validades dos lotes e separa saldos sem validade conhecida; o campo cadastral permanece independente.
 - Módulos de administração e operação carregados sob demanda; pacote inicial reduzido de cerca de 1,38 MB para 1,21 MB.
 
 ## Catálogo de produtos
@@ -129,11 +129,11 @@ Os perfis 1 e 2 seguem a convenção já usada pelo frontend: administrador e ge
 
 Pendências após inventário por lote, custos e histórico:
 
-1. Consolidar alertas do painel com as validades e quantidades de cada lote; hoje o painel usa a validade do cadastro do produto. Avaliar sugestão de retirada por vencimento, mantendo confirmação do lote físico pelo usuário.
+1. Avaliar sugestão de retirada por vencimento, mantendo confirmação do lote físico pelo usuário. Alertas consolidados por lote e pendências de validade foram entregues.
 2. Definir o destino externo e ativar o backup agendado. Retenção, criptografia e confirmação do envio remoto permanecem evoluções adicionais.
-3. Implementar limitação de tentativas de login, recuperação de senha por e-mail e autenticação em dois fatores.
+3. Segurança implementada: limites persistentes, recuperação por e-mail e TOTP/códigos de uso único. Configurar SMTP e testar a entrega real antes de disponibilizar a recuperação. Veja `docs/seguranca.md`.
 4. Concluir a modernização dos cadastros e contratos monetários legados, com validações, paginação e mensagens consistentes. Os novos custos e compras já usam regras explícitas de precisão.
-5. Atualizar as ferramentas do frontend para tratar os avisos remanescentes da última auditoria registrada, reduzir o bundle e usar busca remota nas seleções que ainda carregam listas completas.
+5. Base técnica atualizada para Angular/Material 22, TypeScript 6, RxJS 7 e Vitest, com bundle inicial abaixo de 1 MB. Permanece ampliar a busca remota nas seleções que ainda carregam listas completas e concluir os formulários legados.
 6. Concluir inspeção visual das novas telas e testes em tablet e leitor físicos. Comparação com BibliotecaPI e agenda regulatória depende das referências desses projetos.
 7. Evoluir os custos gerenciais com frete, tributos, margem de venda e eventual crédito/reembolso de devolução, que não fazem parte do custo médio entregue.
 
@@ -219,7 +219,7 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Referência inclui composição por lote e último movimento. Novo lote, movimentação, unidade alterada ou inativação bloqueiam revisão/aprovação. Recontagem limpa todos os campos, captura lotes atuais e preserva os detalhes anteriores na auditoria.
 - Movimentos vinculados a cada contagem apontam ao inventário, não admitem estorno isolado e não entram no relatório de consumo. Funcionários não passam a operar inventários.
 - Migração 12 mantém inventários gerais anteriores e chaves existentes, sem inventar referências históricas por lote. Clientes anteriores continuam podendo omitir modo; interface nova solicita lotes explicitamente.
-- Contagem detalhada e atribuição auditável do saldo fisicamente identificado entregues. Alertas consolidados de validade por lote no painel e eventual sugestão de retirada por vencimento continuam pendentes. Procedimento em [inventario-lotes.md](inventario-lotes.md).
+- Contagem detalhada e atribuição auditável do saldo fisicamente identificado entregues. Alertas consolidados de validade por lote foram entregues na etapa posterior; sugestão de retirada por vencimento continua uma possibilidade futura. Procedimento em [inventario-lotes.md](inventario-lotes.md).
 
 ## Custos e análises históricas — 17/11/2026
 
@@ -230,3 +230,31 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Posição por data e evolução diária no calendário de São Paulo. Totais conhecidos sinalizados como parciais quando existe produto sem custo. Quantidades/unidades preservadas por evento; nomes e códigos atuais identificados. Estornos futuros não apagam fechamentos anteriores.
 - Cálculo inteiro com BigInt em milionésimos de centavo; JSON monetário em strings exatas, interface sem conversão imprecisa para Number e CSV de toda seleção. Valores longos são exportados como texto para preservar precisão em planilhas.
 - Limites explícitos: 10.000 produtos, evolução de até 366 dias/200.000 eventos. Custos não incluem preço de venda, margem, frete, tributos ou reembolso. Detalhes em [custos-historico.md](custos-historico.md).
+
+## Alertas de validade por lote — 18/11/2026
+
+- Painel passa a usar cada lote ativo com saldo positivo, sem inferir validade do cadastro do produto. Indicadores contam produtos distintos por situação, com contagem de lotes explícita; um produto pode estar entre vencidos e próximos simultaneamente.
+- Prévias de seis lotes ordenadas por prioridade e data, totais completos e saldos individuais na unidade registrada. Nova área de pendências para lotes sem data válida e saldo sem lote, sem somar unidades ou afirmar que estoque sem data está no prazo.
+- Consulta global `/home/lotes/alertas` com busca, situações, paginação e filtros na URL. Atalhos do painel filtram vencidos, próximos e pendências; acesso ao produto preenche busca pelo código do lote, sem seleção de estoque.
+- Datas reais e janela inclusiva de hoje até 30 dias em São Paulo; zero e inativos excluídos. Datas inválidas também são normalizadas na consulta individual de lotes para que o caminho de conferência não quebre a interface.
+- Painel e alertas sem cache; consulta para todos os autenticados sem ampliar escrita ou acesso financeiro. Catálogo/relatório identificam a validade cadastral independente. Sem migração de esquema ou baixa automática; sugestão de retirada continua futura.
+- Procedimento e compatibilidade em [alertas-lotes.md](alertas-lotes.md).
+
+
+## Segurança e modernização técnica — 18/11/2026
+
+- Migração 14 preserva contas e sessões existentes; MFA é opt-in, ativado pela própria pessoa em Minha segurança.
+- Login limitado por conta/IP no SQLite; MFA com segredos cifrados, desafio temporário, proteção contra replay e códigos de recuperação de uso único.
+- Troca de senha pessoal, eventos da conta, recuperação por fila cifrada e links consumidos atomicamente. SMTP depende da configuração local.
+- Helmet, CSP, CORS por origem, limites de payload e proxy sem aceitar IP encaminhado pelo cliente. Tokens passam a sessionStorage.
+- Angular/Material/CDK 22.3, TypeScript 6, RxJS 7.8 e Express 5. Bootstrap AOT estático, animações sob demanda, imports menores no shell e builders atuais.
+- Vitest substitui testes gerados de criação de componentes; suíte de API e backup ampliada, validação automatizada no GitHub Actions.
+- Procedimentos, limites, configuração da chave e recuperação após restauração em `docs/seguranca.md`.
+
+## Inspeção visual e seletores remotos — 19/11/2026
+
+- Inspeção realizada pelo Chrome nativo, contornando a indisponibilidade do conector de abas sem ignorar controles de aprovação.
+- Corrigida a atualização de dados assíncronos após a mudança do padrão de detecção no Angular 22; comportamento Eager explícito nos componentes existentes e OnPush/signals no novo seletor.
+- Corrigido o link de recuperação na tela de login; build sem script inline de CSS crítico, com validação automática de compatibilidade CSP e revalidação do HTML.
+- Formulário de produto com categoria, unidade e fornecedor por busca remota em páginas de 25, sem perder a seleção existente fora da página atual. Criação/edição contextual de categoria e unidade preservada.
+- Testes de renderização real, digitação e navegação acrescentados. Detalhes e limites em `docs/modernizacao-interface.md`.

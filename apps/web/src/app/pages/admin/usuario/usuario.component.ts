@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { Perfil } from 'src/app/shared/models/perfil.model';
@@ -5,7 +6,7 @@ import { Usuario } from 'src/app/shared/models/usuario.model';
 import { PerfilService } from 'src/app/shared/services/perfil.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-usuario',
   templateUrl: './usuario.component.html',
   styleUrls: ['./usuario.component.scss'],

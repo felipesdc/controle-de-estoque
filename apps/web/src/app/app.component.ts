@@ -1,6 +1,7 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component } from '@angular/core';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']

@@ -25,6 +25,18 @@ const {salvarUsuario}=require('/app/dist/services/acessos');
  const referencia=pool.transaction(execute=>ultimoCusto(execute,product.produto_id));
  avaliarCusto(product.produto_id,{evento_id:referencia.evento_id,unitario_centavos:200,motivo:'Custo confirmado na documentação de backup QA'},1,'backup-qa-custo-base-01');
  assert.equal(pool.transaction(execute=>ultimoCusto(execute,product.produto_id)).valor_microcentavos,'550000000');
+ // A restored backup must preserve active MFA but never resurrect disposable credentials.
+ const security=require('/app/dist/services/seguranca'),{entrar}=require('/app/dist/services/acessos'),OTP=require('/app/node_modules/otpauth'),jwt=require('/app/node_modules/jsonwebtoken');
+ const worker=await entrar('funcionario','worker-backup-password-2026','fixture-worker');
+ const setup=await security.prepararMfa(worker.usuario.usuario_id,'worker-backup-password-2026');
+ const totp=new OTP.TOTP({secret:OTP.Secret.fromBase32(setup.segredo)});
+ security.ativarMfa(worker.usuario.usuario_id,totp.generate({timestamp:Date.now()-30000}),jwt.decode(worker.token).jti);
+ const lastCounter=Math.floor(Date.now()/30000)+3;
+ await pool.query('UPDATE pi2_auth_mfa SET ultimo_contador=$1 WHERE usuario_id=$2',[lastCounter,worker.usuario.usuario_id]);
+ require('node:fs').writeFileSync('/data/qa-mfa-counter.txt',String(lastCounter));
+ await entrar('funcionario','worker-backup-password-2026','fixture-pending');
+ await pool.query('INSERT INTO pi2_auth_reset(hash,usuario_id,expira_em,credencial) VALUES($1,$2,$3,$4)',['backup-qa-pending',worker.usuario.usuario_id,Date.now()+900000,'synthetic']);
+ await pool.query('INSERT INTO pi2_auth_outbox(usuario_id,payload,proxima_em,expira_em) VALUES($1,$2,$3,$4)',[worker.usuario.usuario_id,security.cifrar('{}'),Date.now(),Date.now()+900000]);
  const login=await fetch('http://127.0.0.1:3000/v1/usuario/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usuario_login:'admin',usuario_password:process.env.ADMIN_PASSWORD})});assert.equal(login.status,200);
  require('node:fs').writeFileSync('/data/qa-token.txt',(await login.json()).token,{mode:0o600});
  assert.equal((await pool.query('SELECT produto_quantidade_estoque AS saldo FROM pi2_produtos')).rows[0].saldo,2.75);

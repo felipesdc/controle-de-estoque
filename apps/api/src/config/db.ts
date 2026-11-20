@@ -283,6 +283,21 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 13) 
   } catch(error) { db.exec("ROLLBACK"); throw error; }
 }
 
+// Optional MFA and short-lived credentials; existing accounts keep password login until enrollment.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 14) {
+ db.exec("BEGIN IMMEDIATE");
+ try {db.exec(`ALTER TABLE pi2_sessoes ADD COLUMN mfa_verificada INTEGER NOT NULL DEFAULT 0 CHECK(mfa_verificada IN (0,1));
+  CREATE TABLE pi2_auth_limites(chave TEXT PRIMARY KEY,tentativas INTEGER NOT NULL,expira_em INTEGER NOT NULL);
+  CREATE TABLE pi2_auth_mfa(usuario_id INTEGER PRIMARY KEY REFERENCES pi2_usuarios(usuario_id),ativo INTEGER NOT NULL DEFAULT 0,
+    segredo TEXT,pendente TEXT,pendente_ate INTEGER,ultimo_contador INTEGER NOT NULL DEFAULT -1,codigos TEXT NOT NULL DEFAULT '[]',ativado_em TEXT);
+  CREATE TABLE pi2_auth_desafios(hash TEXT PRIMARY KEY,usuario_id INTEGER NOT NULL REFERENCES pi2_usuarios(usuario_id),expira_em INTEGER NOT NULL,tentativas INTEGER NOT NULL DEFAULT 0,credencial TEXT NOT NULL);
+  CREATE TABLE pi2_auth_reset(hash TEXT PRIMARY KEY,usuario_id INTEGER NOT NULL REFERENCES pi2_usuarios(usuario_id),expira_em INTEGER NOT NULL,credencial TEXT NOT NULL);
+  CREATE TABLE pi2_auth_outbox(id INTEGER PRIMARY KEY AUTOINCREMENT,usuario_id INTEGER NOT NULL REFERENCES pi2_usuarios(usuario_id),payload TEXT NOT NULL,tentativas INTEGER NOT NULL DEFAULT 0,proxima_em INTEGER NOT NULL,expira_em INTEGER NOT NULL);
+  CREATE TABLE pi2_auth_eventos(id INTEGER PRIMARY KEY AUTOINCREMENT,usuario_id INTEGER REFERENCES pi2_usuarios(usuario_id),tipo TEXT NOT NULL,data TEXT NOT NULL);
+  CREATE INDEX idx_auth_eventos_usuario ON pi2_auth_eventos(usuario_id,id DESC);
+  PRAGMA user_version=14;COMMIT;`);}catch(error){db.exec('ROLLBACK');throw error;}
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;

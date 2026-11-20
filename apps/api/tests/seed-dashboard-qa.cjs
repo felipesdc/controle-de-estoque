@@ -31,7 +31,7 @@ if (process.env.SQLITE_PATH !== '/data/dashboard-qa.sqlite' || process.env.ADMIN
     assert.equal(response.status, 201);
   }
   const dashboard = await (await fetch(base + '/dashboard', { headers })).json();
-  assert.deepEqual(dashboard.totais, { produtos_ativos: 5, estoque_baixo: 2, vencem_em_breve: 2, vencidos: 1 });
+  assert.equal(dashboard.totais.produtos_ativos,5);assert.equal(dashboard.totais.estoque_baixo,2);assert.equal(dashboard.totais.vencem_em_breve,0);assert.equal(dashboard.totais.vencidos,0);assert.equal(dashboard.totais.produtos_sem_validade,4);assert.equal(dashboard.totais.produtos_sem_lote,4);
   assert.equal(dashboard.movimentos_recentes.length, 6);
-  console.log('PASS: populated QA dashboard matches 5 active products, 2 low-stock, 2 expiring, 1 expired and 6 movements.');
+  console.log('PASS: populated QA dashboard matches 5 active products, 2 low-stock, 4 unidentified-expiry stocks, no inferred lot expiry and 6 movements.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

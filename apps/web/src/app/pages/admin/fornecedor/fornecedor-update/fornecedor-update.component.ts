@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -7,7 +8,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-fornecedor-update',
   templateUrl: './fornecedor-update.component.html',
   styleUrls: ['./fornecedor-update.component.scss'],

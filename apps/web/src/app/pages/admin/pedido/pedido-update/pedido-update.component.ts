@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -13,7 +14,7 @@ import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 import { PedidoService } from 'src/app/shared/services/pedido.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-pedido-update',
   templateUrl: './pedido-update.component.html',
   styleUrls: ['./pedido-update.component.scss'],

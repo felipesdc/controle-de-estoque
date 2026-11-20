@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -7,7 +8,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { PerfilService } from 'src/app/shared/services/perfil.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-perfil-update',
   templateUrl: './perfil-update.component.html',
   styleUrls: ['./perfil-update.component.scss'],

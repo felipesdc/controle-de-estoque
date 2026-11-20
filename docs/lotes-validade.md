@@ -8,7 +8,7 @@ Em **Pedidos → Registrar recebimento**, a gestão pode informar código do lot
 
 O código preserva zeros e diferencia maiúsculas/minúsculas. O mesmo código no mesmo produto agrega saldo apenas quando validade e unidade são idênticas; divergências exigem corrigir os dados antes da confirmação. Datas inválidas são rejeitadas. Um lote pode não ter validade conhecida. Não há edição ou exclusão de identidade de lotes nesta etapa.
 
-**Lotes e validades**, no menu e no catálogo, mostra saldo total, identificado e sem lote; busca por código, filtro com saldo e paginação. Lotes são ordenados pela validade, com desconhecidas ao final. Rótulos de vencido/hoje/até 30 dias usam a data de São Paulo. O vencimento é informativo e não bloqueia movimentação automaticamente. Os alertas antigos do painel continuam usando a validade do cadastro do produto.
+**Lotes e validades**, no menu e no catálogo, mostra saldo total, identificado e sem lote; busca por código, filtro com saldo e paginação. Lotes são ordenados pela validade, com desconhecidas ao final. Rótulos de vencido/hoje/até 30 dias usam a data de São Paulo. O vencimento é informativo e não bloqueia movimentação automaticamente. O painel usa as validades e os saldos dos lotes e separa pendências de validade; veja [alertas-lotes.md](alertas-lotes.md).
 
 ## Movimentar e devolver
 
@@ -37,4 +37,4 @@ As novas contagens usam o inventário por lote, incluindo saldo sem lote e lotes
 
 Testes isolados: `lotes.cjs`, `lotes-http.cjs`, `lotes-migracao.cjs`, além das regressões de compras, entregas, estoque, inventário, catálogo, códigos e relatórios. Dados demonstrativos devem ser gerados exclusivamente no ambiente descartável da porta 8081.
 
-Próximos passos: indicadores consolidados de validade por lote no painel; eventual sugestão pelo vencimento com confirmação do lote físico.
+Indicadores consolidados de validade por lote estão no painel. Próximo passo possível: sugestão pelo vencimento com confirmação do lote físico.

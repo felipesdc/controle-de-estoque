@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormArray, FormBuilder, Validators } from '@angular/forms';
@@ -9,7 +10,7 @@ import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 import { Fornecedor } from 'src/app/shared/models/fornecedor.model';
 import { Produto } from 'src/app/shared/models/produto.model';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({ standalone: false,selector:'app-pedidos',templateUrl:'./pedidos.component.html',styleUrl:'./pedidos.component.scss'})
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,selector:'app-pedidos',templateUrl:'./pedidos.component.html',styleUrl:'./pedidos.component.scss'})
 export class PedidosComponent implements OnInit, OnDestroy {
  pedidos:Compra[]=[]; produtos:Produto[]=[]; fornecedores:Fornecedor[]=[];
  detalhe:Compra|null=null; editando=false; novo=false; acao=''; motivo=''; error=''; success=''; loading=false; saving=false;

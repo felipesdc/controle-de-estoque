@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
@@ -6,7 +7,7 @@ import { finalize, takeUntil, timeout } from 'rxjs/operators';
 import { Categoria } from 'src/app/shared/models/categoria.model';
 import { CategoriaService } from 'src/app/shared/services/categoria.service';
 import { RelatoriosService, RelatorioEstoque } from 'src/app/shared/services/relatorios.service';
-@Component({ standalone: false,selector:'app-relatorios',templateUrl:'./relatorios.component.html',styleUrl:'./relatorios.component.scss'})
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,selector:'app-relatorios',templateUrl:'./relatorios.component.html',styleUrl:'./relatorios.component.scss'})
 export class RelatoriosComponent implements OnInit, OnDestroy {
  relatorio:RelatorioEstoque|null=null; categorias:Categoria[]=[];
  loading=false;exporting=false;error='';exportError='';opcoesError=false;pagina=1;tamanho=10;

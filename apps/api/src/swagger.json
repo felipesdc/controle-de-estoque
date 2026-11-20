@@ -3380,7 +3380,7 @@
         "tags": [
           "Sessão"
         ],
-        "description": "",
+        "description": "8 tentativas por conta e 120 por IP a cada 15 minutos. MFA ativo retorna desafio de cinco minutos; somente a confirmação emite JWT. Sem MFA, emite sessão diretamente.",
         "parameters": [],
         "responses": {
           "200": {
@@ -3388,12 +3388,14 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token": {
-                      "type": "string"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SessaoEmitida"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DesafioMfa"
                     }
-                  }
+                  ]
                 }
               }
             }
@@ -3437,6 +3439,27 @@
                 }
               }
             }
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Usuário ou senha inválidos"
           }
         },
         "requestBody": {
@@ -3934,7 +3957,7 @@
         "tags": [
           "Painel"
         ],
-        "description": "Somente produtos ativos; baixo = saldo < mínimo; mínimo zero desativa alerta. Validade no calendário de São Paulo.",
+        "description": "Somente produtos ativos. Baixo = saldo total < mínimo. Validade utiliza cada lote com saldo positivo, no calendário de São Paulo (hoje e até 30 dias inclusive). Datas de cadastro do produto não são atribuídas aos lotes ou ao saldo sem lote. Indicadores vencidos/vencem_em_breve contam produtos distintos por situação, podendo sobrepor; lotes_* contam lotes. Prévia de 6 vencimentos e 6 pendências, sem limitar totais. Consulta sem efeitos no estoque e Cache-Control no-store.",
         "parameters": [],
         "responses": {
           "200": {
@@ -3952,7 +3975,39 @@
                       "type": "object"
                     },
                     "totais": {
-                      "type": "object"
+                      "type": "object",
+                      "properties": {
+                        "produtos_ativos": {
+                          "type": "integer"
+                        },
+                        "estoque_baixo": {
+                          "type": "integer"
+                        },
+                        "vencidos": {
+                          "type": "integer"
+                        },
+                        "vencem_em_breve": {
+                          "type": "integer"
+                        },
+                        "lotes_vencidos": {
+                          "type": "integer"
+                        },
+                        "lotes_vencem_em_breve": {
+                          "type": "integer"
+                        },
+                        "lotes_vencem_hoje": {
+                          "type": "integer"
+                        },
+                        "produtos_sem_validade": {
+                          "type": "integer"
+                        },
+                        "lotes_sem_validade": {
+                          "type": "integer"
+                        },
+                        "produtos_sem_lote": {
+                          "type": "integer"
+                        }
+                      }
                     },
                     "baixo_estoque": {
                       "type": "array",
@@ -3963,13 +4018,20 @@
                     "vencimentos": {
                       "type": "array",
                       "items": {
-                        "type": "object"
+                        "$ref": "#/components/schemas/AlertaLote"
                       }
                     },
                     "movimentos_recentes": {
                       "type": "array",
                       "items": {
                         "type": "object"
+                      }
+                    },
+                    "pendencias_validade": {
+                      "type": "array",
+                      "maxItems": 6,
+                      "items": {
+                        "$ref": "#/components/schemas/AlertaLote"
                       }
                     }
                   }
@@ -8955,6 +9017,969 @@
           }
         ]
       }
+    },
+    "/lotes/alertas": {
+      "get": {
+        "summary": "Consulta alertas e pendências de validade por lote",
+        "tags": [
+          "Painel"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "description": "Todos os autenticados podem ler. Somente produtos ativos e saldos positivos; sem soma de quantidades entre unidades. Sem lote e lote com data ausente/inválida são validade desconhecida. Validade de produto não é usada. Ordenação estável por prioridade/data/produto/código/id. Resumo de toda seleção e Cache-Control no-store. Nenhum lote é escolhido ou movimentado automaticamente.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "description": "Busca literal por produto, código, código do lote ou ID do produto."
+          },
+          {
+            "name": "vencimento",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "atencao",
+                "vencidos",
+                "hoje",
+                "em_breve",
+                "sem_validade",
+                "sem_lote",
+                "todos"
+              ],
+              "default": "atencao"
+            },
+            "description": "em_breve inclui hoje e 30 dias; todos inclui demais lotes com saldo."
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "tamanho",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                10,
+                25,
+                50
+              ],
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consulta consistente com paginação e resumo.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertasLotes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtros inválidos"
+          },
+          "401": {
+            "description": "Autenticação necessária"
+          },
+          "500": {
+            "description": "Falha de consulta"
+          }
+        }
+      }
+    },
+    "/auth/configuracao": {
+      "get": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Consultar disponibilidade da recuperação",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "recuperacao_email": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "security": []
+      }
+    },
+    "/auth/mfa": {
+      "post": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Confirmar segundo fator e criar sessão",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessaoEmitida"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "desafio": {
+                    "type": "string"
+                  },
+                  "codigo": {
+                    "type": "string",
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "desafio",
+                  "codigo"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/recuperar": {
+      "post": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Solicitar recuperação (resposta genérica; link de uso único por 15 minutos)",
+        "responses": {
+          "202": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": [
+                  "email"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/redefinir": {
+      "post": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Redefinir senha e revogar sessões sem desabilitar MFA",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "senha": {
+                    "type": "string",
+                    "format": "password",
+                    "writeOnly": true
+                  }
+                },
+                "required": [
+                  "token",
+                  "senha"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seguranca": {
+      "get": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Consultar MFA e últimos 20 eventos da própria conta",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "mfa_disponivel": {
+                      "type": "boolean"
+                    },
+                    "mfa_ativo": {
+                      "type": "boolean"
+                    },
+                    "ativado_em": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "codigos_restantes": {
+                      "type": "integer"
+                    },
+                    "eventos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        }
+      }
+    },
+    "/seguranca/mfa/preparar": {
+      "post": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Preparar ativação com senha atual; expira em 10 minutos",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "segredo": {
+                      "type": "string"
+                    },
+                    "uri": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "senha": {
+                    "type": "string",
+                    "format": "password",
+                    "writeOnly": true
+                  }
+                },
+                "required": [
+                  "senha"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seguranca/mfa/ativar": {
+      "post": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Confirmar TOTP e retornar códigos de recuperação uma única vez",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "codigos": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "codigo": {
+                    "type": "string",
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "codigo"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seguranca/mfa/desativar": {
+      "post": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Desativar MFA",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "codigos": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "senha": {
+                    "type": "string",
+                    "format": "password",
+                    "writeOnly": true
+                  },
+                  "codigo": {
+                    "type": "string",
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "senha",
+                  "codigo"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seguranca/mfa/codigos": {
+      "post": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Invalidar códigos anteriores e gerar novos",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "codigos": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "senha": {
+                    "type": "string",
+                    "format": "password",
+                    "writeOnly": true
+                  },
+                  "codigo": {
+                    "type": "string",
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "senha",
+                  "codigo"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/seguranca/senha": {
+      "post": {
+        "tags": [
+          "Segurança"
+        ],
+        "summary": "Alterar senha própria e revogar todas as sessões",
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos"
+          },
+          "401": {
+            "description": "Sessão ou credencial inválida"
+          },
+          "409": {
+            "description": "Conta ou preparação alterada/expirada"
+          },
+          "429": {
+            "description": "Limite de tentativas atingido",
+            "headers": {
+              "Retry-After": {
+                "description": "Segundos até permitir nova tentativa",
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Configuração de segurança ou SMTP indisponível"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "senha_atual": {
+                    "type": "string",
+                    "format": "password",
+                    "writeOnly": true
+                  },
+                  "nova_senha": {
+                    "type": "string",
+                    "format": "password",
+                    "writeOnly": true
+                  },
+                  "codigo": {
+                    "type": "string",
+                    "maxLength": 80
+                  }
+                },
+                "required": [
+                  "senha_atual",
+                  "nova_senha"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/cadastros/{tipo}/opcoes": {
+      "get": {
+        "tags": [
+          "Cadastros"
+        ],
+        "summary": "Buscar opções paginadas para formulários",
+        "description": "Retorna até 25 opções por página, somente id/nome. O cadastro selecionado é carregado separadamente mesmo fora da busca/página. Não calcula vínculos nem retorna dados de contato.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tipo",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "categorias",
+                "unidades",
+                "fornecedores"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "selecionado",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de opções; selecionado null se inexistente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itens": {
+                      "type": "array",
+                      "maxItems": 25,
+                      "items": {
+                        "$ref": "#/components/schemas/OpcaoCadastro"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "pagina": {
+                      "type": "integer"
+                    },
+                    "tamanho": {
+                      "type": "integer",
+                      "enum": [
+                        25
+                      ]
+                    },
+                    "selecionado": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/OpcaoCadastro"
+                        }
+                      ],
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtro inválido"
+          },
+          "401": {
+            "description": "Sessão obrigatória"
+          },
+          "404": {
+            "description": "Tipo de cadastro inválido"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -11246,6 +12271,199 @@
                 "type": "string"
               }
             }
+          }
+        }
+      },
+      "AlertaLote": {
+        "type": "object",
+        "properties": {
+          "produto_id": {
+            "type": "integer"
+          },
+          "produto_descricao": {
+            "type": "string"
+          },
+          "produto_codigo": {
+            "type": "string",
+            "nullable": true
+          },
+          "lote_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "lote_codigo": {
+            "type": "string",
+            "nullable": true
+          },
+          "origem": {
+            "type": "string",
+            "enum": [
+              "lote",
+              "sem_lote"
+            ]
+          },
+          "quantidade": {
+            "type": "number",
+            "description": "Saldo positivo deste lote ou saldo sem lote, na unidade informada; não é o saldo total do produto."
+          },
+          "unidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "validade": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "situacao": {
+            "type": "string",
+            "enum": [
+              "vencido",
+              "hoje",
+              "em_breve",
+              "no_prazo",
+              "sem_validade"
+            ]
+          }
+        }
+      },
+      "AlertasLotes": {
+        "type": "object",
+        "properties": {
+          "itens": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertaLote"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "pagina": {
+            "type": "integer"
+          },
+          "tamanho": {
+            "type": "integer"
+          },
+          "paginas": {
+            "type": "integer"
+          },
+          "resumo": {
+            "type": "object",
+            "properties": {
+              "registros": {
+                "type": "integer"
+              },
+              "produtos": {
+                "type": "integer"
+              },
+              "lotes": {
+                "type": "integer"
+              },
+              "sem_lote": {
+                "type": "integer"
+              }
+            }
+          },
+          "gerado_em": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "filtros": {
+            "type": "object",
+            "properties": {
+              "q": {
+                "type": "string"
+              },
+              "vencimento": {
+                "type": "string"
+              }
+            }
+          },
+          "criterios": {
+            "type": "object",
+            "properties": {
+              "data_referencia": {
+                "type": "string",
+                "format": "date"
+              },
+              "vencimento_ate": {
+                "type": "string",
+                "format": "date"
+              },
+              "vencimento_dias": {
+                "type": "integer"
+              },
+              "fuso": {
+                "type": "string"
+              },
+              "origem_validade": {
+                "type": "string",
+                "enum": [
+                  "lote"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "SessaoEmitida": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "usuario": {
+            "type": "object"
+          },
+          "expira_em": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "token",
+          "usuario",
+          "expira_em"
+        ]
+      },
+      "DesafioMfa": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mfa_required": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "desafio": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "expira_em": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "mfa_required",
+          "desafio",
+          "expira_em"
+        ]
+      },
+      "OpcaoCadastro": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "nome"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "nome": {
+            "type": "string"
           }
         }
       }

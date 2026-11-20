@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,7 +14,7 @@ import { AuthService } from 'src/app/shared/services/auth.service';
 import { ProdutosCreateDialogComponent } from './produtos-create-dialog/produtos-create-dialog.component';
 import { ProdutoStatusDialogComponent } from './produto-status-dialog.component';
 
-@Component({ standalone: false, selector: 'app-produtos', templateUrl: './produtos.component.html', styleUrls: ['./produtos.component.scss'] })
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false, selector: 'app-produtos', templateUrl: './produtos.component.html', styleUrls: ['./produtos.component.scss'] })
 export class ProdutosComponent implements OnInit, OnDestroy {
   catalogo: Catalogo | null = null;
   categorias: Categoria[] = [];

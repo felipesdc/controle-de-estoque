@@ -6,7 +6,7 @@
     <mat-form-field appearance="outline" class="search"><mat-label>Buscar produto</mat-label><mat-icon matPrefix>search</mat-icon><input matInput formControlName="q" maxlength="100" placeholder="Nome, código de barras ou ID"></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Situação</mat-label><mat-select formControlName="estado"><mat-option value="ativos">Ativos</mat-option><mat-option value="inativos">Inativos</mat-option><mat-option value="todos">Todos</mat-option></mat-select></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Estoque</mat-label><mat-select formControlName="estoque"><mat-option value="todos">Todos os saldos</mat-option><mat-option value="baixo">Abaixo do mínimo</mat-option><mat-option value="zerado">Sem estoque</mat-option><mat-option value="disponivel">Com saldo</mat-option></mat-select></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Validade</mat-label><mat-select formControlName="vencimento"><mat-option value="todos">Todas</mat-option><mat-option value="vencido">Vencidos com saldo</mat-option><mat-option value="em_breve">Vencem em até 30 dias</mat-option><mat-option value="sem_validade">Sem validade válida</mat-option></mat-select></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Validade do cadastro</mat-label><mat-select formControlName="vencimento"><mat-option value="todos">Todas</mat-option><mat-option value="vencido">Vencidos com saldo</mat-option><mat-option value="em_breve">Vencem em até 30 dias</mat-option><mat-option value="sem_validade">Sem validade válida</mat-option></mat-select></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Categoria</mat-label><mat-select formControlName="categoria"><mat-option value="">Todas as categorias</mat-option><mat-option value="sem">Sem categoria</mat-option><mat-option *ngFor="let c of categorias" [value]="'' + c.categoria_id">{{ c.categoria_descricao }}</mat-option></mat-select></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Ordenar por</mat-label><mat-select formControlName="ordem"><mat-option value="nome">Nome (A–Z)</mat-option><mat-option value="saldo">Menor saldo</mat-option><mat-option value="validade">Validade mais antiga</mat-option><mat-option value="recentes">Cadastro mais recente</mat-option></mat-select></mat-form-field>
     <button mat-button type="button" (click)="limpar()">Limpar filtros</button>
@@ -20,5 +20,6 @@
     </tbody></table>
   </div>
   <mat-paginator *ngIf="catalogo" [length]="catalogo.total" [pageIndex]="pagina - 1" [pageSize]="tamanho" [pageSizeOptions]="[10,25,50]" (page)="paginar($event)" [disabled]="loading" showFirstLastButtons aria-label="Paginação do catálogo"></mat-paginator>
+  <p class="footnote">As datas desta tabela e dos filtros são do cadastro do produto. <a routerLink="/home/lotes/alertas">Consulte os alertas por lote e os saldos sem validade conhecida.</a></p>
   <p class="footnote">Inativar preserva saldo e histórico. Para ajustar quantidades, registre uma movimentação. O filtro de validade com vencimento considera apenas produtos com saldo.</p>
 </section>

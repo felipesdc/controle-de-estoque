@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -8,7 +9,7 @@ import { Router } from '@angular/router';
 import { Categoria } from 'src/app/shared/models/categoria.model';
 import { CategoriaService } from 'src/app/shared/services/categoria.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-categoria-create',
   templateUrl: './categoria-create.component.html',
   styleUrls: ['./categoria-create.component.scss'],

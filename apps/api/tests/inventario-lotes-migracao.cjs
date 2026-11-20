@@ -15,17 +15,17 @@ try{
  UPDATE pi2_movimentos_estoque SET movimento_lote_id=1 WHERE movimento_id=1;
  INSERT INTO pi2_inventarios(inventario_id,titulo,estado,versao,criado_em,criado_por,criacao_chave,criacao_conteudo) VALUES(2,'Contagem geral em andamento','aberto',2,'2026-11-17',1,'criacao-preservada-2','{}');
  INSERT INTO pi2_inventario_itens(inventario_id,produto_id,descricao,unidade_id,unidade,saldo_milesimos,ultimo_movimento_id,contado_milesimos) VALUES(2,1,'Preservado',1,'kg',4000,1,4000);
- DROP TABLE pi2_custos_eventos; DROP TABLE pi2_custos_config; DROP TABLE pi2_inventario_lote_registros; DROP TABLE pi2_inventario_lotes; ALTER TABLE pi2_inventarios DROP COLUMN modo;
+ DROP TABLE pi2_auth_outbox; DROP TABLE pi2_auth_reset; DROP TABLE pi2_auth_desafios; DROP TABLE pi2_auth_mfa; DROP TABLE pi2_auth_eventos; DROP TABLE pi2_auth_limites; ALTER TABLE pi2_sessoes DROP COLUMN mfa_verificada; DROP TABLE pi2_custos_eventos; DROP TABLE pi2_custos_config; DROP TABLE pi2_inventario_lote_registros; DROP TABLE pi2_inventario_lotes; ALTER TABLE pi2_inventarios DROP COLUMN modo;
  PRAGMA user_version=11;`);
  const names=db.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all().map(r=>r.name);
- function snapshot(db){return names.map(name=>({name,rows:db.prepare(`SELECT * FROM ${name} ORDER BY rowid`).all().map(row=>{if(name==='pi2_inventarios')delete row.modo;if(name==='pi2_movimentos_estoque'){}return row;})}));}
+ function snapshot(db){return names.map(name=>({name,rows:db.prepare(`SELECT * FROM ${name} ORDER BY rowid`).all().map(row=>{if(name==='pi2_sessoes')delete row.mfa_verificada;if(name==='pi2_inventarios')delete row.modo;if(name==='pi2_movimentos_estoque'){}return row;})}));}
  const before=snapshot(db);db.close();boot();db=new DatabaseSync(file);
- assert.equal(db.prepare('PRAGMA user_version').get().user_version,13);assert.deepEqual(snapshot(db),before);
+ assert.equal(db.prepare('PRAGMA user_version').get().user_version,14);assert.deepEqual(snapshot(db),before);
  assert.equal(db.prepare('SELECT movimento_codigo_lido FROM pi2_movimentos_estoque').get().movimento_codigo_lido,'000123');
  assert.equal(db.prepare('SELECT movimento_unidade_registrada FROM pi2_movimentos_estoque').get().movimento_unidade_registrada,0);
  assert.equal(db.prepare('SELECT movimento_unidade_descricao FROM pi2_movimentos_estoque').get().movimento_unidade_descricao,null);
  assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(),[]);
  assert.equal(db.prepare('SELECT COUNT(*) AS total FROM pi2_inventario_lotes').get().total,0);assert.equal(db.prepare('SELECT saldo_milesimos FROM pi2_lotes').get().saldo_milesimos,4000);assert.ok(db.prepare('SELECT modo FROM pi2_inventarios').all().every(r=>r.modo==='produto'));assert.equal(db.prepare('SELECT contado_milesimos FROM pi2_inventario_itens WHERE inventario_id=2').get().contado_milesimos,4000);
  db.close();
- console.log('PASS: schema 11 to 13 preserves lots, stock, credentials, sessions, approved movements and open product counts without inventing lot references.');
+ console.log('PASS: schema 11 to 14 preserves lots, stock, credentials, sessions, approved movements and open product counts without inventing lot references.');
 }finally{fs.rmSync(dir,{recursive:true,force:true});}

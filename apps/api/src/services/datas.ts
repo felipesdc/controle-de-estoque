@@ -9,3 +9,7 @@ export function periodoValidade(now = new Date()) {
 // Internal SQL expression; never interpolate user input here.
 export const validadeSql = "substr(p.produto_data_validade, 1, 10)";
 export const dataValidaSql = `(${validadeSql} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND date(${validadeSql}, '+0 days') = ${validadeSql})`;
+
+// Strict lot dates; missing/corrupt legacy values must never reach a date formatter.
+export const validadeLoteValidaSql = `(length(l.validade)=10 AND l.validade GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]' AND l.validade BETWEEN '1900-01-01' AND '9999-12-31' AND date(l.validade,'+0 days')=l.validade)`;
+export const validadeNormalizadaLoteSql = `CASE WHEN ${validadeLoteValidaSql} THEN l.validade ELSE NULL END`;

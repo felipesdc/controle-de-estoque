@@ -4,7 +4,7 @@ const { getDashboard } = require('/app/dist/services/dashboard');
 const now = new Date('2026-10-26T01:30:00.000Z'); // Still October 25 in São Paulo.
 (async () => {
   const empty = getDashboard(now);
-  assert.deepEqual(empty.totais, { produtos_ativos: 0, estoque_baixo: 0, vencem_em_breve: 0, vencidos: 0 });
+  assert.deepEqual(empty.totais, { produtos_ativos:0,estoque_baixo:0,vencem_em_breve:0,vencidos:0,lotes_vencidos:0,lotes_vencem_em_breve:0,lotes_vencem_hoje:0,produtos_sem_validade:0,lotes_sem_validade:0,produtos_sem_lote:0 });
   assert.deepEqual(empty.baixo_estoque, []);
   assert.deepEqual(empty.vencimentos, []);
   assert.deepEqual(empty.movimentos_recentes, []);
@@ -28,15 +28,18 @@ const now = new Date('2026-10-26T01:30:00.000Z'); // Still October 25 in São Pa
   for (const fixture of fixtures) {
     ids.push((await pool.query('INSERT INTO pi2_produtos (produto_descricao, produto_quantidade_estoque, produto_data_validade, produto_estado) VALUES ($1,$2,$3,$4) RETURNING *', fixture)).rows[0].produto_id);
   }
+  // Lot balances, not product dates, now drive expiry. Raw invalid dates represent legacy corruption.
+  for(let i=0;i<fixtures.length;i++)await pool.query('INSERT INTO pi2_lotes(produto_id,codigo,validade,saldo_milesimos,criado_em,usuario_id) VALUES($1,$2,$3,$4,$5,1)',[ids[i],'L'+i,fixtures[i][2],Math.round(fixtures[i][1]*1000),now.toISOString()]);
   const d = getDashboard(now);
-  assert.deepEqual(d.totais, { produtos_ativos: 10, estoque_baixo: 3, vencem_em_breve: 3, vencidos: 1 });
+  assert.deepEqual(d.totais, { produtos_ativos:10,estoque_baixo:3,vencem_em_breve:2,vencidos:1,lotes_vencidos:1,lotes_vencem_em_breve:2,lotes_vencem_hoje:1,produtos_sem_validade:4,lotes_sem_validade:4,produtos_sem_lote:0 });
   assert.deepEqual(d.baixo_estoque.map(p => p.quantidade), [0, 0, 4.999]);
-  assert.equal(d.vencimentos.length, 4);
+  assert.equal(d.vencimentos.length, 3);
   assert.equal(d.vencimentos[0].situacao, 'vencido');
-  assert.equal(d.vencimentos.filter(p => p.situacao === 'hoje').length, 2);
+  assert.equal(d.vencimentos.filter(p => p.situacao === 'hoje').length, 1);
   for (let i = 0; i < 10; i++) {
     await pool.query('INSERT INTO pi2_produtos (produto_descricao, produto_quantidade_estoque, produto_data_validade, produto_estado) VALUES ($1,1,$2,1)', [`Mais ${i}`, '2026-10-24']);
   }
+  for(let i=0;i<10;i++)await pool.query("INSERT INTO pi2_lotes(produto_id,codigo,validade,saldo_milesimos,criado_em,usuario_id) SELECT produto_id,'Mais','2026-10-24',1000,$1,1 FROM pi2_produtos WHERE produto_descricao=$2",[now.toISOString(),'Mais '+i]);
   await pool.query("INSERT INTO pi2_movimentos_estoque (movimento_produto_id, movimento_tipo, movimento_quantidade, movimento_data) VALUES ($1,'entrada',1,'invalid-legacy-date')", [ids[0]]);
   assert.equal(getDashboard(now).movimentos_recentes[0].movimento_data, null, 'invalid legacy dates do not reach the date pipe');
   for (let i = 0; i < 14; i++) {

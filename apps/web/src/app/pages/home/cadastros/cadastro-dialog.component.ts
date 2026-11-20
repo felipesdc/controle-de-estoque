@@ -1,10 +1,11 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { CADASTROS, Cadastro, CadastrosService, TipoCadastro } from 'src/app/shared/services/cadastros.service';
-@Component({ standalone: false, selector: 'app-cadastro-dialog', templateUrl: './cadastro-dialog.component.html', styleUrls: ['./cadastro-dialog.component.scss'] })
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false, selector: 'app-cadastro-dialog', templateUrl: './cadastro-dialog.component.html', styleUrls: ['./cadastro-dialog.component.scss'] })
 export class CadastroDialogComponent {
   saving=false;error='';
   get config(){return CADASTROS[this.data.tipo];}

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import {
   UntypedFormBuilder,
@@ -17,7 +18,7 @@ import { PrecoService } from 'src/app/shared/services/preco.service';
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-item-pedido-create',
   templateUrl: './item-pedido-create.component.html',
   styleUrls: ['./item-pedido-create.component.scss'],

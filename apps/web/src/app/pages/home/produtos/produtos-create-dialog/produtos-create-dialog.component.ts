@@ -1,3 +1,5 @@
+import {OpcaoCadastro} from 'src/app/shared/components/seletor-cadastro/seletor-cadastro.component';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { CadastroDialogComponent } from '../../cadastros/cadastro-dialog.component';
 import { Cadastro, TipoCadastro } from 'src/app/shared/services/cadastros.service';
@@ -6,15 +8,9 @@ import { environment } from 'src/environments/environment';
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { AbstractControl, FormBuilder, Validators } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
+import { of } from 'rxjs';
 import { finalize, timeout } from 'rxjs/operators';
 import { Produto } from 'src/app/shared/models/produto.model';
-import { Categoria } from 'src/app/shared/models/categoria.model';
-import { Unidade } from 'src/app/shared/models/unidade.model';
-import { CategoriaService } from 'src/app/shared/services/categoria.service';
-import { UnidadeService } from 'src/app/shared/services/unidade.service';
-import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
-import { Fornecedor } from 'src/app/shared/models/fornecedor.model';
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 
 const nomeValido = (c: AbstractControl) => typeof c.value === 'string' && c.value.trim() ? null : { vazio: true };
@@ -24,11 +20,10 @@ const dataValida = (c: AbstractControl) => {
   const date = new Date(c.value + 'T00:00:00Z');
   return /^\d{4}-\d{2}-\d{2}$/.test(c.value) && !Number.isNaN(date.getTime()) && date.toISOString().slice(0,10) === c.value ? null : { data: true };
 };
-@Component({ standalone: false, selector: 'app-produtos-create-dialog', templateUrl: './produtos-create-dialog.component.html', styleUrls: ['./produtos-create-dialog.component.scss'] })
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false, selector: 'app-produtos-create-dialog', templateUrl: './produtos-create-dialog.component.html', styleUrls: ['./produtos-create-dialog.component.scss'] })
 export class ProdutosCreateDialogComponent implements OnInit {
-  categorias: Categoria[] = [];
-  unidades: Unidade[] = [];
-  fornecedores: Fornecedor[] = [];
+  categoriaSelecionada:OpcaoCadastro|null=null;
+  unidadeSelecionada:OpcaoCadastro|null=null;
   loading = true;
   optionsError = false;
   saving = false;
@@ -46,7 +41,7 @@ export class ProdutosCreateDialogComponent implements OnInit {
     produto_quantidade_estoque: [this.data?.produto_quantidade_estoque ?? 0, [Validators.required, quantidadeValida]],
     produto_data_validade: [String(this.data?.produto_data_validade || '').slice(0,10), dataValida],
   });
-  constructor(private fb: FormBuilder, private dialog: MatDialog, private http: HttpClient, private ref: MatDialogRef<ProdutosCreateDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: Produto | null, private categoriaService: CategoriaService, private unidadeService: UnidadeService, private service: ProdutoService, private fornecedorService: FornecedorService) {}
+  constructor(private fb: FormBuilder, private dialog: MatDialog, private http: HttpClient, private ref: MatDialogRef<ProdutosCreateDialogComponent>, @Inject(MAT_DIALOG_DATA) public data: Produto | null, private service: ProdutoService) {}
   ngOnInit(): void {
     if (this.data) {
       this.form.controls.produto_quantidade_estoque.clearValidators();
@@ -56,19 +51,17 @@ export class ProdutosCreateDialogComponent implements OnInit {
   }
   carregarOpcoes(): void {
     this.loading = true; this.optionsError = false;
-    forkJoin({ categorias: this.categoriaService.getCategorias(), unidades: this.unidadeService.getUnidades(), fornecedores: this.fornecedorService.getFornecedores(), precos:this.data?.produto_id?this.http.get<{compra_centavos:number|null;venda_centavos:number|null;legado_invalido:boolean}>(`${environment.apiurl}/produto/${this.data.produto_id}/precos`):of({compra_centavos:null,venda_centavos:null,legado_invalido:false}) }).pipe(timeout(15000), finalize(() => this.loading = false)).subscribe({
-      next: data => { this.categorias = data.categorias; this.unidades = data.unidades; this.fornecedores = data.fornecedores; if(!this.precoCompra.dirty&&!this.precoVenda.dirty){this.precoCompra.setValue(data.precos.compra_centavos===null?'':(data.precos.compra_centavos/100).toFixed(2));this.precoVenda.setValue(data.precos.venda_centavos===null?'':(data.precos.venda_centavos/100).toFixed(2));this.legadoInvalido=data.precos.legado_invalido;} },
-      error: () => this.optionsError = true,
-    });
+    const request=this.data?.produto_id?this.http.get<{compra_centavos:number|null;venda_centavos:number|null;legado_invalido:boolean}>(`${environment.apiurl}/produto/${this.data.produto_id}/precos`):of({compra_centavos:null,venda_centavos:null,legado_invalido:false});
+    request.pipe(timeout(15000),finalize(()=>this.loading=false)).subscribe({next:precos=>{if(!this.precoCompra.dirty&&!this.precoVenda.dirty){this.precoCompra.setValue(precos.compra_centavos===null?'':(precos.compra_centavos/100).toFixed(2));this.precoVenda.setValue(precos.venda_centavos===null?'':(precos.venda_centavos/100).toFixed(2));this.legadoInvalido=precos.legado_invalido;}},error:()=>this.optionsError=true});
   }
   cadastro(tipo:'categorias'|'unidades',editar=false):void {
     const id=tipo==='categorias'?this.form.value.produto_categoria_id:this.form.value.produto_unidade_id;
-    const nome=tipo==='categorias'?this.categorias.find(c=>c.categoria_id===id)?.categoria_descricao:this.unidades.find(u=>u.unidade_id===id)?.unidade_descricao;
+    const nome=tipo==='categorias'?this.categoriaSelecionada?.nome:this.unidadeSelecionada?.nome;
     if(editar&&!id)return;
     this.dialog.open(CadastroDialogComponent,{width:'520px',maxWidth:'95vw',data:{tipo,excluir:false,...(editar?{registro:{id,nome,total_vinculos:0}}:{})}}).afterClosed().subscribe((saved:Cadastro|undefined)=>{
       if(!saved||!saved.id)return;
-      if(tipo==='categorias'){this.categorias=this.categorias.filter(c=>c.categoria_id!==saved.id).concat([{categoria_id:saved.id,categoria_descricao:saved.nome}]);this.form.patchValue({produto_categoria_id:saved.id});}
-      else{this.unidades=this.unidades.filter(u=>u.unidade_id!==saved.id).concat([{unidade_id:saved.id,unidade_descricao:saved.nome}]);this.form.patchValue({produto_unidade_id:saved.id});}
+      if(tipo==='categorias'){this.categoriaSelecionada={id:saved.id,nome:saved.nome};this.form.patchValue({produto_categoria_id:saved.id});}
+      else{this.unidadeSelecionada={id:saved.id,nome:saved.nome};this.form.patchValue({produto_unidade_id:saved.id});}
     });
   }
   salvar(): void {

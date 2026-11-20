@@ -8,6 +8,8 @@ import { AdminLayoutComponent } from './shared/layouts/admin-layout/admin-layout
 
 const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path:'recuperar-senha',loadComponent:()=>import('./pages/seguranca/seguranca.component').then(m=>m.RecuperacaoComponent)},
+  { path:'redefinir-senha',loadComponent:()=>import('./pages/seguranca/seguranca.component').then(m=>m.RecuperacaoComponent)},
   { path: 'login', component: LoginComponent },
   {
     path: 'home',

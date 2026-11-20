@@ -8,6 +8,8 @@ services:
       SQLITE_PATH: /data/backup-qa.sqlite
       JWT_SECRET: backup-qa-jwt-only-disposable-2026-key
       ADMIN_PASSWORD: backup-qa-only-password-2026
+      AUTH_ENCRYPTION_KEY: BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=
+      AUTH_EMAIL_DISABLED: "1"
       ADMIN_EMAIL: qa@backup.local
     volumes:
       - backup-qa-data:/data

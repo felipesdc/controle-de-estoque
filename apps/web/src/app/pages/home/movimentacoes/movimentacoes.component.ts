@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { EscolhaLote } from 'src/app/shared/services/lotes.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
@@ -10,7 +11,7 @@ import { MovimentacaoEstoqueService } from 'src/app/shared/services/movimentacao
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-movimentacoes',
   templateUrl: './movimentacoes.component.html',
   styleUrl: './movimentacoes.component.scss',

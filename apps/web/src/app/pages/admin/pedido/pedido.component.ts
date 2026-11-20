@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { EstadoPedido } from 'src/app/shared/models/estado-pedido.model';
@@ -9,7 +10,7 @@ import { FornecedorService } from 'src/app/shared/services/fornecedor.service';
 import { PedidoService } from 'src/app/shared/services/pedido.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-pedido',
   templateUrl: './pedido.component.html',
   styleUrls: ['./pedido.component.scss'],

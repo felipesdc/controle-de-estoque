@@ -1,3 +1,4 @@
+import { AlertasLotesComponent } from './lotes/alertas-lotes.component';
 import { CustosComponent } from './relatorios/custos.component';
 import { LotesComponent } from './lotes/lotes.component';
 import { RelatoriosPeriodoComponent } from './relatorios/relatorios-periodo.component';
@@ -22,7 +23,9 @@ const routes: Routes = [
     component: HomeComponent,
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path:'seguranca',loadComponent:()=>import('../seguranca/seguranca.component').then(m=>m.SegurancaComponent)},
       { path: 'dashboard', component: DashboardComponent },
+      { path: 'lotes/alertas', component: AlertasLotesComponent },
       { path: 'lotes', component: LotesComponent },
       { path: 'produtos', component: ProdutosComponent },
       { path: 'pedidos', component: PedidosComponent },

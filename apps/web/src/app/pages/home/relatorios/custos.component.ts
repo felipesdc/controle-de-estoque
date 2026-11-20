@@ -1,9 +1,10 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component,OnInit,OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { CustosService,Custos,EvolucaoCusto,PosicaoCusto,HistoricoCusto } from 'src/app/shared/services/custos.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({standalone:false,selector:'app-custos',templateUrl:'./custos.component.html',styleUrls:['./relatorios.component.scss','./custos.component.scss']})
+@Component({ changeDetection: ChangeDetectionStrategy.Eager,standalone:false,selector:'app-custos',templateUrl:'./custos.component.html',styleUrls:['./relatorios.component.scss','./custos.component.scss']})
 export class CustosComponent implements OnInit,OnDestroy {
  hoje=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date());data=this.hoje;q='';inicio='';fim=this.hoje;
  posicao:Custos|null=null;evolucao:EvolucaoCusto|null=null;loading=false;loadingEvolucao=false;saving=false;exporting=false;error='';erroEvolucao='';success='';pagina=1;tamanho=10;paginaDias=0;

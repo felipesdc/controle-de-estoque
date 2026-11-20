@@ -1,8 +1,9 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { EstadoPedido } from 'src/app/shared/models/estado-pedido.model';
 import { EstadoPedidoService } from 'src/app/shared/services/estado-pedido.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-estado-pedido',
   templateUrl: './estado-pedido.component.html',
   styleUrls: ['./estado-pedido.component.scss'],

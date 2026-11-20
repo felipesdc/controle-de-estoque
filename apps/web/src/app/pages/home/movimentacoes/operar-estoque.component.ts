@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { EscolhaLote } from 'src/app/shared/services/lotes.service';
 import { Component,OnInit,OnDestroy,ViewChild,ElementRef } from '@angular/core';
 import { FormBuilder,Validators,AbstractControl } from '@angular/forms';
@@ -9,7 +10,7 @@ import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { MovimentacaoEstoqueService } from 'src/app/shared/services/movimentacao-estoque.service';
 import { MovimentacaoEstoque } from 'src/app/shared/models/movimentacao-estoque.model';
 import { AuthService } from 'src/app/shared/services/auth.service';
-@Component({ standalone: false,selector:'app-operar-estoque',templateUrl:'./operar-estoque.component.html',styleUrl:'./operar-estoque.component.scss'})
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,selector:'app-operar-estoque',templateUrl:'./operar-estoque.component.html',styleUrl:'./operar-estoque.component.scss'})
 export class OperarEstoqueComponent implements OnInit,OnDestroy {
  lote:EscolhaLote={id:null,codigo:null,validade:null,saldo:0,pronto:false};
  escolherLote(l:EscolhaLote){this.lote=l;this.chave=crypto.randomUUID();this.revisando=false;}

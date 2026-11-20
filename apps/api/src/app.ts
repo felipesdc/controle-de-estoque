@@ -1,3 +1,7 @@
+import helmet from 'helmet';
+import segurancaRoutes from './routes/seguranca-routes';
+import {iniciarEnvio} from './services/recuperacao';
+import {chaveCripto} from './services/seguranca';
 import inventariosRoutes from './routes/inventarios-routes';
 import express from "express";
 import cors from "cors";
@@ -27,15 +31,21 @@ import comprasRoutes from './routes/compras-routes';
 import relatoriosRoutes from './routes/relatorios-routes';
 const app = express();
 
+app.disable('x-powered-by');
+app.set('query parser','extended'); // Preserve typed rejection of arrays/nested filters after Express 5 upgrade.
+app.set('trust proxy',1);
+chaveCripto(); // Reject a malformed configured key rather than silently disabling protection.
+app.use(helmet({contentSecurityPolicy:{directives:{upgradeInsecureRequests:null}},strictTransportSecurity:false}));
 setupSwagger(app);
 
 // Create application/x-www-form-urlencoded parser
 
 
 // Middlewares
-app.use(cors());
-app.use(express.json({ limit: "15mb" }));
-app.use(express.urlencoded({ extended: false }));
+const publicOrigin=process.env.PUBLIC_URL?new URL(process.env.PUBLIC_URL).origin:'http://localhost:8080';
+app.use(cors({origin:(origin,callback)=>callback(null,!origin||origin===publicOrigin)}));
+app.use(express.json({ limit: "512kb" }));
+app.use(express.urlencoded({ extended: false,limit:"512kb" }));
 app.get("/health", async (_req, res) => {
   try {
     await pool.query("SELECT 1");
@@ -46,6 +56,7 @@ app.get("/health", async (_req, res) => {
 });
 
 // Rotas
+app.use("/v1",segurancaRoutes);
 app.use("/v1", inventariosRoutes);
 app.use("/v1", relatoriosRoutes);
 app.use("/v1", comprasRoutes);
@@ -70,6 +81,12 @@ app.get("/", (req, res) => {
   res.redirect("/api-docs");
 });
 
+app.use((error:any,_req:express.Request,res:express.Response,_next:express.NextFunction)=>{
+ if(error?.type==='entity.too.large'){res.status(413).json({message:'Requisição excede o limite de 512 KB.'});return;}
+ if(error instanceof SyntaxError&&'body' in error){res.status(400).json({message:'JSON inválido.'});return;}
+ console.error('Falha interna; conteúdo da requisição omitido.');res.status(500).json({message:'Não foi possível concluir a solicitação.'});
+});
+iniciarEnvio();
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {

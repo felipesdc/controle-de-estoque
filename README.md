@@ -117,11 +117,11 @@ docker compose exec -T api node < apps/api/tests/migration.cjs
 
 ## Visão geral
 
-Abra http://localhost:8080/home/dashboard. O painel mostra quantos produtos ativos estão cadastrados, estoque baixo (saldo abaixo do mínimo configurado no produto), vencimentos de hoje até 30 dias e produtos já vencidos com saldo. A referência de data usa `America/Sao_Paulo`. Produtos inativos não geram alertas; vencimentos exigem saldo positivo e uma data válida.
+Abra http://localhost:8080/home/dashboard. O painel mostra quantos produtos ativos estão cadastrados, estoque baixo (saldo abaixo do mínimo configurado no produto), produtos com lotes a vencer de hoje até 30 dias e produtos com lotes vencidos com saldo. A referência de data usa `America/Sao_Paulo`. Produtos inativos não geram alertas; vencimentos exigem saldo positivo e uma data válida no lote, sem usar a data do cadastro do produto.
 
-O painel apresenta até 6 prioridades de reposição, 6 vencimentos e 10 movimentos recentes, incluindo estornos. Os cartões mostram os totais completos. O botão **Atualizar** busca os dados novamente; se houver falha, os últimos indicadores permanecem visíveis com aviso e horário da consulta. O catálogo simplificado agora permite informar a validade opcional.
+O painel apresenta até 6 prioridades de reposição, 6 lotes com vencimento próximo/vencido, 6 pendências de validade e 10 movimentos recentes, incluindo estornos. Os cartões mostram os totais completos. O botão **Atualizar** busca os dados novamente; se houver falha, os últimos indicadores permanecem visíveis com aviso e horário da consulta. O catálogo simplificado agora permite informar a validade opcional.
 
-`GET /v1/dashboard` exige autenticação e retorna `criterios`, `totais`, `baixo_estoque`, `vencimentos`, `movimentos_recentes` e `atualizado_em`. O limite de estoque baixo e a janela de vencimento são fixos nesta versão. Quantidades de unidades diferentes não são somadas em um único saldo.
+`GET /v1/dashboard` exige autenticação e retorna `criterios`, `totais`, `baixo_estoque`, `vencimentos`, `pendencias_validade`, `movimentos_recentes` e `atualizado_em`. O mínimo é configurável por produto; a janela de vencimento é de 30 dias. Quantidades de unidades diferentes não são somadas em um único saldo.
 
 Testes isolados dos indicadores e da autenticação:
 
@@ -156,7 +156,7 @@ Contratos novos, preservando o retorno em array de `GET /v1/produto` para os mó
 
 - `GET /v1/catalogo/produtos`: exige autenticação; retorna `itens`, `total`, `pagina`, `tamanho`, `paginas` e `criterios`.
 - Parâmetros: `q` (até 100 caracteres), `estado=ativos|inativos|todos`, `estoque=todos|baixo|zerado|disponivel`, `vencimento=todos|vencido|em_breve|sem_validade`, `categoria=<id>|sem`, `ordem=nome|saldo|validade|recentes`, `direcao=asc|desc`, `pagina` e `tamanho=10|25|50`.
-- O padrão é ativos, nome ascendente, página 1, 10 itens. Página acima do total é ajustada para a última disponível. Datas sem validade válida ficam no fim da ordenação por validade. Vencidos e próximos do vencimento exigem saldo positivo, com os mesmos critérios do painel.
+- O padrão é ativos, nome ascendente, página 1, 10 itens. Página acima do total é ajustada para a última disponível. Datas sem validade válida ficam no fim da ordenação por validade. Vencidos e próximos do vencimento no catálogo usam a data do cadastro e exigem saldo positivo; o painel usa as datas e os saldos dos lotes.
 - `PATCH /v1/produto/:id`: exige administrador ou gerente. Aceita somente descrição, categoria, unidade, fornecedor, preço, validade, código de barras e estado. Campos omitidos permanecem intactos; saldo não é aceito. `produto_estado: false` inativa e `true` reativa.
 - Referências devem ser IDs numéricos existentes ou `null`; validade aceita uma data real `AAAA-MM-DD` (ou ISO UTC, normalizada para a data); estado deve ser booleano. Entradas inválidas retornam 400, registro ausente 404 e falta de permissão 403.
 
@@ -417,3 +417,13 @@ Recebimentos podem identificar lote e validade; operações de estoque seleciona
 ### Custos e análises históricas
 
 A gestão encontra **Custos e histórico** em Relatórios ou no menu. Consulte custo médio móvel por produto, valor conhecido do estoque, posição por data e evolução diária; registre avaliações justificadas do saldo antigo e acompanhe sua trilha. Compras usam o preço confirmado no recebimento; entradas manuais permitem informar custo. Valores antigos não são presumidos e o total é sinalizado como parcial quando há custo desconhecido. A cobertura histórica começa na migração 13. Procedimento, precisão e limites em [docs/custos-historico.md](docs/custos-historico.md).
+
+### Alertas de validade por lote
+
+A Visão geral destaca produtos e lotes vencidos/a vencer e os saldos sem validade conhecida. Abra os indicadores ou **Consultar todos os alertas** para buscar e filtrar em `/home/lotes/alertas`. Saldo sem lote não recebe validade presumida, e nenhum lote é escolhido ou movimentado automaticamente. Catálogo e relatório de posição mantêm suas datas cadastrais, identificadas como tal. Regras e demonstração em [docs/alertas-lotes.md](docs/alertas-lotes.md).
+
+### Segurança da conta
+
+A opção **Minha segurança** permite ativar dois fatores e alterar a própria senha. Consulte [configuração e recuperação](docs/seguranca.md) para a chave de proteção, SMTP, limites de login e cuidados com restauração. A base técnica usa Angular 22/TypeScript 6 e Node 22.22.3+ na série 22; execute pelos contêineres para usar as versões corretas.
+
+A evolução dos seletores paginados e os ajustes de compatibilidade do Angular estão em [modernização da interface](docs/modernizacao-interface.md). Resultados e limites da inspeção estão em [validação](docs/validacao.md).

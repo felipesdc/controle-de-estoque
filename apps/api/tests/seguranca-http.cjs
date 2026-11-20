@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict');const {spawn}=require('node:child_process');
+const child=spawn(process.execPath,['/app/dist/app.js'],{env:{...process.env,PORT:'3119',SQLITE_PATH:':memory:',PUBLIC_URL:'http://localhost:8080',SMTP_HOST:''},stdio:['ignore','ignore','inherit']});
+(async()=>{const base='http://127.0.0.1:3119';for(let i=0;i<100;i++){try{if((await fetch(base+'/health')).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
+ const request=(path,body,headers={})=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify(body)});
+ const health=await fetch(base+'/health');assert.equal(health.headers.get('x-content-type-options'),'nosniff');assert.equal(health.headers.get('x-powered-by'),null);
+ const allowed=await fetch(base+'/health',{headers:{Origin:'http://localhost:8080'}});assert.equal(allowed.headers.get('access-control-allow-origin'),'http://localhost:8080');const other=await fetch(base+'/health',{headers:{Origin:'https://attacker.invalid'}});assert.equal(other.headers.get('access-control-allow-origin'),null);
+ assert.equal((await request('/v1/auth/recuperar',{email:'unknown@example.invalid'})).status,503);assert.equal((await fetch(base+'/v1/seguranca')).status,401);
+ assert.equal((await request('/v1/usuario/login',{usuario_login:'admin',usuario_password:'x'.repeat(530000)})).status,413);
+ const login=async()=>{const r=await request('/v1/usuario/login',{usuario_login:'admin',usuario_password:process.env.ADMIN_PASSWORD});assert.equal(r.status,200);return r.json();};
+ const old=await login(),active=await login();const headers={Authorization:'Bearer '+active.token};
+ const setupResponse=await request('/v1/seguranca/mfa/preparar',{senha:process.env.ADMIN_PASSWORD},headers);assert.equal(setupResponse.status,200);assert.equal(setupResponse.headers.get('cache-control'),'no-store');const setup=await setupResponse.json();
+ const OTP=require('/app/node_modules/otpauth'),totp=new OTP.TOTP({secret:OTP.Secret.fromBase32(setup.segredo)});
+ const activated=await request('/v1/seguranca/mfa/ativar',{codigo:totp.generate({timestamp:Date.now()-30000})},headers);assert.equal(activated.status,200);const codes=(await activated.json()).codigos;
+ assert.equal((await fetch(base+'/v1/sessao',{headers:{Authorization:'Bearer '+old.token}})).status,401);
+ assert.equal((await fetch(base+'/v1/sessao',{headers})).status,200);
+ const challenge=await login();assert.equal(challenge.token,undefined);assert.equal(challenge.mfa_required,true);
+ const verified=await request('/v1/auth/mfa',{desafio:challenge.desafio,codigo:codes[0]});assert.equal(verified.status,200);assert.ok((await verified.json()).token);
+ assert.equal((await request('/v1/seguranca/mfa/desativar',{senha:process.env.ADMIN_PASSWORD,codigo:codes[1]},headers)).status,200);
+ for(let i=0;i<8;i++)assert.equal((await request('/v1/usuario/login',{usuario_login:'admin',usuario_password:'wrong'})).status,401);
+ const blocked=await request('/v1/usuario/login',{usuario_login:'admin',usuario_password:process.env.ADMIN_PASSWORD});assert.equal(blocked.status,429);assert.ok(Number(blocked.headers.get('retry-after'))>0);
+ assert.equal((await request('/v1/auth/mfa',{desafio:'invalid',codigo:'123456',extra:true})).status,400);
+ console.log('PASS: security headers, origin allowlist, JSON body limit, private personal security, disabled recovery, login throttling with Retry-After, strict public MFA body.');
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>child.kill());

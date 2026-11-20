@@ -1,3 +1,4 @@
+import { limitar, decidirEntrada, invalidarTemporarios } from './seguranca';
 import pool from "../config/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -66,6 +67,7 @@ export function salvarUsuario(body:unknown,actorId:number,value?:unknown,legado=
     let target=userId;
     if(!target){data.usuario_inscricao=new Date().toISOString();const keys=Object.keys(data);target=execute(`INSERT INTO pi2_usuarios (${keys.join(',')}) VALUES (${keys.map((_,i)=>`$${i+1}`).join(',')}) RETURNING usuario_id`,Object.values(data)).rows[0].usuario_id;}
     else{const keys=Object.keys(data);execute(`UPDATE pi2_usuarios SET ${keys.map((k,i)=>`${k}=$${i+2}`).join(',')} WHERE usuario_id=$1`,[target,...Object.values(data)]);if(hash||perfil!==current.usuario_perfil_id||ativo!==current.usuario_status||(data.usuario_operar_estoque!==undefined&&data.usuario_operar_estoque!==current.usuario_operar_estoque))execute('DELETE FROM pi2_sessoes WHERE usuario_id=$1',[target]);}
+    if(userId&&(hash||data.usuario_email!==undefined||perfil!==current.usuario_perfil_id||ativo!==current.usuario_status||data.usuario_operar_estoque!==undefined))invalidarTemporarios(execute,userId);
     return publicUser(get(execute,target!));
   });
 }
@@ -79,15 +81,13 @@ export function salvarPerfil(body:any,actorId:number,value?:unknown){
     return perfilId?execute('UPDATE pi2_perfis SET perfil_nome=$2 WHERE perfil_id=$1 RETURNING *',[perfilId,name.trim()]).rows[0]:execute('INSERT INTO pi2_perfis (perfil_nome) VALUES ($1) RETURNING *',[name.trim()]).rows[0];});
 }
 export function excluirPerfil(value:unknown,actorId:number){const perfilId=id(value);pool.transaction(execute=>{actor(execute,actorId);if(perfilId<=3)throw new EstoqueError(409,'Os perfis básicos não podem ser excluídos.');if(!execute('SELECT 1 FROM pi2_perfis WHERE perfil_id=$1',[perfilId]).rows.length)throw new EstoqueError(404,'Perfil não encontrado.');if(execute('SELECT 1 FROM pi2_usuarios WHERE usuario_perfil_id=$1 LIMIT 1',[perfilId]).rows.length)throw new EstoqueError(409,'Este perfil está associado a usuários, inclusive inativos.');execute('DELETE FROM pi2_perfis WHERE perfil_id=$1',[perfilId]);});}
-export async function entrar(login:unknown,password:unknown){
+export async function entrar(login:unknown,password:unknown,ip='interno'){
+  limitar('login-ip',ip,120,900000);
   if(typeof login!=='string'||!login.trim()||login.length>254||typeof password!=='string'||!password||password.length>1024)throw new EstoqueError(400,'Informe usuário e senha.');
   const found=(await pool.query('SELECT * FROM pi2_usuarios WHERE usuario_nome=$1 COLLATE NOCASE OR usuario_email=$1 COLLATE NOCASE LIMIT 2',[login.trim()])).rows;
   const user=found.length===1?found[0]:null;
+  const tentativa=limitar('login-conta',user?String(user.usuario_id):key(login),8,900000);
   const matches=await bcrypt.compare(password,user?.usuario_password||dummyHash);
   if(!user||!matches||!user.usuario_status)throw new EstoqueError(401,'Usuário ou senha inválidos.');
-  return pool.transaction(execute=>{const current=get(execute,user.usuario_id);if(!current.usuario_status||current.usuario_password!==user.usuario_password)throw new EstoqueError(401,'Usuário ou senha inválidos.');const now=Math.floor(Date.now()/1000),exp=now+7200,sessao=randomUUID();
-    execute('DELETE FROM pi2_sessoes WHERE expira_em <= $1',[now]);
-    const token=jwt.sign({usuario_id:current.usuario_id,usuario_perfil_id:current.usuario_perfil_id,usuario_operar_estoque:!!current.usuario_operar_estoque},process.env.JWT_SECRET!,{expiresIn:7200,jwtid:sessao});
-    execute('INSERT INTO pi2_sessoes (sessao_id,usuario_id,expira_em) VALUES ($1,$2,$3)',[sessao,current.usuario_id,exp]);
-    return {token,usuario:publicUser(current),expira_em:exp};});
+  return pool.transaction(execute=>{const current=get(execute,user.usuario_id);if(!current.usuario_status||current.usuario_password!==user.usuario_password)throw new EstoqueError(401,'Usuário ou senha inválidos.');execute('DELETE FROM pi2_auth_limites WHERE chave=$1',[tentativa]);return decidirEntrada(execute,current);});
 }

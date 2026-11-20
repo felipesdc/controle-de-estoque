@@ -1,9 +1,10 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { Preco } from 'src/app/shared/models/preco.model';
 import { PrecoService } from 'src/app/shared/services/preco.service';
 import extractLocaleDate from 'src/app/shared/helpers/extract-locale-date';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-preco',
   templateUrl: './preco.component.html',
   styleUrls: ['./preco.component.scss'],

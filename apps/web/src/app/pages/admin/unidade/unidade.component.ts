@@ -1,8 +1,9 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { Unidade } from 'src/app/shared/models/unidade.model';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-unidade',
   templateUrl: './unidade.component.html',
   styleUrls: ['./unidade.component.scss'],

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -6,7 +7,7 @@ import { finalize, timeout } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AuthService } from 'src/app/shared/services/auth.service';
 interface Item {produto_id:number;produto_descricao:string;unidade:string|null;saldo:number;produto_estoque_minimo:number;encomendado:number;sugestao:number;pedidos_unidade_divergente:number;}
-@Component({ standalone: false,selector:'app-reposicao',templateUrl:'./reposicao.component.html',styleUrls:['../pedidos/pedidos.component.scss']})
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,selector:'app-reposicao',templateUrl:'./reposicao.component.html',styleUrls:['../pedidos/pedidos.component.scss']})
 export class ReposicaoComponent implements OnInit,OnDestroy {
  itens:Item[]=[]; selecionados=new Set<number>(); q='';pagina=1;total=0;loading=false;error='';gerado='';private consulta?:Subscription;
  constructor(private http:HttpClient,private router:Router,public auth:AuthService){}

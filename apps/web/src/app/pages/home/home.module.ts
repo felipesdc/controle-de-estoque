@@ -1,3 +1,5 @@
+import {SeletorCadastroComponent} from 'src/app/shared/components/seletor-cadastro/seletor-cadastro.component';
+import { AlertasLotesComponent } from './lotes/alertas-lotes.component';
 import { CustosComponent } from './relatorios/custos.component';
 import { LotesComponent } from './lotes/lotes.component';
 import { RelatoriosPeriodoComponent } from './relatorios/relatorios-periodo.component';
@@ -25,6 +27,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 @NgModule({
   imports: [
     CommonModule,
+    SeletorCadastroComponent,
     HomeRoutingModule,
     MaterialModule,
     FormsModule,
@@ -33,6 +36,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   declarations: [
     HomeComponent,
     LotesComponent,
+    AlertasLotesComponent,
     SeletorLoteComponent,
     OperarEstoqueComponent,
     PedidosComponent,

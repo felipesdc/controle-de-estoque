@@ -58,4 +58,4 @@ Rotas financeiras exigem autenticação e gestão, com `Cache-Control: no-store`
 
 Testes: `custos.cjs`, `custos-http.cjs`, `custos-migracao.cjs`, regressões de estoque/compras/inventário e backup/restauração. `seed-custos-qa.cjs` gera exemplos e datas históricas sintéticas **somente** na base descartável da porta 8081.
 
-Esta entrega não calcula frete, tributos, margem de venda, crédito de devolução ou demonstração contábil. O painel de vencimentos por lote continua sendo outra evolução.
+Esta entrega não calcula frete, tributos, margem de venda, crédito de devolução ou demonstração contábil. Os alertas de validade por lote são descritos em [alertas-lotes.md](alertas-lotes.md).

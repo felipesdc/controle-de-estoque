@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import {
   AfterContentInit,
   AfterViewInit,
@@ -16,7 +17,7 @@ import { PrecoService } from 'src/app/shared/services/preco.service';
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { UnidadeService } from 'src/app/shared/services/unidade.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-produto',
   templateUrl: './produto.component.html',
   styleUrls: ['./produto.component.scss'],

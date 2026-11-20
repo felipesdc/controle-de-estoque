@@ -1,3 +1,4 @@
+import { validadeNormalizadaLoteSql } from './datas';
 import pool from '../config/db';
 import { EstoqueError, quantidade } from './estoque-validacao';
 type Execute=Parameters<Parameters<typeof pool.transaction>[0]>[0];
@@ -47,7 +48,7 @@ export function consultarLotes(id:number,query:any={}) {
     const where="produto_id=$1 AND instr(lower(codigo),lower($2))>0"+(estado==='disponiveis'?' AND saldo_milesimos>0':'');
     const total=execute('SELECT COUNT(*) AS total FROM pi2_lotes WHERE '+where,[id,q.trim()]).rows[0].total;
     const atual=Math.min(pagina,Math.max(1,Math.ceil(total/tamanho)));
-    const itens=execute('SELECT * FROM pi2_lotes WHERE '+where+' ORDER BY validade IS NULL,validade,codigo,lote_id LIMIT $3 OFFSET $4',[id,q.trim(),tamanho,(atual-1)*tamanho]).rows;
+    const itens=execute('SELECT l.*,'+validadeNormalizadaLoteSql+' AS validade_normalizada FROM pi2_lotes l WHERE '+where+' ORDER BY ('+validadeNormalizadaLoteSql+') IS NULL,'+validadeNormalizadaLoteSql+',codigo,lote_id LIMIT $3 OFFSET $4',[id,q.trim(),tamanho,(atual-1)*tamanho]).rows.map(({validade_normalizada,...l})=>({...l,validade:validade_normalizada}));
     return {produto_id:id,produto:produto.produto_descricao,unidade:produto.unidade,saldo:produto.produto_quantidade_estoque??0,identificado:identificado/1000,sem_lote:semLote/1000,itens,total,pagina:atual,tamanho,data_referencia:new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date())};
   });
 }

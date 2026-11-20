@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { MovimentacaoEstoque } from 'src/app/shared/models/movimentacao-estoque.model';
@@ -7,7 +8,7 @@ import { MovimentacaoEstoqueService } from 'src/app/shared/services/movimentacao
 import { ProdutoService } from 'src/app/shared/services/produto.service';
 import { UsuarioService } from 'src/app/shared/services/usuario.service';
 
-@Component({ standalone: false,
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false,
   selector: 'app-crud-movimentacao-estoque',
   templateUrl: './movimentacao-estoque.component.html',
   styleUrls: ['./movimentacao-estoque.component.scss'],
