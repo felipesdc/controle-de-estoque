@@ -14,6 +14,7 @@ export class CustosService {
  posicao(f:Record<string,string|number>){return this.http.get<Custos>(environment.apiurl+'/relatorios/custos',{params:this.params(f)}).pipe(timeout(15000));}
  evolucao(f:Record<string,string|number>){return this.http.get<EvolucaoCusto>(environment.apiurl+'/relatorios/custos/evolucao',{params:this.params(f)}).pipe(timeout(30000));}
  csv(tipo:'custos'|'custos/evolucao',f:Record<string,string|number>){return this.http.get(environment.apiurl+'/relatorios/'+tipo+'.csv',{params:this.params(f),responseType:'blob'}).pipe(timeout(30000));}
+ margem(produto:number){return this.http.get<{produto_id:number;venda_centavos:number|null;custo_medio_reais:string|null;margem_bruta_percentual:string|null;observacao:string}>(environment.apiurl+`/produto/${produto}/margem`).pipe(timeout(15000));}
  historico(produto:number,pagina:number){return this.http.get<HistoricoCusto>(environment.apiurl+`/produto/${produto}/custos/historico`,{params:this.params({pagina,tamanho:10})}).pipe(timeout(15000));}
  avaliar(p:PosicaoCusto,unitario:number,motivo:string,chave:string){return this.http.post(environment.apiurl+`/produto/${p.produto_id}/custo-base`,{evento_id:p.evento_id,unitario_centavos:unitario,motivo},{headers:{'Idempotency-Key':chave}}).pipe(timeout(15000));}
 }

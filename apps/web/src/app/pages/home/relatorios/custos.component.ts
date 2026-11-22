@@ -1,3 +1,4 @@
+import {centavos} from 'src/app/shared/utils/dinheiro';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { Component,OnInit,OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
@@ -8,6 +9,8 @@ import { AuthService } from 'src/app/shared/services/auth.service';
 export class CustosComponent implements OnInit,OnDestroy {
  hoje=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date());data=this.hoje;q='';inicio='';fim=this.hoje;
  posicao:Custos|null=null;evolucao:EvolucaoCusto|null=null;loading=false;loadingEvolucao=false;saving=false;exporting=false;error='';erroEvolucao='';success='';pagina=1;tamanho=10;paginaDias=0;
+ margem: {produto_id:number;venda_centavos:number|null;custo_medio_reais:string|null;margem_bruta_percentual:string|null;observacao:string}|null=null; loadingMargem=false;private consultaMargem?:Subscription;
+ estimarMargem(produto:number){this.consultaMargem?.unsubscribe();this.margem=null;this.loadingMargem=true;this.consultaMargem=this.service.margem(produto).pipe(finalize(()=>this.loadingMargem=false)).subscribe({next:r=>this.margem=r,error:e=>this.error=e.error?.message||'Falha ao estimar margem.'});}
  trilha:HistoricoCusto|null=null;loadingTrilha=false;private consultaTrilha?:Subscription;
  verHistorico(produto:number,pagina=1){this.consultaTrilha?.unsubscribe();this.loadingTrilha=true;this.error='';this.trilha=null;this.consultaTrilha=this.service.historico(produto,pagina).pipe(finalize(()=>this.loadingTrilha=false)).subscribe({next:r=>this.trilha=r,error:e=>this.error=e.error?.message||'Falha ao consultar histórico de custos.'});}
  avaliando:PosicaoCusto|null=null;custo='';motivo='';private chave=crypto.randomUUID();private consulta?:Subscription;private historico?:Subscription;private operacao?:Subscription;private download?:Subscription;private encerrado=false;
@@ -26,7 +29,7 @@ export class CustosComponent implements OnInit,OnDestroy {
  paginar(e:{pageIndex:number;pageSize:number}){this.pagina=e.pageIndex+1;this.tamanho=e.pageSize;this.carregar();}
  iniciarAvaliacao(p:PosicaoCusto){if(this.saving||this.alterados||this.data!==this.hoje)return;this.avaliando=p;this.custo='';this.motivo='';this.alterarAvaliacao();this.success='';}
  alterarAvaliacao(){this.chave=crypto.randomUUID();}
- avaliar(){if(!this.avaliando||!this.custoValido||this.saving)return;this.saving=true;this.error='';this.operacao=this.service.avaliar(this.avaliando,Math.round(Number(this.custo.replace(',','.'))*100),this.motivo,this.chave).pipe(finalize(()=>this.saving=false)).subscribe({next:()=>{this.avaliando=null;this.success='Avaliação registrada com justificativa. Posições anteriores foram preservadas.';this.carregar();this.carregarEvolucao();},error:e=>this.error=e.error?.message||'Não foi possível avaliar. Dados mantidos; atualize a posição se houver conflito.'});}
+ avaliar(){if(!this.avaliando||!this.custoValido||this.saving)return;this.saving=true;this.error='';this.operacao=this.service.avaliar(this.avaliando,centavos(this.custo)!,this.motivo,this.chave).pipe(finalize(()=>this.saving=false)).subscribe({next:()=>{this.avaliando=null;this.success='Avaliação registrada com justificativa. Posições anteriores foram preservadas.';this.carregar();this.carregarEvolucao();},error:e=>this.error=e.error?.message||'Não foi possível avaliar. Dados mantidos; atualize a posição se houver conflito.'});}
  exportar(tipo:'custos'|'custos/evolucao'){if(this.exporting||this.saving||tipo==='custos'&&(!this.posicao||this.alterados)||tipo!=='custos'&&(!this.evolucao||this.evolucaoAlterada))return;this.exporting=true;const f:Record<string,string>=tipo==='custos'?{data:this.posicao!.filtros.data,q:this.posicao!.filtros.q}:{inicio:this.evolucao!.filtros.inicio,fim:this.evolucao!.filtros.fim,q:this.evolucao!.filtros.q};this.download=this.service.csv(tipo,f).pipe(finalize(()=>this.exporting=false)).subscribe({next:b=>{const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=tipo==='custos'?'custos.csv':'evolucao-custos.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);},error:async e=>{let msg='Falha ao exportar.';if(e.error instanceof Blob){try{msg=JSON.parse(await e.error.text()).message||msg;}catch{}}if(!this.encerrado)this.error=msg;}});}
- ngOnDestroy(){this.encerrado=true;this.consulta?.unsubscribe();this.historico?.unsubscribe();this.operacao?.unsubscribe();this.download?.unsubscribe();this.consultaTrilha?.unsubscribe();}
+ ngOnDestroy(){this.consultaMargem?.unsubscribe();this.encerrado=true;this.consulta?.unsubscribe();this.historico?.unsubscribe();this.operacao?.unsubscribe();this.download?.unsubscribe();this.consultaTrilha?.unsubscribe();}
 }

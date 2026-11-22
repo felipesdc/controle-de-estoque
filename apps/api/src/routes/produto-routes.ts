@@ -1,3 +1,5 @@
+import {opcoesProdutos} from '../services/produtos-opcoes';
+import {margemProduto} from '../services/custos-gerenciais';
 import { historicoCustos } from '../services/relatorios-custos';
 import { avaliarCusto } from '../services/custos';
 import { AuthenticatedRequest } from '../middlewares/auth';
@@ -16,6 +18,8 @@ import {
 import { authenticateToken, requireManager } from "../middlewares/auth";
 
 const router = Router();
+router.get('/catalogo/produtos/opcoes',authenticateToken,(req,res)=>{try{res.set('Cache-Control','no-store').json(opcoesProdutos(req.query));}catch(e){if(e instanceof EstoqueError)res.status(e.status).json({message:e.message});else{console.error(e);res.status(500).json({message:'Não foi possível carregar opções de produtos.'});}}});
+
 router.get('/produto/:produto_id/custos/historico',authenticateToken,requireManager,(req,res)=>{
  try{res.set('Cache-Control','no-store').json(historicoCustos(Number(req.params.produto_id),req.query));}
  catch(e){if(e instanceof EstoqueError)res.status(e.status).json({message:e.message});else{console.error(e);res.status(500).json({message:'Não foi possível consultar o histórico de custos.'});}}
@@ -39,6 +43,7 @@ router.get('/produto/:produto_id/lotes',authenticateToken,(req,res)=>{
   try{res.set('Cache-Control','no-store').json(consultarLotes(Number(req.params.produto_id),req.query));}
   catch(e){if(e instanceof EstoqueError)res.status(e.status).json({message:e.message});else{console.error(e);res.status(500).json({message:'Não foi possível consultar os lotes.'});}}
 });
+router.get('/produto/:produto_id/margem',authenticateToken,requireManager,(req,res)=>{try{const id=Number(req.params.produto_id);if(!Number.isSafeInteger(id)||id<=0)throw new EstoqueError(400,'Produto inválido.');res.set('Cache-Control','no-store').json(margemProduto(id));}catch(e){if(e instanceof EstoqueError)res.status(e.status).json({message:e.message});else res.status(500).json({message:'Não foi possível consultar a margem.'});}});
 router.get('/produto/:produto_id/precos',authenticateToken,requireManager,(req,res)=>{
   try{res.set('Cache-Control','no-store').json(lerPrecosProduto(Number(req.params.produto_id)));}
   catch(e){if(e instanceof EstoqueError)res.status(e.status).json({message:e.message});else{console.error(e);res.status(500).json({message:'Não foi possível carregar preços.'});}}

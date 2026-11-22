@@ -1,3 +1,4 @@
+import {validarCustos,ratearAquisicao} from './custos-gerenciais';
 import { identidadeLote, loteId, receberLote } from './lotes';
 import pool from '../config/db';
 import { EstoqueError, quantidade, registrar } from './estoque';
@@ -26,7 +27,7 @@ export function registrarEntrega(value:number,tipo:string,body:any,user:number,k
   if(!Number.isSafeInteger(value)||value<=0) bad('Pedido inválido.');
   if(!['receber','devolver'].includes(tipo)) bad('Operação inválida.');
   if(typeof key!=='string'||!/^[\w-]{16,80}$/.test(key)) bad('Envie uma Idempotency-Key válida.');
-  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>!['versao','itens','documento','motivo'].includes(k))) bad('Campos da entrega inválidos.');
+  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(k=>!['versao','itens','documento','motivo',...(tipo==='receber'?['custos']:[])].includes(k))) bad('Campos da entrega inválidos.');
   if(!Number.isSafeInteger(body.versao)||body.versao<=0) bad('Versão inválida.');
   const documento=body.documento??'',motivo=body.motivo??'';
   if(typeof documento!=='string'||documento.length>120) bad('Documento deve ter até 120 caracteres.');
@@ -39,7 +40,8 @@ export function registrarEntrega(value:number,tipo:string,body:any,user:number,k
     const q=quantidade(i.quantidade);if(q<=0||seen.has(i.item)) bad('Quantidades devem ser positivas e itens não podem repetir.');seen.add(i.item);
     return {item:i.item,quantidade:Math.round(q*1000),...(tipo==='receber'&&i.lote!==undefined?{lote:identidadeLote(i.lote)}:{}),...(tipo==='devolver'&&loteId(i.lote_id)!==null?{lote_id:loteId(i.lote_id)}:{})};
   }).sort((a:any,b:any)=>a.item-b.item);
-  const conteudo=JSON.stringify({pedido:value,tipo,usuario:user,versao:body.versao,itens,documento:documento.trim(),motivo:motivo.trim()});
+  const custos=tipo==='receber'?validarCustos(body.custos??{}):null;
+  const conteudo=JSON.stringify({pedido:value,tipo,usuario:user,versao:body.versao,itens,documento:documento.trim(),motivo:motivo.trim(),...(body.custos!==undefined?{custos}:{})});
   return pool.transaction(execute=>{
     const actor=execute('SELECT * FROM pi2_usuarios WHERE usuario_id=$1',[user]).rows[0];
     if(!actor?.usuario_status||![1,2].includes(actor.usuario_perfil_id)) throw new EstoqueError(403,'Administrador ou gerente ativo necessário.');
@@ -58,6 +60,10 @@ export function registrarEntrega(value:number,tipo:string,body:any,user:number,k
     const selecionados=integral?rows.filter(i=>saldos.get(i.item_pedido_id)!.pendente>0).map(i=>({item:i.item_pedido_id,quantidade:saldos.get(i.item_pedido_id)!.pendente})):itens;
     if(!selecionados.length) throw new EstoqueError(409,'Não há quantidade pendente para receber.');
     const entrega=execute('INSERT INTO pi2_entregas_pedido (pedido_id,tipo,chave,conteudo,documento,motivo,usuario_id,data) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING entrega_id',[value,tipo,key,conteudo,documento.trim(),motivo.trim(),user,new Date().toISOString()]).rows[0].entrega_id;
+    const bases=selecionados.map((s:any)=>{const i=rows.find(i=>i.item_pedido_id===s.item);if(!i)bad('Item não pertence ao pedido.');return {item:s.item,quantidade:s.quantidade,preco:i.item_preco_centavos};});
+    if(body.custos!==undefined&&bases.some((i:any)=>i.preco===null))bad('O preço de um item é desconhecido; revise o pedido antes de ratear custos.');
+    const rateio=tipo==='receber'&&bases.every((i:any)=>Number.isSafeInteger(i.preco))?ratearAquisicao(bases,custos!):null;
+    if(rateio)execute('INSERT INTO pi2_entrega_custos(entrega_id,dados,base_microcentavos,total_microcentavos) VALUES($1,$2,$3,$4)',[entrega,JSON.stringify({...custos,criterio:rateio.criterio,regras_versao:'aquisicao-1',calculo_fiscal:false,classificacao_informada:body.custos!==undefined}),rateio.base,rateio.total]);
     for(const selected of selecionados){
       const item=rows.find(i=>i.item_pedido_id===selected.item),saldo=saldos.get(selected.item);
       if(!item||!saldo) bad('Item não pertence ao pedido.');
@@ -70,8 +76,9 @@ export function registrarEntrega(value:number,tipo:string,body:any,user:number,k
         const bucket=lotesDevolviveis(execute,item).find(l=>l.lote_id===loteSelecionado);
         if(!bucket||Math.round(bucket.quantidade*1000)<selected.quantidade)throw new EstoqueError(409,'Quantidade excede o recebido disponível neste lote do pedido.');
       }
-      const movimento=registrar(execute,item.item_pedido_produto_id,selected.quantidade/1000,tipo==='receber'?'entrada':'saida',`${tipo==='receber'?'Recebimento':'Devolução'} do pedido #${value} · entrega #${entrega} · item #${item.item_pedido_id}`,user,`entrega-${entrega}-item-${item.item_pedido_id}-estoque`,undefined,tipo==='devolver',undefined,loteSelecionado,{origem:'compra',...(tipo==='receber'?{unitario_centavos:item.item_preco_centavos}:{})});
-      execute('INSERT INTO pi2_entrega_itens (entrega_id,item_pedido_id,quantidade_milesimos,movimento_id) VALUES ($1,$2,$3,$4)',[entrega,item.item_pedido_id,selected.quantidade,movimento.movimento_id]);
+      const movimento=registrar(execute,item.item_pedido_produto_id,selected.quantidade/1000,tipo==='receber'?'entrada':'saida',`${tipo==='receber'?'Recebimento':'Devolução'} do pedido #${value} · entrega #${entrega} · item #${item.item_pedido_id}`,user,`entrega-${entrega}-item-${item.item_pedido_id}-estoque`,undefined,tipo==='devolver',undefined,loteSelecionado,{origem:'compra',...(tipo==='receber'?{unitario_centavos:item.item_preco_centavos,...(rateio?{valor_entrada_microcentavos:rateio.linhas.find(l=>l.item===selected.item)!.custo}:{})}:{})});
+      const linha=execute('INSERT INTO pi2_entrega_itens (entrega_id,item_pedido_id,quantidade_milesimos,movimento_id) VALUES ($1,$2,$3,$4) RETURNING entrega_item_id',[entrega,item.item_pedido_id,selected.quantidade,movimento.movimento_id]).rows[0];
+      if(rateio){const r=rateio.linhas.find(l=>l.item===selected.item)!;execute('INSERT INTO pi2_entrega_rateios(entrega_item_id,base_microcentavos,custo_microcentavos) VALUES($1,$2,$3)',[linha.entrega_item_id,r.base,r.custo]);}
     }
     const completo=rows.every(i=>saldoItem(execute,i).pendente===0);
     const estado=tipo==='receber'?(completo?'recebido':'parcial'):old.pedido_fluxo;

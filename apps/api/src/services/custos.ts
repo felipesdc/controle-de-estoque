@@ -40,7 +40,8 @@ export function registrarCusto(execute:Execute,p:any,m:any,c:ContextoCusto,base:
     fluxo=valor===null?null:dividir(valor*q,saldo);
   } else if(c.origem==='inventario'){
     fluxo=c.valor_entrada_microcentavos==null?null:BigInt(c.valor_entrada_microcentavos);
-  } else if(unitario!==null)fluxo=BigInt(unitario)*q*1000n;
+  } else if(c.origem==='compra'&&c.valor_entrada_microcentavos!==undefined)fluxo=c.valor_entrada_microcentavos===null?null:BigInt(c.valor_entrada_microcentavos);
+  else if(unitario!==null)fluxo=BigInt(unitario)*q*1000n;
   // A known entry cannot retrospectively value an unknown opening balance.
   if(m.movimento_tipo==='entrada')valor=valor===null||fluxo===null?null:valor+fluxo;
   else valor=valor===null||fluxo===null||fluxo>valor?null:valor-fluxo;

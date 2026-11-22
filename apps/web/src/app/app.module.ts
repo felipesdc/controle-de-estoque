@@ -30,7 +30,6 @@ import { FornecedorService } from './shared/services/fornecedor.service';
 import { UsuarioService } from './shared/services/usuario.service';
 import { UnidadeService } from './shared/services/unidade.service';
 import { PerfilService } from './shared/services/perfil.service';
-import { PrecoService } from './shared/services/preco.service';
 import { MovimentacaoEstoqueService } from './shared/services/movimentacao-estoque.service';
 import { ItemPedidoService } from './shared/services/item-pedido.service';
 import { HistoricoEstadoPedidoService } from './shared/services/historico-estado-pedido.service';
@@ -76,7 +75,6 @@ registerLocaleData(localePt);
     MovimentacaoEstoqueService,
     PedidoService,
     PerfilService,
-    PrecoService,
     ProdutoService,
     UnidadeService,
     UsuarioService,

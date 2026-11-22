@@ -1,4 +1,4 @@
-import { validadeNormalizadaLoteSql } from './datas';
+import { periodoValidade, validadeNormalizadaLoteSql } from './datas';
 import pool from '../config/db';
 import { EstoqueError, quantidade } from './estoque-validacao';
 type Execute=Parameters<Parameters<typeof pool.transaction>[0]>[0];
@@ -36,7 +36,22 @@ export function aplicarLote(execute:Execute,produto:any,id:number|null,valor:num
   if(novo>1e12)throw new EstoqueError(409,'Saldo do lote excede o limite.');
   if(lote)execute('UPDATE pi2_lotes SET saldo_milesimos=$2 WHERE lote_id=$1',[id,novo]);
 }
-export function consultarLotes(id:number,query:any={}) {
+// Advice only: no reservation, stock write or automatic choice.
+function sugerirRetirada(execute:Execute,produto:any,hoje:string) {
+  const avisos=execute(`SELECT
+    COUNT(CASE WHEN (${validadeNormalizadaLoteSql})<$3 THEN 1 END) AS vencidos,
+    COUNT(CASE WHEN (${validadeNormalizadaLoteSql}) IS NULL THEN 1 END) AS sem_validade,
+    COUNT(CASE WHEN l.unidade_id IS NOT $2 THEN 1 END) AS unidade_incompativel
+    FROM pi2_lotes l WHERE l.produto_id=$1 AND l.saldo_milesimos>0`,[produto.produto_id,produto.produto_unidade_id,hoje]).rows[0];
+  const lote=produto.produto_estado?execute(`WITH candidatos AS (
+    SELECT l.*,${validadeNormalizadaLoteSql} AS data_valida FROM pi2_lotes l
+    WHERE l.produto_id=$1 AND l.saldo_milesimos>0 AND l.unidade_id IS $2
+  ) SELECT lote_id,codigo,data_valida AS validade,unidade,saldo_milesimos FROM candidatos
+    WHERE data_valida>=$3 ORDER BY data_valida,criado_em,lote_id LIMIT 1`,[produto.produto_id,produto.produto_unidade_id,hoje]).rows[0]??null:null;
+  return {lote,motivo:!produto.produto_estado?'produto_inativo':lote?'vencimento_mais_proximo':'sem_lote_elegivel',avisos,
+    criterio:'validade,registro,id',data_referencia:hoje,fuso:'America/Sao_Paulo',confirmacao_obrigatoria:true};
+}
+export function consultarLotes(id:number,query:any={},now=new Date()) {
   if(!Number.isSafeInteger(id)||id<=0)throw new EstoqueError(400,'Produto inválido.');
   const pagina=Number(query.pagina??1),tamanho=Number(query.tamanho??10),q=query.q??'',estado=query.estado??'todos';
   if(!Number.isSafeInteger(pagina)||pagina<1||![10,25,50].includes(tamanho)||typeof q!=='string'||q.length>80||!['todos','disponiveis'].includes(estado))throw new EstoqueError(400,'Filtros de lote inválidos.');
@@ -49,6 +64,8 @@ export function consultarLotes(id:number,query:any={}) {
     const total=execute('SELECT COUNT(*) AS total FROM pi2_lotes WHERE '+where,[id,q.trim()]).rows[0].total;
     const atual=Math.min(pagina,Math.max(1,Math.ceil(total/tamanho)));
     const itens=execute('SELECT l.*,'+validadeNormalizadaLoteSql+' AS validade_normalizada FROM pi2_lotes l WHERE '+where+' ORDER BY ('+validadeNormalizadaLoteSql+') IS NULL,'+validadeNormalizadaLoteSql+',codigo,lote_id LIMIT $3 OFFSET $4',[id,q.trim(),tamanho,(atual-1)*tamanho]).rows.map(({validade_normalizada,...l})=>({...l,validade:validade_normalizada}));
-    return {produto_id:id,produto:produto.produto_descricao,unidade:produto.unidade,saldo:produto.produto_quantidade_estoque??0,identificado:identificado/1000,sem_lote:semLote/1000,itens,total,pagina:atual,tamanho,data_referencia:new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date())};
+    const {hoje}=periodoValidade(now);
+    const retirada=sugerirRetirada(execute,produto,hoje);
+    return {retirada,produto_id:id,produto:produto.produto_descricao,unidade:produto.unidade,saldo:produto.produto_quantidade_estoque??0,identificado:identificado/1000,sem_lote:semLote/1000,itens,total,pagina:atual,tamanho,data_referencia:hoje};
   });
 }

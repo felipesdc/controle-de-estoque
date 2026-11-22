@@ -19,7 +19,7 @@
         <mat-form-field appearance="outline"><mat-label>Quantidade</mat-label><input matInput type="number" min="0.001" max="1000000000" step="0.001" formControlName="movimento_quantidade"><mat-error>Informe uma quantidade positiva.</mat-error></mat-form-field>
       </div>
       <mat-form-field appearance="outline" *ngIf="form.value.movimento_tipo==='entrada'"><mat-label>Custo unitário da entrada (R$, opcional)</mat-label><input matInput inputmode="decimal" formControlName="custo_unitario"><mat-hint>Sem valor informado, o custo fica desconhecido. Zero é custo gratuito confirmado.</mat-hint><mat-error>Informe reais com até duas casas decimais.</mat-error></mat-form-field>
-      <app-seletor-lote [produtoId]="form.value.movimento_produto_id" [disabled]="saving" (escolha)="escolherLote($event)"></app-seletor-lote>
+      <app-seletor-lote [sugerirRetirada]="form.value.movimento_tipo==='saida'" [produtoId]="form.value.movimento_produto_id" [disabled]="saving" (escolha)="escolherLote($event)"></app-seletor-lote>
       <p class="saldo" *ngIf="produto">Saldo disponível: <strong>{{ produto.produto_quantidade_estoque | number:'1.0-3' }}</strong>. Quantidades aceitam até três casas decimais.</p>
       <mat-form-field appearance="outline" class="observacao"><mat-label>Observação (opcional)</mat-label><textarea matInput rows="2" maxlength="500" formControlName="movimento_observacao"></textarea></mat-form-field>
       <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving || loading || !lote.pronto">{{ saving ? 'Registrando…' : 'Registrar movimentação' }}</button>

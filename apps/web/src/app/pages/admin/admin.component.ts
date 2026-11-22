@@ -9,6 +9,6 @@ export class AdminComponent {
     { titulo: 'Operação do estoque', texto: 'Catálogo, saldos e histórico de entradas e saídas.', links: [{nome:'Produtos',url:'/home/produtos',icone:'inventory_2'},{nome:'Movimentações',url:'/home/movimentacoes',icone:'swap_horiz'}] },
     { titulo: 'Cadastros auxiliares', texto: 'Organize as informações usadas nos produtos e pedidos.', links: [{nome:'Categorias',url:'/home/cadastros/categorias',icone:'category'},{nome:'Unidades',url:'/home/cadastros/unidades',icone:'straighten'},{nome:'Fornecedores',url:'/home/cadastros/fornecedores',icone:'local_shipping'}] },
     { titulo: 'Acesso ao sistema', texto: 'Gerencie usuários e perfis de acesso.', links: [{nome:'Usuários',url:'/admin/acessos/usuarios',icone:'people_outline'},{nome:'Perfis',url:'/admin/acessos/perfis',icone:'manage_accounts'}] },
-    { titulo: 'Pedidos e valores', texto: 'Compras com recebimento integrado ao estoque e cadastro legado de preços.', links: [{nome:'Pedidos',url:'/home/pedidos',icone:'receipt_long'},{nome:'Preços',url:'/admin/preco',icone:'payments'}] },
+    { titulo: 'Pedidos e valores', texto: 'Compras com recebimento integrado ao estoque e preços individualizados por produto.', links: [{nome:'Pedidos',url:'/home/pedidos',icone:'receipt_long'},{nome:'Preços por produto',url:'/home/produtos',icone:'payments'}] },
   ];
 }

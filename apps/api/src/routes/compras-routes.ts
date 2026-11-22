@@ -1,3 +1,4 @@
+import {registrarCredito} from '../services/custos-gerenciais';
 import { listarReposicao } from '../services/reposicao';
 import { Router, Response } from 'express';
 import { authenticateToken, requireManager, AuthenticatedRequest } from '../middlewares/auth';
@@ -8,8 +9,9 @@ function run(res:Response,fn:()=>unknown,status=200) {try {res.status(status).js
 router.get('/compras/reposicao',authenticateToken,(req,res)=>{res.setHeader('Cache-Control','no-store');run(res,()=>listarReposicao(req.query));});
 router.use('/compras/pedidos',authenticateToken);
 router.get('/compras/pedidos',(req,res)=>run(res,()=>listarPedidos(req.query)));
-router.get('/compras/pedidos/:id',(req,res)=>run(res,()=>obterPedido(Number(req.params.id))));
+router.get('/compras/pedidos/:id',(req:AuthenticatedRequest,res)=>run(res,()=>{const pedido=obterPedido(Number(req.params.id));if(![1,2].includes(req.roleId!))for(const e of pedido.entregas){delete (e as any).custos;delete (e as any).creditos;}return pedido;}));
 router.post('/compras/pedidos',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>salvarPedido(req.body,req.userId!,req.get('Idempotency-Key')||''),201));
 router.patch('/compras/pedidos/:id',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>salvarPedido(req.body,req.userId!,'',Number(req.params.id))));
+router.post('/compras/pedidos/:id/devolucoes/:entrega/creditos',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>registrarCredito(Number(req.params.id),Number(req.params.entrega),req.body,req.userId!,req.get('Idempotency-Key')||''),201));
 router.post('/compras/pedidos/:id/:acao',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>transicionar(Number(req.params.id),req.params.acao,req.body,req.userId!,req.get('Idempotency-Key')||'')));
 export default router;

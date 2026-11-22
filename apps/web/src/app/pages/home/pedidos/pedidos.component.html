@@ -4,10 +4,9 @@
  <mat-card *ngIf="editando">
   <h2>{{novo ? 'Novo rascunho' : 'Editar rascunho #' + detalhe?.pedido_id}}</h2><p>Preços em reais; até três casas decimais na quantidade. A quantidade usa a unidade atual de cada produto, sem conversão. O total de cada item é arredondado ao centavo.</p>
   <form [formGroup]="form" (ngSubmit)="salvar()">
-   <mat-form-field appearance="outline"><mat-label>Fornecedor</mat-label><mat-select formControlName="fornecedor"><mat-option *ngFor="let f of fornecedores" [value]="f.fornecedor_id">{{f.fornecedor_nome}}</mat-option></mat-select><mat-error>Selecione um fornecedor.</mat-error></mat-form-field>
-   <p *ngIf="!fornecedores.length">Cadastre um fornecedor antes de criar o pedido.</p>
+   <app-seletor-cadastro tipo="fornecedores" label="Fornecedor" formControlName="fornecedor"></app-seletor-cadastro>
    <div formArrayName="itens"><div class="item" *ngFor="let item of itens.controls; let i=index" [formGroupName]="i">
-    <mat-form-field appearance="outline"><mat-label>Produto {{i+1}}</mat-label><mat-select formControlName="produto"><ng-container *ngFor="let p of produtos"><mat-option *ngIf="p.produto_estado" [value]="p.produto_id">{{p.produto_descricao}}</mat-option></ng-container></mat-select><mat-error>Selecione um produto ativo.</mat-error></mat-form-field>
+    <app-seletor-cadastro tipo="produtos" [label]="'Produto ' + (i+1)" formControlName="produto"></app-seletor-cadastro>
     <mat-form-field appearance="outline"><mat-label>Quantidade</mat-label><input matInput type="number" min="0.001" max="1000000000" step="0.001" formControlName="quantidade"><mat-error>Informe quantidade positiva.</mat-error></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Preço unitário (R$)</mat-label><input matInput inputmode="decimal" formControlName="preco"><mat-error>Use até duas casas decimais.</mat-error></mat-form-field>
     <button mat-button type="button" color="warn" (click)="itens.removeAt(i)" [disabled]="saving || itens.length===1" [attr.aria-label]="'Remover item ' + (i+1)">Remover</button>
@@ -35,11 +34,44 @@
     <p *ngIf="acao==='receber'">Informe um lote por produto nesta entrega. Para dois lotes, registre dois recebimentos parciais. Sem código, o saldo ficará sem lote e sem validade identificados.</p>
     <p *ngIf="!linhasEntrega.length">Nenhuma quantidade disponível para esta operação.</p>
    </ng-container>
+   <div *ngIf="acao==='receber'" [formGroup]="custosForm" class="acquisition">
+    <h3>Custo de aquisição desta entrega</h3>
+    <p>Frete e despesas diretamente ligados à aquisição serão rateados pelo valor dos itens recebidos. Se todos os preços forem zero, o rateio será igual por linha. Não repita valores já incluídos nos preços.</p>
+    <div class="money-fields"><mat-form-field appearance="outline"><mat-label>Frete (R$)</mat-label><input matInput inputmode="decimal" formControlName="frete" [readonly]="saving"><mat-error>Informe valor positivo ou zero, com até duas casas.</mat-error></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Despesas de aquisição (R$)</mat-label><input matInput inputmode="decimal" formControlName="despesas" [readonly]="saving"><mat-error>Informe valor positivo ou zero, com até duas casas.</mat-error></mat-form-field>
+    <mat-form-field appearance="outline"><mat-label>Desconto desta entrega (R$)</mat-label><input matInput inputmode="decimal" formControlName="desconto" [readonly]="saving"><mat-error>Informe valor positivo ou zero, com até duas casas.</mat-error></mat-form-field>
+    </div><p>Perfil de referência: Simples Nacional · São Paulo · hamburgueria. Classificação gerencial informada conforme documento; sem apuração fiscal automática.</p>
+    <mat-form-field appearance="outline" class="wide"><mat-label>Documento e referência da classificação tributária</mat-label><input matInput formControlName="referencia" maxlength="160" [readonly]="saving"></mat-form-field>
+    <mat-checkbox formControlName="regular" [disabled]="saving">Há opção efetiva pelo regime regular de IBS/CBS, validada pela contabilidade</mat-checkbox>
+    <p>Sem essa opção, IBS/CBS não podem ser classificados como recuperáveis. Valores apenas informativos não alteram o custo. Não aplicamos alíquotas automaticamente.</p>
+    <div formArrayName="tributos"><div class="item" *ngFor="let t of tributos.controls;let j=index" [formGroupName]="j">
+     <mat-form-field appearance="outline"><mat-label>Tributo</mat-label><mat-select formControlName="codigo" [disabled]="saving"><mat-option *ngFor="let c of ['IBS','CBS','IS','ICMS','IPI','PIS','COFINS','OUTRO']" [value]="c">{{c}}</mat-option></mat-select></mat-form-field>
+     <mat-form-field appearance="outline"><mat-label>Tratamento no documento</mat-label><mat-select formControlName="tratamento" [disabled]="saving"><mat-option value="informativo">Informativo · sem ajuste</mat-option><mat-option value="nao_recuperavel_incluso">Não recuperável · já incluído</mat-option><mat-option value="nao_recuperavel_adicional">Não recuperável · acrescentar</mat-option><mat-option value="recuperavel_incluso">Recuperável · descontar do custo</mat-option><mat-option value="recuperavel_adicional">Recuperável · fora do preço</mat-option></mat-select></mat-form-field>
+     <mat-form-field appearance="outline"><mat-label>Valor (R$)</mat-label><input matInput inputmode="decimal" formControlName="valor" [readonly]="saving"><mat-error>Use até duas casas decimais.</mat-error></mat-form-field>
+     <button mat-button type="button" (click)="tributos.removeAt(j)" [disabled]="saving" [attr.aria-label]="'Remover tributo ' + (j+1)">Remover</button>
+    </div></div>
+    <button mat-stroked-button type="button" (click)="tributos.push(tributo())" [disabled]="saving || tributos.length>=20">Adicionar tributo informado</button>
+    <p role="alert" *ngIf="!custosValidos">Revise os valores, a referência do documento e o tratamento de IBS/CBS.</p>
+   </div>
    <mat-form-field appearance="outline" *ngIf="['cancelar','encerrar','devolver'].includes(acao)"><mat-label>Motivo obrigatório</mat-label><textarea matInput [(ngModel)]="motivo" (ngModelChange)="alterarEntrega()" minlength="3" maxlength="450" [disabled]="saving"></textarea></mat-form-field>
-   <div class="actions"><button mat-raised-button color="primary" (click)="executar()" [disabled]="saving || (['cancelar','encerrar','devolver'].includes(acao) && motivo.trim().length<3) || (['receber','devolver'].includes(acao) && !entregaValida)">{{saving ? 'Processando…' : 'Confirmar operação'}}</button><button mat-button (click)="acao=''" [disabled]="saving">Voltar</button></div>
+   <div class="actions"><button mat-raised-button color="primary" (click)="executar()" [disabled]="saving || (acao==='receber' && !custosValidos) || (['cancelar','encerrar','devolver'].includes(acao) && motivo.trim().length<3) || (['receber','devolver'].includes(acao) && !entregaValida)">{{saving ? 'Processando…' : 'Confirmar operação'}}</button><button mat-button (click)="acao=''" [disabled]="saving">Voltar</button></div>
   </div>
   <h3 *ngIf="detalhe.entregas.length">Recebimentos e devoluções</h3>
-  <article class="delivery" *ngFor="let e of detalhe.entregas"><h4>{{e.tipo==='receber'?'Recebimento':'Devolução'}} #{{e.entrega_id}}</h4><p>{{e.data | date:'dd/MM/yyyy HH:mm':'-0300'}} · {{e.usuario}}<span *ngIf="e.documento"> · Documento: {{e.documento}}</span></p><p *ngIf="e.motivo">{{e.motivo}}</p><ul><li *ngFor="let i of e.itens">{{i.produto}} · {{i.lote_codigo ? 'Lote ' + i.lote_codigo : 'Sem lote identificado'}}<span *ngIf="i.lote_validade"> · validade {{i.lote_validade | date:'dd/MM/yyyy':'UTC'}}</span> · {{i.quantidade_milesimos/1000 | number:'1.0-3'}} · <a routerLink="/home/movimentacoes">Movimento #{{i.movimento_id}}</a></li></ul></article>
+  <article class="delivery" *ngFor="let e of detalhe.entregas"><h4>{{e.tipo==='receber'?'Recebimento':'Devolução'}} #{{e.entrega_id}}</h4><p>{{e.data | date:'dd/MM/yyyy HH:mm':'-0300'}} · {{e.usuario}}<span *ngIf="e.documento"> · Documento: {{e.documento}}</span></p><p *ngIf="e.motivo">{{e.motivo}}</p><ul><li *ngFor="let i of e.itens">{{i.produto}} · {{i.lote_codigo ? 'Lote ' + i.lote_codigo : 'Sem lote identificado'}}<span *ngIf="i.lote_validade"> · validade {{i.lote_validade | date:'dd/MM/yyyy':'UTC'}}</span> · {{i.quantidade_milesimos/1000 | number:'1.0-3'}} · <a routerLink="/home/movimentacoes">Movimento #{{i.movimento_id}}</a></li></ul>
+   <ng-container *ngIf="podeAlterar">
+    <p *ngIf="e.custos">Mercadorias: {{moedaExata(e.custos.base_reais)}} · Custo de aquisição: {{moedaExata(e.custos.custo_reais)}} · Rateio: {{e.custos.criterio==='valor_mercadorias'?'valor das mercadorias':'igual por linha'}}. <span *ngIf="e.custos.referencia_documento">Referência: {{e.custos.referencia_documento}}</span></p>
+    <details *ngIf="e.custos"><summary>Composição do custo informado</summary><p>Frete: {{e.custos.frete_centavos/100 | currency:'BRL'}} · Despesas: {{e.custos.despesas_centavos/100 | currency:'BRL'}} · Desconto: {{e.custos.desconto_centavos/100 | currency:'BRL'}}</p><ul><li *ngFor="let t of e.custos.tributos">{{t.codigo}} · {{t.valor_centavos/100 | currency:'BRL'}} · {{tratamentoTributo(t.tratamento)}}</li></ul><p>Regime informado: {{e.custos.regime}} · IBS/CBS regular: {{e.custos.ibs_cbs_regular?'informado':'não informado'}}. Classificação documental, sem apuração fiscal automática.</p></details>
+    <p *ngIf="e.tipo==='receber' && !e.custos">Composição gerencial não informada neste recebimento anterior.</p>
+    <ul *ngIf="e.creditos?.length"><li *ngFor="let c of e.creditos">Crédito comercial #{{c.credito_id}} · {{c.valor_centavos/100 | currency:'BRL'}} · {{c.documento}} · {{c.motivo}}</li></ul>
+    <button mat-stroked-button *ngIf="e.tipo==='devolver'" (click)="iniciarCredito(e.entrega_id)" [disabled]="saving || !!acao">Registrar crédito comercial</button>
+    <form *ngIf="creditoEntrega===e.entrega_id" [formGroup]="creditoForm" (ngSubmit)="salvarCredito()">
+     <p>Registra o crédito concedido pelo fornecedor. Não registra pagamento, não emite documento fiscal e não altera o estoque nem seu custo histórico.</p>
+     <mat-form-field appearance="outline"><mat-label>Crédito (R$)</mat-label><input matInput inputmode="decimal" formControlName="valor" [readonly]="saving"><mat-error>Informe valor positivo com até duas casas.</mat-error></mat-form-field>
+     <mat-form-field appearance="outline"><mat-label>Documento do crédito</mat-label><input matInput formControlName="documento" maxlength="120" [readonly]="saving"></mat-form-field>
+     <mat-form-field appearance="outline"><mat-label>Motivo</mat-label><input matInput formControlName="motivo" maxlength="450" [readonly]="saving"></mat-form-field>
+     <button mat-raised-button color="primary" type="submit" [disabled]="saving || creditoForm.invalid">Registrar crédito</button><button mat-button type="button" (click)="creditoEntrega=null" [disabled]="saving">Cancelar</button>
+    </form>
+   </ng-container></article>
   <h3>Histórico do pedido</h3><ol><li *ngFor="let e of detalhe.eventos"><strong>{{rotulo(e.estado)}}</strong> · {{e.data | date:'dd/MM/yyyy HH:mm':'-0300'}} · {{e.usuario}}<p>{{e.observacao}}</p></li><li *ngFor="let e of detalhe.historico_legado">{{e.estado || 'Estado antigo'}} · {{e.historico_data}}<p>{{e.historico_observacao}}</p></li></ol>
   <p *ngIf="['parcial','recebido','encerrado'].includes(detalhe.pedido_fluxo || '')">Use devoluções neste pedido para registrar saídas dos itens recebidos. Movimentos vinculados a entregas não podem ser estornados isoladamente. Devoluções não reabrem o pedido.</p>
  </mat-card>

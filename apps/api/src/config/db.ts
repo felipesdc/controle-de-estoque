@@ -298,6 +298,17 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 14) 
   PRAGMA user_version=14;COMMIT;`);}catch(error){db.exec('ROLLBACK');throw error;}
 }
 
+// Acquisition allocations and commercial credits are additive; past receipts are not inferred.
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 15) {
+ db.exec('BEGIN IMMEDIATE');
+ try{db.exec(`
+ CREATE TABLE pi2_entrega_custos(entrega_id INTEGER PRIMARY KEY REFERENCES pi2_entregas_pedido(entrega_id),dados TEXT NOT NULL,base_microcentavos TEXT NOT NULL,total_microcentavos TEXT NOT NULL);
+ CREATE TABLE pi2_entrega_rateios(entrega_item_id INTEGER PRIMARY KEY REFERENCES pi2_entrega_itens(entrega_item_id),base_microcentavos TEXT NOT NULL,custo_microcentavos TEXT NOT NULL);
+ CREATE TABLE pi2_creditos_devolucao(credito_id INTEGER PRIMARY KEY AUTOINCREMENT,entrega_id INTEGER NOT NULL REFERENCES pi2_entregas_pedido(entrega_id),valor_centavos INTEGER NOT NULL CHECK(valor_centavos>0),documento TEXT NOT NULL,motivo TEXT NOT NULL,usuario_id INTEGER NOT NULL REFERENCES pi2_usuarios(usuario_id),data TEXT NOT NULL,chave TEXT NOT NULL UNIQUE,solicitacao TEXT NOT NULL);
+ CREATE INDEX idx_credito_entrega ON pi2_creditos_devolucao(entrega_id,credito_id);
+ PRAGMA user_version=15;COMMIT;`);}catch(e){db.exec('ROLLBACK');throw e;}
+}
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;

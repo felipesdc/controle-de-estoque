@@ -2012,7 +2012,7 @@
           }
         },
         "deprecated": true,
-        "description": "Compatibilidade. Prefira os endpoints atuais. Leitura autenticada; escrita por administrador ou gerente."
+        "description": "Consulta legada restrita a administrador/gerente. Preços novos devem ser vinculados pelo cadastro de produto."
       },
       "post": {
         "summary": "Criar um novo preço",
@@ -2030,21 +2030,11 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "Preço criado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preco"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Erro ao criar preço"
+          "405": {
+            "description": "Escrita legada desativada"
           },
           "401": {
-            "description": "Sessão inválida",
+            "description": "Sessão ausente, revogada ou expirada",
             "content": {
               "application/json": {
                 "schema": {
@@ -2065,7 +2055,7 @@
           }
         },
         "deprecated": true,
-        "description": "Compatibilidade. Prefira os endpoints atuais. Leitura autenticada; escrita por administrador ou gerente."
+        "description": "Escrita desativada. Use produto_precos no cadastro de produto, em centavos inteiros."
       }
     },
     "/preco/{preco_id}": {
@@ -2124,7 +2114,7 @@
           }
         },
         "deprecated": true,
-        "description": "Compatibilidade. Prefira os endpoints atuais. Leitura autenticada; escrita por administrador ou gerente."
+        "description": "Consulta legada restrita a administrador/gerente. Preços novos devem ser vinculados pelo cadastro de produto."
       },
       "put": {
         "summary": "Atualizar um preço específico",
@@ -2153,24 +2143,11 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Preço atualizado com sucesso",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Preco"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Preço não encontrado"
-          },
-          "500": {
-            "description": "Erro ao atualizar preço"
+          "405": {
+            "description": "Escrita legada desativada"
           },
           "401": {
-            "description": "Sessão inválida",
+            "description": "Sessão ausente, revogada ou expirada",
             "content": {
               "application/json": {
                 "schema": {
@@ -2191,7 +2168,7 @@
           }
         },
         "deprecated": true,
-        "description": "Compatibilidade. Prefira os endpoints atuais. Leitura autenticada; escrita por administrador ou gerente."
+        "description": "Escrita desativada. Use produto_precos no cadastro de produto, em centavos inteiros."
       },
       "delete": {
         "summary": "Deletar um preço específico",
@@ -2210,14 +2187,11 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "Preço deletado com sucesso"
-          },
-          "500": {
-            "description": "Erro ao deletar preço"
+          "405": {
+            "description": "Escrita legada desativada"
           },
           "401": {
-            "description": "Sessão inválida",
+            "description": "Sessão ausente, revogada ou expirada",
             "content": {
               "application/json": {
                 "schema": {
@@ -2238,7 +2212,7 @@
           }
         },
         "deprecated": true,
-        "description": "Compatibilidade. Prefira os endpoints atuais. Leitura autenticada; escrita por administrador ou gerente."
+        "description": "Escrita desativada. Use produto_precos no cadastro de produto, em centavos inteiros."
       }
     },
     "/unidade": {
@@ -5889,7 +5863,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EntregaInput"
+                "$ref": "#/components/schemas/RecebimentoInput"
               }
             }
           }
@@ -8458,6 +8432,9 @@
                           }
                         }
                       }
+                    },
+                    "retirada": {
+                      "$ref": "#/components/schemas/SugestaoRetirada"
                     }
                   }
                 }
@@ -8476,7 +8453,8 @@
           "409": {
             "description": "Saldos inconsistentes"
           }
-        }
+        },
+        "description": " A resposta inclui retirada: sugestão global pelo vencimento mais próximo entre lotes com saldo positivo, validade conhecida maior ou igual ao dia de São Paulo e unidade compatível. Desempate por registro e ID. Ignora busca e página para recomendar; não reserva nem movimenta estoque. Lotes vencidos/sem validade não são recomendados. A confirmação física é explícita na interface de saída; o registro continua validando saldo atomicamente."
       }
     },
     "/inventarios/{id}/lotes": {
@@ -8666,7 +8644,7 @@
             }
           }
         ],
-        "description": "Gestão. Cobertura começa na migração 13, sem retroatribuir custos. Datas inclusivas no calendário de São Paulo, até hoje. Nomes/códigos atuais, unidade capturada. Posição de hoje considera registros realizados. Valores conhecidos são parciais quando existe produto sem custo. Até 10.000 produtos, evolução até 366 dias e 200.000 eventos. Valores gerenciais em BRL, sem conversão de unidades, frete ou tributos."
+        "description": "Gestão. Cobertura começa na migração 13, sem retroatribuir custos. Datas inclusivas no calendário de São Paulo, até hoje. Nomes/códigos atuais, unidade capturada. Posição de hoje considera registros realizados. Valores conhecidos são parciais quando existe produto sem custo. Até 10.000 produtos, evolução até 366 dias e 200.000 eventos. Valores gerenciais em BRL, sem conversão de unidades. Recebimentos com composição informada incluem frete, despesas, descontos e tratamento documental de tributos, sem cálculo fiscal automático."
       }
     },
     "/relatorios/custos.csv": {
@@ -8743,7 +8721,7 @@
             }
           }
         ],
-        "description": "Gestão. Cobertura começa na migração 13, sem retroatribuir custos. Datas inclusivas no calendário de São Paulo, até hoje. Nomes/códigos atuais, unidade capturada. Posição de hoje considera registros realizados. Valores conhecidos são parciais quando existe produto sem custo. Até 10.000 produtos, evolução até 366 dias e 200.000 eventos. Valores gerenciais em BRL, sem conversão de unidades, frete ou tributos."
+        "description": "Gestão. Cobertura começa na migração 13, sem retroatribuir custos. Datas inclusivas no calendário de São Paulo, até hoje. Nomes/códigos atuais, unidade capturada. Posição de hoje considera registros realizados. Valores conhecidos são parciais quando existe produto sem custo. Até 10.000 produtos, evolução até 366 dias e 200.000 eventos. Valores gerenciais em BRL, sem conversão de unidades. Recebimentos com composição informada incluem frete, despesas, descontos e tratamento documental de tributos, sem cálculo fiscal automático."
       }
     },
     "/relatorios/custos/evolucao": {
@@ -8807,7 +8785,7 @@
             }
           }
         ],
-        "description": "Gestão. Cobertura começa na migração 13, sem retroatribuir custos. Datas inclusivas no calendário de São Paulo, até hoje. Nomes/códigos atuais, unidade capturada. Posição de hoje considera registros realizados. Valores conhecidos são parciais quando existe produto sem custo. Até 10.000 produtos, evolução até 366 dias e 200.000 eventos. Valores gerenciais em BRL, sem conversão de unidades, frete ou tributos."
+        "description": "Gestão. Cobertura começa na migração 13, sem retroatribuir custos. Datas inclusivas no calendário de São Paulo, até hoje. Nomes/códigos atuais, unidade capturada. Posição de hoje considera registros realizados. Valores conhecidos são parciais quando existe produto sem custo. Até 10.000 produtos, evolução até 366 dias e 200.000 eventos. Valores gerenciais em BRL, sem conversão de unidades. Recebimentos com composição informada incluem frete, despesas, descontos e tratamento documental de tributos, sem cálculo fiscal automático."
       }
     },
     "/relatorios/custos/evolucao.csv": {
@@ -8871,7 +8849,7 @@
             }
           }
         ],
-        "description": "Gestão. Cobertura começa na migração 13, sem retroatribuir custos. Datas inclusivas no calendário de São Paulo, até hoje. Nomes/códigos atuais, unidade capturada. Posição de hoje considera registros realizados. Valores conhecidos são parciais quando existe produto sem custo. Até 10.000 produtos, evolução até 366 dias e 200.000 eventos. Valores gerenciais em BRL, sem conversão de unidades, frete ou tributos."
+        "description": "Gestão. Cobertura começa na migração 13, sem retroatribuir custos. Datas inclusivas no calendário de São Paulo, até hoje. Nomes/códigos atuais, unidade capturada. Posição de hoje considera registros realizados. Valores conhecidos são parciais quando existe produto sem custo. Até 10.000 produtos, evolução até 366 dias e 200.000 eventos. Valores gerenciais em BRL, sem conversão de unidades. Recebimentos com composição informada incluem frete, despesas, descontos e tratamento documental de tributos, sem cálculo fiscal automático."
       }
     },
     "/produto/{produto_id}/custo-base": {
@@ -9904,6 +9882,312 @@
               ]
             }
           },
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "selecionado",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de opções; selecionado null se inexistente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itens": {
+                      "type": "array",
+                      "maxItems": 25,
+                      "items": {
+                        "$ref": "#/components/schemas/OpcaoCadastro"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "pagina": {
+                      "type": "integer"
+                    },
+                    "tamanho": {
+                      "type": "integer",
+                      "enum": [
+                        25
+                      ]
+                    },
+                    "selecionado": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/OpcaoCadastro"
+                        }
+                      ],
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtro inválido"
+          },
+          "401": {
+            "description": "Sessão obrigatória"
+          },
+          "404": {
+            "description": "Tipo de cadastro inválido"
+          }
+        }
+      }
+    },
+    "/compras/pedidos/{id}/devolucoes/{entrega}/creditos": {
+      "post": {
+        "summary": "Registrar crédito comercial de devolução",
+        "tags": [
+          "Compras"
+        ],
+        "description": "Administrador/gerente. Registro imutável e idempotente, separado do estoque e dos custos históricos. Não registra pagamento nem emite documento fiscal.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 80,
+              "pattern": "^[\\w-]+$"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entrega",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, revogada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de dados, saldo, versão ou idempotência",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Crédito registrado (ou repetição da mesma chave)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "credito_id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreditoDevolucaoInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produto/{produto_id}/margem": {
+      "get": {
+        "summary": "Margem bruta estimada atual (gestão)",
+        "description": "Preço cadastral versus custo médio atual conhecido. Antes de tributos da venda e despesas comerciais; não é lucro realizado nem estimativa histórica.",
+        "parameters": [
+          {
+            "name": "produto_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estimativa atual; margem nula quando faltarem preço positivo ou saldo/custo conhecidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "produto_id": {
+                      "type": "integer"
+                    },
+                    "venda_centavos": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000000,
+                      "nullable": true
+                    },
+                    "custo_medio_reais": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "margem_bruta_percentual": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "estimativa": {
+                      "type": "boolean"
+                    },
+                    "observacao": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, revogada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/catalogo/produtos/opcoes": {
+      "get": {
+        "tags": [
+          "Cadastros"
+        ],
+        "summary": "Opções paginadas de produtos ativos",
+        "description": "Até 25 produtos ativos por página; sem valores financeiros. Hidrata a seleção por ID, independente da página e da busca.",
+        "parameters": [
           {
             "in": "query",
             "name": "q",
@@ -12466,6 +12750,266 @@
             "type": "string"
           }
         }
+      },
+      "SugestaoRetirada": {
+        "type": "object",
+        "properties": {
+          "lote": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "lote_id": {
+                "type": "integer"
+              },
+              "codigo": {
+                "type": "string"
+              },
+              "validade": {
+                "type": "string",
+                "format": "date"
+              },
+              "unidade": {
+                "type": "string",
+                "nullable": true
+              },
+              "saldo_milesimos": {
+                "type": "integer"
+              }
+            }
+          },
+          "motivo": {
+            "type": "string",
+            "enum": [
+              "produto_inativo",
+              "vencimento_mais_proximo",
+              "sem_lote_elegivel"
+            ]
+          },
+          "avisos": {
+            "type": "object",
+            "properties": {
+              "vencidos": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sem_validade": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unidade_incompativel": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "criterio": {
+            "type": "string",
+            "enum": [
+              "validade,registro,id"
+            ]
+          },
+          "data_referencia": {
+            "type": "string",
+            "format": "date"
+          },
+          "fuso": {
+            "type": "string",
+            "enum": [
+              "America/Sao_Paulo"
+            ]
+          },
+          "confirmacao_obrigatoria": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "CustosAquisicaoInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Classificação gerencial informada por documento. Sem cálculo fiscal automático. IBS/CBS recuperáveis no Simples exigem opção efetiva pelo regime regular. Valores em centavos; não repetir valores já incluídos nos preços.",
+        "properties": {
+          "frete_centavos": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "despesas_centavos": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "desconto_centavos": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "regime": {
+            "type": "string",
+            "enum": [
+              "nao_informado",
+              "mei",
+              "simples",
+              "presumido",
+              "real"
+            ],
+            "default": "simples"
+          },
+          "ibs_cbs_regular": {
+            "type": "boolean",
+            "default": false
+          },
+          "referencia_documento": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "tributos": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "codigo",
+                "tratamento",
+                "valor_centavos"
+              ],
+              "properties": {
+                "codigo": {
+                  "type": "string",
+                  "enum": [
+                    "IBS",
+                    "CBS",
+                    "IS",
+                    "ICMS",
+                    "IPI",
+                    "PIS",
+                    "COFINS",
+                    "OUTRO"
+                  ]
+                },
+                "tratamento": {
+                  "type": "string",
+                  "enum": [
+                    "informativo",
+                    "recuperavel_incluso",
+                    "recuperavel_adicional",
+                    "nao_recuperavel_incluso",
+                    "nao_recuperavel_adicional"
+                  ]
+                },
+                "valor_centavos": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 1000000000000
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreditoDevolucaoInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "valor_centavos",
+          "documento",
+          "motivo"
+        ],
+        "properties": {
+          "valor_centavos": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000000
+          },
+          "documento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "motivo": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 450
+          }
+        }
+      },
+      "RecebimentoInput": {
+        "type": "object",
+        "properties": {
+          "versao": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "documento": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "motivo": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 450
+          },
+          "itens": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "quantidade": {
+                  "type": "number",
+                  "minimum": 0.001,
+                  "maximum": 1000000000,
+                  "multipleOf": 0.001
+                },
+                "lote": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "codigo"
+                  ],
+                  "description": "Somente no recebimento. Mesmo produto e código exigem validade e unidade idênticas.",
+                  "properties": {
+                    "codigo": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "validade": {
+                      "type": "string",
+                      "format": "date",
+                      "nullable": true
+                    }
+                  }
+                },
+                "lote_id": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "nullable": true,
+                  "description": "Somente na devolução. Deve corresponder a um lote recebido neste item; nulo usa recebimentos sem lote."
+                }
+              },
+              "required": [
+                "item",
+                "quantidade"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 100
+          },
+          "custos": {
+            "$ref": "#/components/schemas/CustosAquisicaoInput"
+          }
+        },
+        "required": [
+          "versao"
+        ],
+        "description": "Receber: itens opcionais (omitir recebe todas as pendências). Devolver: itens e motivo obrigatórios; quantidade positiva até o recebido disponível, exige estoque suficiente."
       }
     },
     "securitySchemes": {

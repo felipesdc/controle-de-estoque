@@ -1,0 +1,4 @@
+import {EstoqueError} from './estoque-validacao';
+export function centavosInteiros(value:unknown,nome='Valor'):number {if(typeof value!=='number'||!Number.isSafeInteger(value)||value<0||value>1e12)throw new EstoqueError(400,nome+' deve ser informado em centavos inteiros, entre zero e 1 trilhão.');return value;}
+export function centavosLegados(value:unknown):number|null {if(value===null||value===undefined||value==='')return null;const text=String(value).trim().replace(',','.');if(text.length>20||!/^\d+(\.\d{1,2})?$/.test(text))return null;const[a,b='']=text.split('.'),n=BigInt(a)*100n+BigInt(b.padEnd(2,'0'));return n<=1000000000000n?Number(n):null;}
+export function reaisCentavos(value:number):string{const n=BigInt(centavosInteiros(value));return String(n/100n)+'.'+String(n%100n).padStart(2,'0');}

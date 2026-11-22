@@ -1,0 +1,33 @@
+const assert=require('node:assert/strict'),{randomUUID}=require('node:crypto');
+const pool=require('/app/dist/config/db').default,{consultarLotes}=require('/app/dist/services/lotes'),{movimentar}=require('/app/dist/services/estoque');
+(async()=>{
+ await pool.query("INSERT INTO pi2_unidades(unidade_id,unidade_descricao) VALUES(1,'kg'),(2,'caixa')");
+ await pool.query("INSERT INTO pi2_produtos(produto_id,produto_descricao,produto_estado,produto_unidade_id,produto_quantidade_estoque,produto_data_validade) VALUES(1,'Produto FEFO',1,1,100,'1900-01-01'),(2,'Sem unidade',1,NULL,10,NULL)");
+ const now=new Date('2026-11-20T02:59:00Z'); // still Nov 19 in São Paulo
+ const get=(q={})=>consultarLotes(1,q,now);
+ assert.equal(get().retirada.lote,null,'legacy product date must never become lot advice');
+ const lote=async(codigo,validade,saldo=125,unidade=1,criado='2026-10-01T12:00:00Z',produto=1)=>(await pool.query('INSERT INTO pi2_lotes(produto_id,codigo,validade,unidade_id,unidade,saldo_milesimos,criado_em,usuario_id) VALUES($1,$2,$3,$4,$5,$6,$7,1) RETURNING lote_id',[produto,codigo,validade,unidade,unidade===null?null:unidade===1?'kg':'caixa',saldo,criado])).rows[0].lote_id;
+ const expired=await lote('000V','2026-11-18');
+ for(const [i,date]of [null,'2026-02-30','2026-11-20T00:00:00Z','2026-11-19 '].entries())await lote('SEM'+i,date);
+ await lote('ZERO','2026-11-19',0);await lote('OUTRA-UNIDADE','2026-11-19',125,2);
+ const later=await lote('A-NOVO','2026-11-19',125,1,'2026-10-02T12:00:00Z');
+ const first=await lote('Z-ANTIGO','2026-11-19',125,1,'2026-10-01T12:00:00Z');
+ const tie=await lote('B-MESMO-REGISTRO','2026-11-19',125,1,'2026-10-01T12:00:00Z');
+ const tomorrow=await lote('AMANHA','2026-11-20',250),far=await lote('FUTURO','2027-02-01',1000);
+ for(let i=0;i<20;i++)await lote('VELHO'+String(i).padStart(2,'0'),'2025-01-01');
+ const before=(await pool.query('SELECT COUNT(*) n FROM pi2_movimentos_estoque')).rows[0].n;
+ const d=get();assert.equal(d.data_referencia,'2026-11-19');assert.equal(d.retirada.lote.lote_id,first);assert.equal(d.retirada.lote.saldo_milesimos,125);assert.equal(d.retirada.confirmacao_obrigatoria,true);assert.equal(d.retirada.avisos.vencidos,21);assert.equal(d.retirada.avisos.sem_validade,4);assert.equal(d.retirada.avisos.unidade_incompativel,1);assert.ok(!d.itens.some(l=>l.lote_id===first),'advice is outside first page');
+ assert.equal(get({q:'not-found',pagina:999,tamanho:10}).retirada.lote.lote_id,first,'filter/page do not change advice');
+ assert.equal((await pool.query('SELECT COUNT(*) n FROM pi2_movimentos_estoque')).rows[0].n,before,'reading suggestion never moves/reserves stock');
+ const out=(id,q)=>movimentar({movimento_produto_id:1,movimento_tipo:'saida',movimento_quantidade:q,movimento_lote_id:id},1,randomUUID());
+ out(first,.125);assert.equal(get().retirada.lote.lote_id,tie,'stable ID tie-breaker after earlier lot depleted');
+ assert.throws(()=>out(first,.125),e=>e.status===409,'stale advice still uses normal atomic stock validation');
+ out(tie,.125);assert.equal(get().retirada.lote.lote_id,later);out(later,.125);assert.equal(get().retirada.lote.lote_id,tomorrow);
+ const nextDay=consultarLotes(1,{},new Date('2026-11-20T03:01:00Z'));assert.equal(nextDay.data_referencia,'2026-11-20');assert.equal(nextDay.retirada.lote.lote_id,tomorrow);
+ out(tomorrow,.25);assert.equal(get().retirada.lote.lote_id,far,'eligible dates beyond 30 days remain valid advice');out(far,1);assert.equal(get().retirada.lote,null);assert.equal(get().retirada.motivo,'sem_lote_elegivel');
+ await pool.query('UPDATE pi2_produtos SET produto_estado=0 WHERE produto_id=1');assert.equal(get().retirada.motivo,'produto_inativo');assert.equal(get().retirada.lote,null);
+ const nullUnit=await lote('SEM-UNIDADE','2018-11-03',125,null,'2018-11-01',2);
+ assert.equal(consultarLotes(2,{},new Date('2018-11-04T02:59:00Z')).retirada.lote.lote_id,nullUnit,'reference respects historical São Paulo midnight before DST');
+ assert.equal(consultarLotes(2,{},new Date('2018-11-04T03:01:00Z')).retirada.lote,null,'same lot becomes expired after historical midnight');
+ console.log('PASS: FEFO excludes expired/unknown/invalid/zero/incompatible lots, inclusive today, deterministic receipt/ID ties, global pagination independence, fractions, no read writes, depletion/stale advice, inactive products, nullable units and São Paulo/DST boundaries.');
+})().catch(e=>{console.error(e);process.exitCode=1});

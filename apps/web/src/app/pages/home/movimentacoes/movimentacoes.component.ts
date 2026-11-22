@@ -1,3 +1,4 @@
+import {centavos} from 'src/app/shared/utils/dinheiro';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { EscolhaLote } from 'src/app/shared/services/lotes.service';
 import { ActivatedRoute } from '@angular/router';
@@ -77,7 +78,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.error = ''; this.success = ''; this.saving = true;
     this.form.disable({ emitEvent: false });
     const {custo_unitario,...raw}=this.form.getRawValue();
-    this.service.createNewMovimentacaoEstoque({...raw,movimento_lote_id:this.lote.id,...(raw.movimento_tipo==='entrada'&&custo_unitario?.trim()?{movimento_custo_unitario_centavos:Math.round(Number(custo_unitario.replace(',','.'))*100)}:{})} as unknown as MovimentacaoEstoque, this.chave)
+    this.service.createNewMovimentacaoEstoque({...raw,movimento_lote_id:this.lote.id,...(raw.movimento_tipo==='entrada'&&custo_unitario?.trim()?{movimento_custo_unitario_centavos:centavos(custo_unitario)!}:{})} as unknown as MovimentacaoEstoque, this.chave)
       .pipe(finalize(() => { this.saving = false; this.form.enable({ emitEvent: false }); })).subscribe({
         next: () => {
           this.form.reset({ movimento_tipo: 'entrada', movimento_observacao: '', custo_unitario:'' });

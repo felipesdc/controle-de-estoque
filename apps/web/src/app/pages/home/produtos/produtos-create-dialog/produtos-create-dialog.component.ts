@@ -1,3 +1,4 @@
+import {centavos,textoCentavos,validarDinheiro} from 'src/app/shared/utils/dinheiro';
 import {OpcaoCadastro} from 'src/app/shared/components/seletor-cadastro/seletor-cadastro.component';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
@@ -29,8 +30,8 @@ export class ProdutosCreateDialogComponent implements OnInit {
   saving = false;
   error = '';
   legadoInvalido=false;
-  precoCompra=this.fb.control('',[(c:AbstractControl)=>!c.value||(/^\d+([.,]\d{1,2})?$/.test(c.value)&&Number(String(c.value).replace(',','.'))<=1e10)?null:{preco:true}]);
-  precoVenda=this.fb.control('',[(c:AbstractControl)=>!c.value||(/^\d+([.,]\d{1,2})?$/.test(c.value)&&Number(String(c.value).replace(',','.'))<=1e10)?null:{preco:true}]);
+  precoCompra=this.fb.control('',[validarDinheiro(true)]);
+  precoVenda=this.fb.control('',[validarDinheiro(true)]);
   form = this.fb.group({
     produto_descricao: [this.data?.produto_descricao || '', [Validators.required, Validators.maxLength(200), nomeValido]],
     produto_codigo_barras: [this.data?.produto_codigo_barras || '', Validators.maxLength(80)],
@@ -52,7 +53,7 @@ export class ProdutosCreateDialogComponent implements OnInit {
   carregarOpcoes(): void {
     this.loading = true; this.optionsError = false;
     const request=this.data?.produto_id?this.http.get<{compra_centavos:number|null;venda_centavos:number|null;legado_invalido:boolean}>(`${environment.apiurl}/produto/${this.data.produto_id}/precos`):of({compra_centavos:null,venda_centavos:null,legado_invalido:false});
-    request.pipe(timeout(15000),finalize(()=>this.loading=false)).subscribe({next:precos=>{if(!this.precoCompra.dirty&&!this.precoVenda.dirty){this.precoCompra.setValue(precos.compra_centavos===null?'':(precos.compra_centavos/100).toFixed(2));this.precoVenda.setValue(precos.venda_centavos===null?'':(precos.venda_centavos/100).toFixed(2));this.legadoInvalido=precos.legado_invalido;}},error:()=>this.optionsError=true});
+    request.pipe(timeout(15000),finalize(()=>this.loading=false)).subscribe({next:precos=>{if(!this.precoCompra.dirty&&!this.precoVenda.dirty){this.precoCompra.setValue(textoCentavos(precos.compra_centavos));this.precoVenda.setValue(textoCentavos(precos.venda_centavos));this.legadoInvalido=precos.legado_invalido;}},error:()=>this.optionsError=true});
   }
   cadastro(tipo:'categorias'|'unidades',editar=false):void {
     const id=tipo==='categorias'?this.form.value.produto_categoria_id:this.form.value.produto_unidade_id;
@@ -78,7 +79,7 @@ export class ProdutosCreateDialogComponent implements OnInit {
       produto_codigo_barras: values.produto_codigo_barras?.trim() || null,
     } as unknown as Partial<Produto>;
     if(this.precoCompra.dirty||this.precoVenda.dirty){
-      const cents=(v:string|null)=>v?Math.round(Number(v.replace(',','.'))*100):null;
+      const cents=(v:string|null)=>v?centavos(v):null;
       Object.assign(dados,{produto_precos:{compra_centavos:cents(this.precoCompra.value),venda_centavos:cents(this.precoVenda.value)}});
     }
     const request = this.data?.produto_id

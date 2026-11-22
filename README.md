@@ -427,3 +427,7 @@ A Visão geral destaca produtos e lotes vencidos/a vencer e os saldos sem valida
 A opção **Minha segurança** permite ativar dois fatores e alterar a própria senha. Consulte [configuração e recuperação](docs/seguranca.md) para a chave de proteção, SMTP, limites de login e cuidados com restauração. A base técnica usa Angular 22/TypeScript 6 e Node 22.22.3+ na série 22; execute pelos contêineres para usar as versões corretas.
 
 A evolução dos seletores paginados e os ajustes de compatibilidade do Angular estão em [modernização da interface](docs/modernizacao-interface.md). Resultados e limites da inspeção estão em [validação](docs/validacao.md).
+
+As saídas agora oferecem [sugestão de lote pelo vencimento mais próximo](docs/retirada-vencimento.md), sempre com seleção e confirmação explícitas do operador.
+
+Custos de aquisição com frete, despesas, descontos, classificação tributária informada e créditos comerciais: [critérios e limites](docs/custos-gerenciais.md).

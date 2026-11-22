@@ -44,6 +44,10 @@ export class ProdutosComponent implements OnInit, OnDestroy {
     }), takeUntil(this.destroy)).subscribe(data => { if (data) { this.catalogo = data; this.pagina = data.pagina; } });
     this.filtros.valueChanges.pipe(debounceTime(300), takeUntil(this.destroy)).subscribe(() => { this.pagina = 1; this.success = ''; this.atualizar(); });
     this.carregarOpcoes(); this.atualizar();
+    if(params.get('precos')==='1')this.success='Preços são editados individualmente no produto, sem alterar outros produtos ou pedidos antigos.';
+    if(this.podeAlterar&&params.get('novo')==='1')queueMicrotask(()=>this.novo());
+    const acao=params.has('editar')?'editar':params.has('situacao')?'situacao':'';
+    if(this.podeAlterar&&acao){const id=Number(params.get(acao));if(Number.isSafeInteger(id)&&id>0)this.service.getProduto(id).pipe(takeUntil(this.destroy)).subscribe({next:p=>acao==='editar'?this.editar(p as ProdutoCatalogo):this.alterarEstado(p as ProdutoCatalogo),error:()=>this.error='Produto não encontrado ou indisponível.'});else this.error='Identificador de produto inválido.';}
   }
   carregarOpcoes(): void {
     this.opcoesError = false;

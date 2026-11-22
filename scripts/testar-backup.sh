@@ -39,6 +39,9 @@ compose exec -T api node -e '
  assert.equal(db.prepare("SELECT usuario_operar_estoque AS p FROM pi2_usuarios WHERE usuario_nome=?").get("funcionario").p,1);
  assert.equal(db.prepare("SELECT pedido_fluxo AS f FROM pi2_pedidos").get().f,"parcial");
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM pi2_entregas_pedido").get().n,2);
+ assert.equal(db.prepare("SELECT total_microcentavos FROM pi2_entrega_custos").get().total_microcentavos,"228000000");
+ assert.equal(db.prepare("SELECT custo_microcentavos FROM pi2_entrega_rateios").get().custo_microcentavos,"228000000");
+ assert.equal(db.prepare("SELECT valor_centavos FROM pi2_creditos_devolucao").get().valor_centavos,50);
  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM pi2_sessoes").get().n,0);
  for(const table of ["pi2_auth_desafios","pi2_auth_reset","pi2_auth_outbox"])assert.equal(db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n,0);
  const mfa=db.prepare("SELECT * FROM pi2_auth_mfa WHERE ativo=1").get();assert.ok(mfa.segredo);assert.equal(mfa.codigos,"[]");assert.equal(mfa.pendente,null);assert.ok(mfa.ultimo_contador>=Number(require("node:fs").readFileSync("/data/qa-mfa-counter.txt","utf8")));db.close();

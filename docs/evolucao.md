@@ -129,13 +129,13 @@ Os perfis 1 e 2 seguem a convenção já usada pelo frontend: administrador e ge
 
 Pendências após inventário por lote, custos e histórico:
 
-1. Avaliar sugestão de retirada por vencimento, mantendo confirmação do lote físico pelo usuário. Alertas consolidados por lote e pendências de validade foram entregues.
+1. Sugestão de retirada por vencimento implementada com confirmação explícita do lote físico, sem reserva ou seleção automática. Alertas por lote e pendências de validade já estavam entregues. Veja `docs/retirada-vencimento.md`.
 2. Definir o destino externo e ativar o backup agendado. Retenção, criptografia e confirmação do envio remoto permanecem evoluções adicionais.
 3. Segurança implementada: limites persistentes, recuperação por e-mail e TOTP/códigos de uso único. Configurar SMTP e testar a entrega real antes de disponibilizar a recuperação. Veja `docs/seguranca.md`.
-4. Concluir a modernização dos cadastros e contratos monetários legados, com validações, paginação e mensagens consistentes. Os novos custos e compras já usam regras explícitas de precisão.
+4. Modernização dos formulários administrativos e contratos monetários consolidada em 21/11/2026; pedidos passam a usar seletores remotos. Restam refinamentos de filtros e paginação em outras telas conforme crescimento do catálogo.
 5. Base técnica atualizada para Angular/Material 22, TypeScript 6, RxJS 7 e Vitest, com bundle inicial abaixo de 1 MB. Permanece ampliar a busca remota nas seleções que ainda carregam listas completas e concluir os formulários legados.
 6. Concluir inspeção visual das novas telas e testes em tablet e leitor físicos. Comparação com BibliotecaPI e agenda regulatória depende das referências desses projetos.
-7. Evoluir os custos gerenciais com frete, tributos, margem de venda e eventual crédito/reembolso de devolução, que não fazem parte do custo médio entregue.
+7. Custos gerenciais de aquisição, margem estimada atual e créditos comerciais implementados em 21/11/2026. Apuração fiscal, reembolso/pagamento e margem realizada permanecem fora do escopo.
 
 O histórico financeiro anterior à migração 13 não é presumido; isso é um limite de cobertura, não uma reconstrução retroativa prometida.
 
@@ -258,3 +258,19 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Corrigido o link de recuperação na tela de login; build sem script inline de CSS crítico, com validação automática de compatibilidade CSP e revalidação do HTML.
 - Formulário de produto com categoria, unidade e fornecedor por busca remota em páginas de 25, sem perder a seleção existente fora da página atual. Criação/edição contextual de categoria e unidade preservada.
 - Testes de renderização real, digitação e navegação acrescentados. Detalhes e limites em `docs/modernizacao-interface.md`.
+
+
+## Retirada pelo vencimento mais próximo — 20/11/2026
+
+- Consulta de lotes passa a fornecer sugestão global, independente da busca e da página, com validade dentro do prazo e unidade compatível.
+- Na saída, a escolha do lote físico é explícita; atualizar a consulta exige nova escolha. Quantidade e confirmação final permanecem com o operador.
+- Vencidos e saldos sem validade não são sugeridos; nenhuma reserva, separação automática ou substituição de lote é feita.
+- Concorrência e saldo continuam protegidos na transação existente. Banco permanece na versão 14, sem novas dependências.
+
+## Custos gerenciais e consolidação dos formulários — 21/11/2026
+
+- Migração 15 aditiva: composição documental do recebimento, rateio exato por item e créditos comerciais de devolução, sem reconstrução histórica.
+- Frete, despesas, descontos e tributos conforme classificação informada. Simples Nacional é o padrão; IBS/CBS recuperáveis exigem opção efetiva pelo regime regular. Sem alíquotas ou créditos presumidos pelo sistema.
+- Margem bruta estimada atual por produto, antes de tributos da venda e despesas comerciais, com indicação explícita de indisponibilidade quando falta custo ou preço.
+- Rotas administrativas antigas encaminham aos formulários atuais; escrita legada de preços bloqueada, preços por produto em centavos e seletores remotos em pedidos.
+- Fontes oficiais, critérios e limites em [custos-gerenciais.md](custos-gerenciais.md).

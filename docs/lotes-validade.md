@@ -38,3 +38,5 @@ As novas contagens usam o inventário por lote, incluindo saldo sem lote e lotes
 Testes isolados: `lotes.cjs`, `lotes-http.cjs`, `lotes-migracao.cjs`, além das regressões de compras, entregas, estoque, inventário, catálogo, códigos e relatórios. Dados demonstrativos devem ser gerados exclusivamente no ambiente descartável da porta 8081.
 
 Indicadores consolidados de validade por lote estão no painel. Próximo passo possível: sugestão pelo vencimento com confirmação do lote físico.
+
+A saída oferece agora uma [sugestão pelo vencimento mais próximo](retirada-vencimento.md). A orientação exclui vencidos e saldos sem validade conhecida, exige a confirmação física e não reserva nem separa quantidades automaticamente.
