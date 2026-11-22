@@ -135,7 +135,7 @@ Pendências após inventário por lote, custos e histórico:
 4. Modernização dos formulários administrativos e contratos monetários consolidada em 21/11/2026; pedidos passam a usar seletores remotos. Restam refinamentos de filtros e paginação em outras telas conforme crescimento do catálogo.
 5. Base técnica atualizada para Angular/Material 22, TypeScript 6, RxJS 7 e Vitest, com bundle inicial abaixo de 1 MB. Permanece ampliar a busca remota nas seleções que ainda carregam listas completas e concluir os formulários legados.
 6. Concluir inspeção visual das novas telas e testes em tablet e leitor físicos. Comparação com BibliotecaPI e agenda regulatória depende das referências desses projetos.
-7. Custos gerenciais de aquisição, margem estimada atual e créditos comerciais implementados em 21/11/2026. Apuração fiscal, reembolso/pagamento e margem realizada permanecem fora do escopo.
+7. Custos gerenciais de aquisição, margem estimada atual e créditos comerciais implementados em 21/11/2026. Apuração fiscal, execução de pagamentos e margem realizada permanecem fora do escopo. O registro de reembolsos já recebidos foi acrescentado em 22/11/2026.
 
 O histórico financeiro anterior à migração 13 não é presumido; isso é um limite de cobertura, não uma reconstrução retroativa prometida.
 
@@ -274,3 +274,12 @@ As referências BibliotecaPI e agenda regulatória não estão nesta pasta. A ap
 - Margem bruta estimada atual por produto, antes de tributos da venda e despesas comerciais, com indicação explícita de indisponibilidade quando falta custo ou preço.
 - Rotas administrativas antigas encaminham aos formulários atuais; escrita legada de preços bloqueada, preços por produto em centavos e seletores remotos em pedidos.
 - Fontes oficiais, critérios e limites em [custos-gerenciais.md](custos-gerenciais.md).
+
+## Seletores restantes, reembolsos e tablet horizontal — 22/11/2026
+
+- Catálogo e relatório de estoque usam categorias remotas; estados Todos/Sem categoria permanecem disponíveis.
+- Movimentações usa busca remota de produto ativo para operar; histórico permite busca paginada incluindo inativos e responsáveis com movimentações, mantendo a opção de registro legado. Nenhuma tela ativa chama mais os métodos de carregamento integral de produtos, categorias, unidades ou fornecedores.
+- Seletores hidratam o ID fora da página sem reaplicar filtros; texto parcial, erro ou seleção inexistente bloqueiam a aplicação do filtro. As opções expõem somente ID/nome e têm limite de 25.
+- Reembolsos parciais/totais de crédito comercial e estornos justificados com comprovante, data e autor; saldo protegido contra concorrência, sem iniciar pagamentos ou alterar estoque/custos. Migração 16 aditiva. Detalhes em [custos-gerenciais.md](custos-gerenciais.md).
+- Comparação de implementação com referências locais concluída em [comparacao-referencias.md](comparacao-referencias.md). A agenda regulatória usa PostgreSQL em produção conforme seu README; a referência não implica usar SQLite em todos os projetos.
+- Testes de tablet horizontal e contrato de leitor descritos em [homologacao-tablet-leitor.md](homologacao-tablet-leitor.md). Pareamento/óptica/USB-OTG de hardware real permanecem pendentes do equipamento; emulação de teclado não constitui homologação física.

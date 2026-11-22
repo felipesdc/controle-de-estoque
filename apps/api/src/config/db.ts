@@ -309,6 +309,23 @@ if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 15) 
  PRAGMA user_version=15;COMMIT;`);}catch(e){db.exec('ROLLBACK');throw e;}
 }
 
+if (Number((db.prepare("PRAGMA user_version").get() as any).user_version) < 16) {
+ try { db.exec(`BEGIN IMMEDIATE;
+ CREATE TABLE pi2_reembolsos_devolucao (
+ reembolso_id INTEGER PRIMARY KEY AUTOINCREMENT,
+ credito_id INTEGER NOT NULL REFERENCES pi2_creditos_devolucao(credito_id),
+ valor_centavos INTEGER NOT NULL CHECK(valor_centavos<>0 AND ABS(valor_centavos)<=1000000000000),
+ forma TEXT NOT NULL, recebido_em TEXT NOT NULL, documento TEXT NOT NULL, motivo TEXT NOT NULL,
+ usuario_id INTEGER NOT NULL REFERENCES pi2_usuarios(usuario_id), data TEXT NOT NULL,
+ estorno_de_id INTEGER UNIQUE REFERENCES pi2_reembolsos_devolucao(reembolso_id),
+ chave TEXT NOT NULL UNIQUE, solicitacao TEXT NOT NULL,
+ CHECK((estorno_de_id IS NULL AND valor_centavos>0) OR (estorno_de_id IS NOT NULL AND valor_centavos<0))
+ );
+ CREATE INDEX pi2_reembolsos_credito ON pi2_reembolsos_devolucao(credito_id,reembolso_id);
+ PRAGMA user_version=16;COMMIT;`); } catch(error){db.exec('ROLLBACK');throw error;}
+}
+
+
 // Bootstrap only an empty database. Never reset an existing account on restart.
 if (!(db.prepare("SELECT 1 FROM pi2_usuarios LIMIT 1").get())) {
   const password = process.env.ADMIN_PASSWORD;

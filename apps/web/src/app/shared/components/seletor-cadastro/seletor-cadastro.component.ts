@@ -26,7 +26,7 @@ interface Busca {q:string;pagina:number;selecionado:number|null;hidratar:boolean
 export class SeletorCadastroComponent implements ControlValueAccessor,Validator,OnInit,OnDestroy {
   private static sequencia=0;
   readonly ajudaId='ajuda-cadastro-'+(++SeletorCadastroComponent.sequencia);
-  @Input({required:true}) tipo!:TipoCadastro|'produtos';
+  @Input({required:true}) tipo!:TipoCadastro|'produtos'|'produtos-historico'|'responsaveis';
   @Input() label='Cadastro';
   @Input() vazio='Não informado';
   @Output() opcaoChange=new EventEmitter<OpcaoCadastro|null>();
@@ -44,7 +44,8 @@ export class SeletorCadastroComponent implements ControlValueAccessor,Validator,
     this.consultas.pipe(switchMap(busca=>timer(busca.delay).pipe(switchMap(()=>{
       let params=new HttpParams().set('q',busca.q).set('pagina',busca.pagina);
       if(busca.selecionado!==null)params=params.set('selecionado',busca.selecionado);
-      return this.http.get<Pagina>(`${environment.apiurl}/${this.tipo==='produtos'?'catalogo/produtos':'cadastros/'+this.tipo}/opcoes`,{params}).pipe(timeout(15000));
+      const path=this.tipo==='produtos-historico'?'movimentacao-estoque/opcoes/produtos':this.tipo==='responsaveis'?'movimentacao-estoque/opcoes/responsaveis':this.tipo==='produtos'?'catalogo/produtos/opcoes':'cadastros/'+this.tipo+'/opcoes';
+      return this.http.get<Pagina>(`${environment.apiurl}/${path}`,{params}).pipe(timeout(15000));
     }),map(pagina=>({pagina,busca,erro:''})),catchError(()=>of({pagina:null,busca,erro:'Não foi possível carregar as opções.'})))),takeUntil(this.fim)).subscribe(resultado=>{
       this.carregando.set(false);this.erro.set(resultado.erro);
       if(resultado.pagina){this.pagina.set(resultado.pagina);if(resultado.busca.hidratar){const selecionado=resultado.pagina.selecionado;this.texto.setValue(selecionado,{emitEvent:false});this.opcaoChange.emit(selecionado);if(this.valor()!==null&&!selecionado)this.erro.set('O cadastro selecionado não existe mais. Escolha outro ou limpe o campo.');}}

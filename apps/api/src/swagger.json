@@ -10264,6 +10264,468 @@
           }
         }
       }
+    },
+    "/compras/pedidos/{id}/devolucoes/{entrega}/creditos/{credito}/reembolsos": {
+      "post": {
+        "summary": "Registrar reembolso já recebido",
+        "tags": [
+          "Compras"
+        ],
+        "description": "Gestão. Registro de evidência, sem iniciar transação financeira nem alterar estoque/custo. Imutável, atômico e idempotente. Soma líquida não excede crédito. Estorno preserva original e reabre saldo do crédito.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 80,
+              "pattern": "^[\\w-]+$"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entrega",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "credito",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, revogada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de dados, saldo, versão ou idempotência",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Registro criado ou repetição idempotente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reembolso_id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReembolsoInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/compras/pedidos/{id}/devolucoes/{entrega}/creditos/{credito}/reembolsos/{reembolso}/estornar": {
+      "post": {
+        "summary": "Estornar registro de reembolso",
+        "tags": [
+          "Compras"
+        ],
+        "description": "Gestão. Registro de evidência, sem iniciar transação financeira nem alterar estoque/custo. Imutável, atômico e idempotente. Soma líquida não excede crédito. Estorno preserva original e reabre saldo do crédito.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 80,
+              "pattern": "^[\\w-]+$"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "entrega",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "credito",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "reembolso",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão ausente, revogada ou expirada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Permissão insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito de dados, saldo, versão ou idempotência",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Falha interna",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Registro criado ou repetição idempotente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reembolso_id": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "motivo"
+                ],
+                "properties": {
+                  "motivo": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 450
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movimentacao-estoque/opcoes/produtos": {
+      "get": {
+        "tags": [
+          "Cadastros"
+        ],
+        "summary": "Opções de produtos do histórico",
+        "description": "Autenticado, sem cache, até 25 opções por página. Produtos incluem inativos; responsáveis somente com histórico de movimentos. Seleção independente da página e busca. Somente ID e nome.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "selecionado",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de opções; selecionado null se inexistente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itens": {
+                      "type": "array",
+                      "maxItems": 25,
+                      "items": {
+                        "$ref": "#/components/schemas/OpcaoCadastro"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "pagina": {
+                      "type": "integer"
+                    },
+                    "tamanho": {
+                      "type": "integer",
+                      "enum": [
+                        25
+                      ]
+                    },
+                    "selecionado": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/OpcaoCadastro"
+                        }
+                      ],
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtro inválido"
+          },
+          "401": {
+            "description": "Sessão obrigatória"
+          },
+          "404": {
+            "description": "Tipo de cadastro inválido"
+          }
+        }
+      }
+    },
+    "/movimentacao-estoque/opcoes/responsaveis": {
+      "get": {
+        "tags": [
+          "Cadastros"
+        ],
+        "summary": "Opções de responsaveis do histórico",
+        "description": "Autenticado, sem cache, até 25 opções por página. Produtos incluem inativos; responsáveis somente com histórico de movimentos. Seleção independente da página e busca. Somente ID e nome.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "selecionado",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de opções; selecionado null se inexistente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "itens": {
+                      "type": "array",
+                      "maxItems": 25,
+                      "items": {
+                        "$ref": "#/components/schemas/OpcaoCadastro"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "pagina": {
+                      "type": "integer"
+                    },
+                    "tamanho": {
+                      "type": "integer",
+                      "enum": [
+                        25
+                      ]
+                    },
+                    "selecionado": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/OpcaoCadastro"
+                        }
+                      ],
+                      "nullable": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Filtro inválido"
+          },
+          "401": {
+            "description": "Sessão obrigatória"
+          },
+          "404": {
+            "description": "Tipo de cadastro inválido"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -13010,6 +13472,48 @@
           "versao"
         ],
         "description": "Receber: itens opcionais (omitir recebe todas as pendências). Devolver: itens e motivo obrigatórios; quantidade positiva até o recebido disponível, exige estoque suficiente."
+      },
+      "ReembolsoInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "valor_centavos",
+          "forma",
+          "recebido_em",
+          "documento",
+          "motivo"
+        ],
+        "properties": {
+          "valor_centavos": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000000000
+          },
+          "forma": {
+            "type": "string",
+            "enum": [
+              "pix",
+              "transferencia",
+              "dinheiro",
+              "outro"
+            ]
+          },
+          "recebido_em": {
+            "type": "string",
+            "format": "date",
+            "description": "Data válida até hoje no calendário de São Paulo."
+          },
+          "documento": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "motivo": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 450
+          }
+        }
       }
     },
     "securitySchemes": {

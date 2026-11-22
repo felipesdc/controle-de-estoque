@@ -10,11 +10,7 @@
     <h2>Nova movimentação</h2>
     <form [formGroup]="form" (ngSubmit)="salvar()">
       <div class="campos">
-        <mat-form-field appearance="outline"><mat-label>Produto</mat-label>
-          <mat-select formControlName="movimento_produto_id">
-            <ng-container *ngFor="let p of produtos"><mat-option *ngIf="p.produto_estado" [value]="p.produto_id">{{ p.produto_descricao }} · Saldo {{ p.produto_quantidade_estoque | number:'1.0-3' }}</mat-option></ng-container>
-          </mat-select><mat-error>Selecione um produto.</mat-error>
-        </mat-form-field>
+        <app-seletor-cadastro tipo="produtos" label="Produto" formControlName="movimento_produto_id" (opcaoChange)="selecionarProduto($event?.id ?? null)"></app-seletor-cadastro>
         <mat-form-field appearance="outline"><mat-label>Operação</mat-label><mat-select formControlName="movimento_tipo"><mat-option value="entrada">Entrada</mat-option><mat-option value="saida">Saída</mat-option></mat-select></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Quantidade</mat-label><input matInput type="number" min="0.001" max="1000000000" step="0.001" formControlName="movimento_quantidade"><mat-error>Informe uma quantidade positiva.</mat-error></mat-form-field>
       </div>
@@ -22,9 +18,9 @@
       <app-seletor-lote [sugerirRetirada]="form.value.movimento_tipo==='saida'" [produtoId]="form.value.movimento_produto_id" [disabled]="saving" (escolha)="escolherLote($event)"></app-seletor-lote>
       <p class="saldo" *ngIf="produto">Saldo disponível: <strong>{{ produto.produto_quantidade_estoque | number:'1.0-3' }}</strong>. Quantidades aceitam até três casas decimais.</p>
       <mat-form-field appearance="outline" class="observacao"><mat-label>Observação (opcional)</mat-label><textarea matInput rows="2" maxlength="500" formControlName="movimento_observacao"></textarea></mat-form-field>
-      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving || loading || !lote.pronto">{{ saving ? 'Registrando…' : 'Registrar movimentação' }}</button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving || loading || carregandoProduto || !produto?.produto_estado || !lote.pronto">{{ saving ? 'Registrando…' : 'Registrar movimentação' }}</button>
     </form>
-    <p class="empty" *ngIf="!loading && !produtos.length">Cadastre um produto antes de registrar uma movimentação.</p>
+
   </mat-card>
 
   <mat-card class="registro" *ngIf="estorno">
@@ -35,14 +31,14 @@
   </mat-card>
 
   <div class="historico-header"><h2>Histórico <span>{{ total }}</span></h2></div>
-  <form class="filtros" (ngSubmit)="aplicar()">
+  <form class="filtros" #filtrosForm="ngForm" (ngSubmit)="filtrosForm.valid && aplicar()">
     <mat-form-field appearance="outline"><mat-label>Buscar no histórico</mat-label><input matInput name="q" [(ngModel)]="filtros.q" maxlength="200" placeholder="Produto, observação ou ID"></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Data inicial</mat-label><input matInput type="date" name="inicio" [(ngModel)]="filtros.inicio"></mat-form-field>
     <mat-form-field appearance="outline"><mat-label>Data final</mat-label><input matInput type="date" name="fim" [(ngModel)]="filtros.fim"></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Produto do histórico</mat-label><mat-select name="produto" [(ngModel)]="filtros.produto"><mat-option value="">Todos</mat-option><mat-option *ngFor="let p of produtos" [value]="'' + p.produto_id">{{ p.produto_descricao }}{{ p.produto_estado ? '' : ' (inativo)' }}</mat-option></mat-select></mat-form-field>
-    <mat-form-field appearance="outline"><mat-label>Responsável</mat-label><mat-select name="responsavel" [(ngModel)]="filtros.responsavel"><mat-option value="">Todos</mat-option><mat-option value="legado">Registro anterior (sem responsável)</mat-option><mat-option *ngFor="let r of responsaveis" [value]="'' + r.id">{{ r.nome }}</mat-option></mat-select></mat-form-field>
+    <app-seletor-filtro tipo="produtos-historico" label="Produto do histórico" name="produto" [(ngModel)]="filtros.produto"></app-seletor-filtro>
+    <app-seletor-filtro tipo="responsaveis" label="Responsável" especial="legado" rotuloEspecial="Registro anterior (sem responsável)" name="responsavel" [(ngModel)]="filtros.responsavel"></app-seletor-filtro>
     <mat-form-field appearance="outline"><mat-label>Tipo</mat-label><mat-select name="tipo" [(ngModel)]="filtros.tipo"><mat-option value="">Todos</mat-option><mat-option value="entrada">Entrada</mat-option><mat-option value="saida">Saída</mat-option></mat-select></mat-form-field>
-    <div class="botoes"><button mat-raised-button color="primary" type="submit" [disabled]="loading || saving">Aplicar filtros</button><button mat-button type="button" (click)="limpar()" [disabled]="loading || saving">Limpar</button></div>
+    <div class="botoes"><button mat-raised-button color="primary" type="submit" [disabled]="loading || saving || filtrosForm.invalid">Aplicar filtros</button><button mat-button type="button" (click)="limpar()" [disabled]="loading || saving">Limpar</button></div>
   </form>
   <p class="saldo">Período inclusivo no horário de São Paulo. Estornos e registros originais permanecem no histórico.</p>
   <p role="status" *ngIf="loading">Carregando movimentações…</p>

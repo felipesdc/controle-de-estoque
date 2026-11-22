@@ -27,3 +27,13 @@ A regra gerencial segue a composição do custo de aquisição descrita no CPC 1
 Rotas administrativas antigas encaminham aos formulários atuais. Preços são informados dentro do produto; a API legada de preços mantém consulta para gestão e rejeita escrita com 405. Pedidos usam seletores remotos de fornecedores e produtos ativos, com até 25 opções por página. Entradas monetárias usam conversão decimal exata, sem arredondamento de ponto flutuante.
 
 Custos e créditos de entregas e estimativas de margem ficam restritos à gestão. Recebimentos anteriores continuam consultáveis e não recebem composição tributária presumida.
+
+## Reembolsos de devolução — 22/11/2026
+
+Migração 16 acrescenta um livro de registros de recebimento vinculado a cada crédito comercial. A gestão informa valor já recebido, data, forma (Pix, transferência, dinheiro ou outro), comprovante e motivo. É possível receber parcialmente; a soma líquida não pode ultrapassar o crédito. A data deve ser válida e não posterior ao dia atual em São Paulo.
+
+Este registro não executa transferência nem movimenta contas bancárias. Não substitui conciliação financeira, emissão fiscal ou apuração tributária. Frete, tributos informados e margem estimada continuam seguindo os critérios acima; nenhuma nova alíquota é aplicada nesta etapa.
+
+Registros são imutáveis. Uma correção exige estorno justificado, preserva autor/data/original e reabre o saldo do crédito. O estorno não devolve dinheiro ao fornecedor. Cada recebimento e estorno tem chave de idempotência; transações concorrentes conferem o saldo na mesma transação SQLite. Campos de reembolsos são exibidos somente à gestão, junto aos créditos da devolução. Funcionários permanecem sem acesso financeiro.
+
+Recebimento, crédito comercial e reembolso têm funções distintas: o primeiro forma o custo do estoque; o segundo registra o valor reconhecido pelo fornecedor; o terceiro registra evidência de dinheiro efetivamente recebido. Créditos, reembolsos e seus estornos não reescrevem o custo do estoque.

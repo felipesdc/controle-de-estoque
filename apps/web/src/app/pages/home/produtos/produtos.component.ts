@@ -7,9 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { catchError, debounceTime, finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { Catalogo, ProdutoCatalogo } from 'src/app/shared/models/catalogo.model';
-import { Categoria } from 'src/app/shared/models/categoria.model';
 import { ProdutoService } from 'src/app/shared/services/produto.service';
-import { CategoriaService } from 'src/app/shared/services/categoria.service';
 import { AuthService } from 'src/app/shared/services/auth.service';
 import { ProdutosCreateDialogComponent } from './produtos-create-dialog/produtos-create-dialog.component';
 import { ProdutoStatusDialogComponent } from './produto-status-dialog.component';
@@ -17,17 +15,15 @@ import { ProdutoStatusDialogComponent } from './produto-status-dialog.component'
 @Component({ changeDetection: ChangeDetectionStrategy.Eager, standalone: false, selector: 'app-produtos', templateUrl: './produtos.component.html', styleUrls: ['./produtos.component.scss'] })
 export class ProdutosComponent implements OnInit, OnDestroy {
   catalogo: Catalogo | null = null;
-  categorias: Categoria[] = [];
   loading = false;
   error = '';
   success = '';
-  opcoesError = false;
   pagina = 1;
   tamanho = 10;
   private reload = new Subject<void>();
   private destroy = new Subject<void>();
   filtros = this.fb.group({ q: [''], estado: ['ativos'], estoque: ['todos'], vencimento: ['todos'], categoria: [''], ordem: ['nome'] });
-  constructor(private fb: FormBuilder, private service: ProdutoService, private categoriaService: CategoriaService, private dialog: MatDialog, public auth: AuthService, private route: ActivatedRoute) {}
+  constructor(private fb: FormBuilder, private service: ProdutoService, private dialog: MatDialog, public auth: AuthService, private route: ActivatedRoute) {}
   get podeAlterar(): boolean { return this.auth.isAdmin() || this.auth.isGerente(); }
   ngOnInit(): void {
     const params = this.route.snapshot.queryParamMap;
@@ -43,17 +39,13 @@ export class ProdutosComponent implements OnInit, OnDestroy {
         .pipe(catchError(err => { this.error = err.error?.message || 'Não foi possível carregar o catálogo. Tente novamente.'; return of(null); }), finalize(() => this.loading = false));
     }), takeUntil(this.destroy)).subscribe(data => { if (data) { this.catalogo = data; this.pagina = data.pagina; } });
     this.filtros.valueChanges.pipe(debounceTime(300), takeUntil(this.destroy)).subscribe(() => { this.pagina = 1; this.success = ''; this.atualizar(); });
-    this.carregarOpcoes(); this.atualizar();
+    this.atualizar();
     if(params.get('precos')==='1')this.success='Preços são editados individualmente no produto, sem alterar outros produtos ou pedidos antigos.';
     if(this.podeAlterar&&params.get('novo')==='1')queueMicrotask(()=>this.novo());
     const acao=params.has('editar')?'editar':params.has('situacao')?'situacao':'';
     if(this.podeAlterar&&acao){const id=Number(params.get(acao));if(Number.isSafeInteger(id)&&id>0)this.service.getProduto(id).pipe(takeUntil(this.destroy)).subscribe({next:p=>acao==='editar'?this.editar(p as ProdutoCatalogo):this.alterarEstado(p as ProdutoCatalogo),error:()=>this.error='Produto não encontrado ou indisponível.'});else this.error='Identificador de produto inválido.';}
   }
-  carregarOpcoes(): void {
-    this.opcoesError = false;
-    this.categoriaService.getCategorias().pipe(takeUntil(this.destroy)).subscribe({ next: data => this.categorias = data, error: () => this.opcoesError = true });
-  }
-  atualizar(): void { this.reload.next(); }
+  atualizar(): void { if(this.filtros.valid)this.reload.next(); }
   limpar(): void { this.filtros.reset({ q: '', estado: 'ativos', estoque: 'todos', vencimento: 'todos', categoria: '', ordem: 'nome' }); }
   paginar(event: PageEvent): void { this.pagina = event.pageIndex + 1; this.tamanho = event.pageSize; this.atualizar(); }
   novo(): void {

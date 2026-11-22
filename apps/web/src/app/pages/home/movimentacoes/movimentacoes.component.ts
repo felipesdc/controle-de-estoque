@@ -1,10 +1,10 @@
-import {centavos} from 'src/app/shared/utils/dinheiro';
+import {centavos,validarDinheiro} from 'src/app/shared/utils/dinheiro';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { EscolhaLote } from 'src/app/shared/services/lotes.service';
 import { ActivatedRoute } from '@angular/router';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { forkJoin, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { finalize, timeout } from 'rxjs/operators';
 import { MovimentacaoEstoque } from 'src/app/shared/models/movimentacao-estoque.model';
 import { Produto } from 'src/app/shared/models/produto.model';
@@ -20,14 +20,13 @@ import { AuthService } from 'src/app/shared/services/auth.service';
 export class MovimentacoesComponent implements OnInit, OnDestroy {
  lote:EscolhaLote={id:null,codigo:null,validade:null,saldo:0,pronto:false};
  escolherLote(l:EscolhaLote){this.lote=l;this.chave=crypto.randomUUID();}
-  produtos: Produto[] = [];
+  produto:Produto|undefined; carregandoProduto=false;private consultaProduto?:Subscription;private subscriptions=new Subscription();
   movimentos: MovimentacaoEstoque[] = [];
   loading = true;
   saving = false;
   error = '';
   success = '';
   filtros = {q: '', inicio: '', fim: '', produto: '', responsavel: '', tipo: ''};
-  responsaveis: {id: number; nome: string}[] = [];
   total = 0;
   pagina = 1;
   tamanho = 10;
@@ -41,14 +40,14 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     movimento_tipo: ['entrada', Validators.required],
     movimento_quantidade: [null as number | null, [Validators.required, Validators.min(0.001), Validators.max(1e9)]],
     movimento_observacao: ['', Validators.maxLength(500)],
-    custo_unitario: ['',Validators.pattern(/^\d+([.,]\d{1,2})?$/)],
+    custo_unitario: ['',validarDinheiro(true)],
   });
   constructor(private fb: FormBuilder, private service: MovimentacaoEstoqueService, private produtoService: ProdutoService, public auth: AuthService, private route: ActivatedRoute) {}
   get podeAlterar(): boolean { return this.auth.isAdmin() || this.auth.isGerente(); }
-  get produto(): Produto | undefined { return this.produtos.find(p => p.produto_id === this.form.value.movimento_produto_id); }
+  selecionarProduto(id:number|null){this.consultaProduto?.unsubscribe();this.produto=undefined;this.carregandoProduto=false;if(id===null)return;this.carregandoProduto=true;this.consultaProduto=this.produtoService.getProduto(id).pipe(timeout(15000),finalize(()=>this.carregandoProduto=false)).subscribe({next:p=>{if(this.form.controls.movimento_produto_id.value===id)this.produto=p;},error:()=>this.error='Não foi possível atualizar o saldo do produto. Selecione novamente.'});}
   ngOnInit(): void {
-    this.form.controls.movimento_tipo.valueChanges.subscribe(tipo=>{if(tipo==='saida')this.form.controls.custo_unitario.setValue('',{emitEvent:false});});
-    this.form.valueChanges.subscribe(() => { this.chave = crypto.randomUUID(); this.success = ''; });
+    this.subscriptions.add(this.form.controls.movimento_tipo.valueChanges.subscribe(tipo=>{if(tipo==='saida')this.form.controls.custo_unitario.setValue('',{emitEvent:false});}));
+    this.subscriptions.add(this.form.valueChanges.subscribe(() => { this.chave = crypto.randomUUID(); this.success = ''; }));
     this.filtros.q = (this.route.snapshot.queryParamMap.get('q') || '').slice(0,200);
     const selected = Number(this.route.snapshot.queryParamMap.get('produto'));
     if (Number.isSafeInteger(selected) && selected > 0) this.form.patchValue({ movimento_produto_id: selected });
@@ -60,28 +59,28 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const date = new Date(normalized);
     return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat('pt-BR', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(date) : 'Data indisponível';
   }
-  ngOnDestroy(): void { this.consulta?.unsubscribe(); }
+  ngOnDestroy(): void { this.subscriptions.unsubscribe();this.consultaProduto?.unsubscribe(); this.consulta?.unsubscribe(); }
   aplicar(): void { this.pagina = 1; this.carregar(); }
   limpar(): void { this.filtros = {q: '', inicio: '', fim: '', produto: '', responsavel: '', tipo: ''}; this.aplicar(); }
   paginar(event: {pageIndex: number; pageSize: number}): void { this.pagina = event.pageIndex + 1; this.tamanho = event.pageSize; this.carregar(); }
   carregar(): void {
     this.consulta?.unsubscribe();
     this.loading = true; this.error = '';
-    this.consulta = forkJoin({ produtos: this.produtoService.getProdutos(), responsaveis: this.service.responsaveis(), movimentos: this.service.historico({...this.filtros, pagina: this.pagina, tamanho: this.tamanho}) })
+    this.consulta = this.service.historico({...this.filtros, pagina: this.pagina, tamanho: this.tamanho})
       .pipe(timeout(15000), finalize(() => this.loading = false)).subscribe({
-        next: ({ produtos, responsaveis, movimentos }) => { this.produtos = produtos; this.responsaveis = responsaveis; this.movimentos = movimentos.itens; this.total = movimentos.total; this.pagina = movimentos.pagina; },
+        next: movimentos => { this.movimentos = movimentos.itens; this.total = movimentos.total; this.pagina = movimentos.pagina; },
         error: err => { this.movimentos = []; this.total = 0; this.error = err.error?.message || 'Não foi possível carregar os dados. Tente atualizar.'; },
       });
   }
   salvar(): void {
-    if (this.form.invalid || this.saving || !this.lote.pronto) { this.form.markAllAsTouched(); return; }
+    if (this.form.invalid || this.saving || this.carregandoProduto || !this.produto?.produto_estado || !this.lote.pronto) { this.form.markAllAsTouched(); return; }
     this.error = ''; this.success = ''; this.saving = true;
     this.form.disable({ emitEvent: false });
     const {custo_unitario,...raw}=this.form.getRawValue();
     this.service.createNewMovimentacaoEstoque({...raw,movimento_lote_id:this.lote.id,...(raw.movimento_tipo==='entrada'&&custo_unitario?.trim()?{movimento_custo_unitario_centavos:centavos(custo_unitario)!}:{})} as unknown as MovimentacaoEstoque, this.chave)
       .pipe(finalize(() => { this.saving = false; this.form.enable({ emitEvent: false }); })).subscribe({
         next: () => {
-          this.form.reset({ movimento_tipo: 'entrada', movimento_observacao: '', custo_unitario:'' });
+          this.produto=undefined;this.form.reset({ movimento_tipo: 'entrada', movimento_observacao: '', custo_unitario:'' });
           this.chave = crypto.randomUUID();
           this.success = 'Movimentação registrada. O saldo foi atualizado.';
           this.pagina = 1; this.carregar();

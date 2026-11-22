@@ -431,3 +431,5 @@ A evolução dos seletores paginados e os ajustes de compatibilidade do Angular 
 As saídas agora oferecem [sugestão de lote pelo vencimento mais próximo](docs/retirada-vencimento.md), sempre com seleção e confirmação explícitas do operador.
 
 Custos de aquisição com frete, despesas, descontos, classificação tributária informada e créditos comerciais: [critérios e limites](docs/custos-gerenciais.md).
+
+Seletores remotos restantes e reembolsos recebidos/estornos: [custos gerenciais](docs/custos-gerenciais.md). [Validação de tablet e leitor](docs/homologacao-tablet-leitor.md) e [comparação das referências locais](docs/comparacao-referencias.md).

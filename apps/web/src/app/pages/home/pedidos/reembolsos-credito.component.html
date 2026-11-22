@@ -1,0 +1,17 @@
+<h4>Crédito comercial #{{credito.credito_id}} · {{credito.valor_centavos/100 | currency:'BRL'}}</h4>
+<p>{{credito.documento}} · {{credito.motivo}}</p><p>Reembolsado: {{(credito.reembolsado_centavos || 0)/100 | currency:'BRL'}} · Pendente: <strong>{{pendente/100 | currency:'BRL'}}</strong></p>
+<ul class="history"><li *ngFor="let r of credito.reembolsos"><strong>{{r.estorno_de_id?'Estorno do reembolso #'+r.estorno_de_id:'Reembolso #'+r.reembolso_id}}</strong> · {{r.valor_centavos/100 | currency:'BRL'}} · {{r.forma}} · recebido em {{r.recebido_em | date:'dd/MM/yyyy':'UTC'}}<small>{{r.documento}} · {{r.motivo}} · registrado por {{r.usuario}} em {{r.data | date:'dd/MM/yyyy HH:mm':'-0300'}}</small><button mat-button *ngIf="!r.estorno_de_id && !jaEstornado(r)" (click)="preparar(r.reembolso_id)" [disabled]="saving || aberto">Corrigir por estorno</button><small *ngIf="jaEstornado(r)">Registro estornado; histórico preservado.</small></li></ul>
+<button mat-stroked-button *ngIf="!aberto && pendente>0" (click)="preparar()" [disabled]="saving">Registrar reembolso recebido</button>
+<form *ngIf="aberto" [formGroup]="form" (ngSubmit)="enviar()">
+ <h4>{{estorno===undefined?'Registrar reembolso já recebido':'Estornar registro de reembolso'}}</h4>
+ <p>{{estorno===undefined?'Informe o valor efetivamente recebido do fornecedor e o comprovante. O registro não inicia transferência, não emite documento fiscal e não altera o estoque ou seu custo.':'Registra uma correção e reabre o saldo do crédito, mantendo o recebimento original. Não devolve dinheiro nem altera o estoque.'}}</p>
+ <div class="fields" *ngIf="estorno===undefined">
+  <mat-form-field appearance="outline"><mat-label>Valor recebido (R$)</mat-label><input matInput inputmode="decimal" formControlName="valor"><mat-error>Informe reais com até duas casas decimais.</mat-error></mat-form-field>
+  <mat-form-field appearance="outline"><mat-label>Forma do recebimento</mat-label><mat-select formControlName="forma"><mat-option value="pix">Pix</mat-option><mat-option value="transferencia">Transferência</mat-option><mat-option value="dinheiro">Dinheiro</mat-option><mat-option value="outro">Outro</mat-option></mat-select></mat-form-field>
+  <mat-form-field appearance="outline"><mat-label>Data do recebimento</mat-label><input matInput type="date" formControlName="recebido_em" [max]="hoje"></mat-form-field>
+  <mat-form-field appearance="outline"><mat-label>Documento / comprovante</mat-label><input matInput formControlName="documento" maxlength="120"><mat-error>Informe o comprovante.</mat-error></mat-form-field>
+ </div>
+ <mat-form-field appearance="outline"><mat-label>Motivo / observação</mat-label><textarea matInput formControlName="motivo" maxlength="450"></textarea><mat-error>Informe ao menos três caracteres.</mat-error></mat-form-field>
+ <p class="error" *ngIf="estorno===undefined && !valido">Confira os campos e o saldo pendente do crédito.</p><p class="error" role="alert" *ngIf="error">{{error}}</p>
+ <button mat-raised-button color="primary" type="submit" [disabled]="saving || !valido">{{saving?'Registrando…':'Confirmar registro'}}</button><button mat-button type="button" (click)="aberto=false" [disabled]="saving">Cancelar</button>
+</form>

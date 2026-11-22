@@ -1,3 +1,4 @@
+import {registrarReembolso} from '../services/reembolsos';
 import {registrarCredito} from '../services/custos-gerenciais';
 import { listarReposicao } from '../services/reposicao';
 import { Router, Response } from 'express';
@@ -13,5 +14,8 @@ router.get('/compras/pedidos/:id',(req:AuthenticatedRequest,res)=>run(res,()=>{c
 router.post('/compras/pedidos',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>salvarPedido(req.body,req.userId!,req.get('Idempotency-Key')||''),201));
 router.patch('/compras/pedidos/:id',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>salvarPedido(req.body,req.userId!,'',Number(req.params.id))));
 router.post('/compras/pedidos/:id/devolucoes/:entrega/creditos',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>registrarCredito(Number(req.params.id),Number(req.params.entrega),req.body,req.userId!,req.get('Idempotency-Key')||''),201));
+const reembolsos='/compras/pedidos/:id/devolucoes/:entrega/creditos/:credito/reembolsos';
+router.post(reembolsos,requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>registrarReembolso(Number(req.params.id),Number(req.params.entrega),Number(req.params.credito),req.body,req.userId!,req.get('Idempotency-Key')||''),201));
+router.post(reembolsos+'/:reembolso/estornar',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>registrarReembolso(Number(req.params.id),Number(req.params.entrega),Number(req.params.credito),req.body,req.userId!,req.get('Idempotency-Key')||'',Number(req.params.reembolso)),201));
 router.post('/compras/pedidos/:id/:acao',requireManager,(req:AuthenticatedRequest,res)=>run(res,()=>transicionar(Number(req.params.id),req.params.acao,req.body,req.userId!,req.get('Idempotency-Key')||'')));
 export default router;

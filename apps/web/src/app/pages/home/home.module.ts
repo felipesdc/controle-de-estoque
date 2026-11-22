@@ -1,3 +1,5 @@
+import {ReembolsosCreditoComponent} from './pedidos/reembolsos-credito.component';
+import {SeletorFiltroComponent} from 'src/app/shared/components/seletor-filtro/seletor-filtro.component';
 import {SeletorCadastroComponent} from 'src/app/shared/components/seletor-cadastro/seletor-cadastro.component';
 import { AlertasLotesComponent } from './lotes/alertas-lotes.component';
 import { CustosComponent } from './relatorios/custos.component';
@@ -28,6 +30,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
   imports: [
     CommonModule,
     SeletorCadastroComponent,
+    SeletorFiltroComponent,
+    ReembolsosCreditoComponent,
     HomeRoutingModule,
     MaterialModule,
     FormsModule,
